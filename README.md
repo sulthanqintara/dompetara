@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Personal Ledger
 
-## Getting Started
+A private Google-account ledger built with Next.js, Better Auth, Drizzle, and Supabase Postgres.
 
-First, run the development server:
+## Setup
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. Copy `.env.example` to `.env` if you do not already have one. Set `DATABASE_URL` to your Supabase Postgres connection string (the session pooler is suitable for local development). Set a random `BETTER_AUTH_SECRET` and your app origin as `BETTER_AUTH_URL`.
+2. Create a Google OAuth **Web application** client. Add `http://localhost:3000` as an authorized JavaScript origin and `http://localhost:3000/api/auth/callback/google` as an authorized redirect URI. Add your own Google account as a test user if the consent screen is in testing mode.
+3. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. For production, register the corresponding production origin and callback and update `BETTER_AUTH_URL`. See [Better Auth’s Google setup](https://better-auth.com/docs/authentication/google).
+4. Run `pnpm install`, `pnpm db:migrate`, and `pnpm dev`.
+5. Sign in and create your first wallet with its opening balance. Edit the wallet to add other currencies.
+
+Better Auth manages identity and sessions; Supabase supplies Postgres, not Supabase Auth. Keep database credentials server-side. The ledger table has RLS enabled with no public policies; the server database role must own the table or have BYPASSRLS. Do not expose the auth tables through public Supabase Data API permissions.
+
+## Ledger behavior
+
+- Wallets can contain IDR, USD, and CAD balances. Amounts use integer minor units with at most two decimal places.
+- Monthly income and expenses are shown in the selected currency. Total balance is the current balance across all wallets in that currency; currencies are never added together.
+- Transfers record source and destination balances. For different currencies, enter both the sent and received amounts; no automatic exchange-rate estimates are used.
+- Wallet balance edits append corrections. Opening balances and corrections are excluded from income/expense reports and cannot be edited or deleted as ordinary transactions.
+- Editing or deleting an income, expense, or transfer recalculates affected balances. Corrections remain fixed historical adjustments. Negative balances are allowed.
+- Removing a category preserves its name in transaction history.
+- Times are entered and displayed in the device timezone and stored as UTC instants. Month boundaries use the device timezone.
+- Every API operation uses the authenticated user ID. Version checks reject conflicting saves from different tabs instead of overwriting changes.
+- Each personal ledger is stored as one JSON document. Large histories will eventually need normalized entries and pagination.
+
+## Checks
+
+Requires Node 22.18+ (Node 24 recommended).
+
+```sh
+pnpm test
+pnpm lint
+pnpm typecheck
+pnpm build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Tests cover exact money parsing, opening balances, corrections, editing/deleting entries, same-currency and cross-currency transfers, category history, and invalid wallet references. A live Google sign-in and persistence check requires working OAuth credentials and a reachable, migrated database.

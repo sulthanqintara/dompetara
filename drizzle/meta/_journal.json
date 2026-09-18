@@ -8,6 +8,13 @@
       "when": 1788863963254,
       "tag": "0000_sloppy_the_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788952118323,
+      "tag": "0001_white_boomerang",
+      "breakpoints": true
     }
   ]
 }

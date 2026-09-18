@@ -1,14 +1,9 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-
-export default function Home() {
-  return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
-      <h1 className="text-4xl font-semibold tracking-tight">Personal Ledger</h1>
-      <p className="text-muted-foreground max-w-md">
-        Track your income and expenses, all in one place.
-      </p>
-      <Button render={<Link href="/sign-in" />}>Sign in</Button>
-    </main>
-  );
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { LedgerApp } from "@/features/ledger/components/ledger-app";
+export default async function Home() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) redirect("/sign-in");
+  return <LedgerApp name={session.user.name} email={session.user.email} />;
 }
