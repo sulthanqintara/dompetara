@@ -12,7 +12,9 @@ Design requirement: mobile first, then tablet, then desktop. Every feature must 
 - [x] Transaction history with monthly income, expenses, and current balance.
 - [x] Named wallets for bank accounts, cash, and e-wallets such as GoPay.
 - [x] Wallet opening balances and balance corrections recorded separately from income and expenses.
-- [x] Same-currency and cross-currency transfers, with amounts entered explicitly.
+- [x] Same-currency and cross-currency transfers with explicit source/destination currencies and editable exchange rates. Manually entering sent and received amounts calculates the effective rate while preserving both actual amounts.
+- [x] Optional source/destination service fees saved as linked Admin fees expenses; transfer edits/deletion update both atomically, and reports count fees as spending.
+- [x] Shared Supabase Postgres exchange-rate cache using ECB data through Frankfurter, with a protected weekday refresh cron, ETag/304 validation, and manual fallback. Saved transfers retain their applied rate/source/date.
 - [x] IDR, USD, and CAD balances kept separately; exact amounts stored as integer minor units.
 - [x] Income and expense category management, preserving category names in transaction history.
 - [x] Month selection and currency selection for summaries and reports. Transaction history currently includes all currencies for the selected month.
@@ -110,7 +112,7 @@ Replaced the native/custom controls on 2026-10-01 using the existing shadcn Base
 
 Remaining custom markup is intentional: responsive page/sidebar layout, branding, headings, help text, privacy notes, footer, ordinary borders, and the semantic chart breakdown. The month picker is a feature composition of shadcn primitives. Time and number fields use browser input behavior inside shadcn Input. There are no visible raw buttons, selects, text inputs, textareas, native editor dialogs, or browser confirmation calls in feature views; hidden form values remain plain HTML.
 
-Verification: `pnpm test:responsive` passed against development and production servers at all seven viewport sizes listed above. It checks open selects, month picker, Calendar, and AlertDialogs as well as all tabs and editors. It covers compact desktop navigation, keyboard selection, date navigation, focus restoration, required transfer wallets, category saves/removals, transaction edits, and cross-currency transfer saves. Lint, TypeScript, ledger checks, and the production build passed. Test accounts and ledgers are removed afterward. Real-device keyboard, screen-reader, Safari, and text-enlargement checks remain outstanding.
+Verification: `pnpm test:responsive` passed against development and production servers at all seven viewport sizes listed above. It checks open selects, month picker, Calendar, and AlertDialogs as well as all tabs and editors. It covers compact desktop navigation, keyboard selection, date navigation, focus restoration, required transfer wallets, category saves/removals, transaction edits, and cross-currency transfer saves. Transfer checks cover source/destination fees, fee spending reports, atomic edits/deletion, cached/manual rate snapshots, missing-cache fallback, and CAD 159.33 → IDR 2,000,000 with exact amounts preserved through edits and reloads. Ordinary transfer operations leave the shared rate cache unchanged. Lint, TypeScript, domain/database checks, and the production build passed. The linked Supabase migration, protected refresh function, named weekday cron, initial cache, and a real conditional HTTP 304 refresh were verified; unauthorized refresh requests were rejected. Test accounts and ledgers are removed afterward. Real-device keyboard, screen-reader, Safari, and text-enlargement checks remain outstanding.
 
 ## Decisions needed before the relevant feature
 

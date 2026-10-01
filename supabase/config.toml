@@ -1,0 +1,5 @@
+project_id = "personal-ledger"
+
+[functions.refresh-exchange-rates]
+# The handler validates a private cron token; this is not a browser endpoint.
+verify_jwt = false

@@ -4,6 +4,7 @@ import { createHmac, randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright";
 import postgres from "postgres";
+import { balance } from "../src/features/ledger/ledger.ts";
 
 const origin = process.env.LEDGER_TEST_URL ?? "http://localhost:3000";
 const screenshots = process.env.RESPONSIVE_SCREENSHOTS;
@@ -27,7 +28,7 @@ const sizes = [
 ];
 const data = {
   wallets: [
-    { id: "bank", name: "BCA Main Account", currencies: ["IDR", "USD"] },
+    { id: "bank", name: "BCA Main Account", currencies: ["IDR", "USD", "CAD"] },
     { id: "gopay", name: "GoPay", currencies: ["IDR"] },
     { id: "long", name: "Long wallet ".repeat(12), currencies: ["IDR"] },
   ],
@@ -278,6 +279,321 @@ async function check(page, name, width, height) {
     });
 }
 
+async function saveEditor(page) {
+  const saved = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/ledger") &&
+      response.request().method() === "POST",
+  );
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Save", exact: true })
+    .click();
+  const response = await saved;
+  assert.ok(response.ok(), await response.text());
+  const result = await response.json();
+  await page.getByRole("dialog").waitFor({ state: "detached" });
+  return result.data;
+}
+
+async function removeFeeTransfer(page) {
+  await page
+    .getByRole("button", { name: "Edit Transfer service fee", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  const saved = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/ledger") &&
+      response.request().method() === "POST",
+  );
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Delete transaction", exact: true })
+    .click();
+  assert.ok((await saved).ok());
+  await page.getByRole("dialog").waitFor({ state: "detached" });
+}
+
+async function checkTransferFees(page, width, height) {
+  await page.getByRole("tab", { name: "Transactions", exact: true }).click();
+  const before = (await (await page.request.get(`${origin}/api/ledger`)).json())
+    .data;
+  const cacheBefore =
+    await sql`select rate_date, last_checked_at from public.exchange_rate_cache order by rate_date`;
+  await page
+    .getByRole("button", { name: "Add transaction", exact: true })
+    .click();
+  await page.getByRole("tab", { name: "transfer", exact: true }).click();
+  await choose(page, "To wallet", "GoPay");
+  await page
+    .getByRole("spinbutton", { name: "Amount sent", exact: true })
+    .fill("200000");
+  await page
+    .getByRole("spinbutton", { name: "Service fee (IDR)", exact: true })
+    .fill("1000");
+  assert.match(
+    await page.locator(".transfer-summary").textContent(),
+    /199,000/,
+  );
+  await check(page, "same-currency-destination-fee", width, height);
+  let saved = await saveEditor(page);
+  let fee = saved.entries.findLast((e) => e.transferId);
+  const transferId = fee.transferId;
+  assert.equal(fee.wallet, "gopay");
+  assert.equal(fee.amount, 100000);
+  assert.equal(
+    balance(saved, "bank", "IDR"),
+    balance(before, "bank", "IDR") - 20000000,
+  );
+  assert.equal(
+    balance(saved, "gopay", "IDR"),
+    balance(before, "gopay", "IDR") + 19900000,
+  );
+  assert.match(
+    await page
+      .getByRole("row")
+      .filter({
+        has: page.getByRole("button", { name: "Edit Transfer", exact: true }),
+      })
+      .filter({ hasText: "GoPay" })
+      .first()
+      .textContent(),
+    /199,000/,
+  );
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Edit Transfer service fee", exact: true })
+    .click();
+  assert.equal(
+    await page
+      .getByRole("spinbutton", { name: "Service fee (IDR)", exact: true })
+      .inputValue(),
+    "1000.00",
+  );
+  await choose(page, "Fee charged to", "Source · BCA Main Account (IDR)");
+  await check(page, "same-currency-source-fee", width, height);
+  saved = await saveEditor(page);
+  assert.equal(
+    saved.entries.filter((e) => e.transferId === transferId).length,
+    1,
+  );
+  assert.equal(
+    balance(saved, "bank", "IDR"),
+    balance(before, "bank", "IDR") - 20100000,
+  );
+  assert.equal(
+    balance(saved, "gopay", "IDR"),
+    balance(before, "gopay", "IDR") + 20000000,
+  );
+  await page.getByRole("tab", { name: "Report", exact: true }).click();
+  const admin = page
+    .locator(".expense-category-list .report-row")
+    .filter({ hasText: "Admin fees" });
+  assert.match(await admin.textContent(), /1,000/);
+  await check(page, "admin-fee-report", width, height);
+  await page.getByRole("tab", { name: "Transactions", exact: true }).click();
+  await removeFeeTransfer(page);
+  let restored = (await (await page.request.get(`${origin}/api/ledger`)).json())
+    .data;
+  assert.deepEqual(
+    restored.entries,
+    before.entries,
+    "Deleting a transfer must remove its fee atomically.",
+  );
+
+  await page
+    .getByRole("button", { name: "Add transaction", exact: true })
+    .click();
+  await page.getByRole("tab", { name: "transfer", exact: true }).click();
+  await choose(page, "Source currency", "USD");
+  await choose(page, "To wallet", "GoPay");
+  const rate = page.getByRole("spinbutton", {
+    name: "Exchange rate (1 USD in IDR)",
+    exact: true,
+  });
+  await page.waitForFunction(
+    () => Number(document.querySelector('[name="exchangeRate"]')?.value) > 0,
+  );
+  assert.match(
+    await page.getByRole("dialog").textContent(),
+    /ECB via Frankfurter/,
+  );
+  await page
+    .getByRole("spinbutton", { name: "Amount sent", exact: true })
+    .fill("100");
+  const received = page.getByRole("spinbutton", {
+    name: "Amount received before fee (IDR)",
+    exact: true,
+  });
+  assert.equal(
+    Number(await received.inputValue()),
+    Number(await rate.inputValue()) * 100,
+  );
+  const referenceRate = await rate.inputValue();
+  await page
+    .getByRole("spinbutton", { name: "Service fee (IDR)", exact: true })
+    .fill("1000");
+  await check(page, "cross-currency-reference-rate", width, height);
+  saved = await saveEditor(page);
+  fee = saved.entries.findLast((e) => e.transferId);
+  const referenceTransfer = saved.entries.find((e) => e.id === fee.transferId);
+  assert.equal(referenceTransfer.exchangeRate.source, "ecb");
+  assert.equal(referenceTransfer.exchangeRate.value, referenceRate);
+  assert.ok(referenceTransfer.exchangeRate.referenceDate);
+  await page
+    .getByRole("button", { name: "Edit Transfer service fee", exact: true })
+    .click();
+  assert.equal(await rate.inputValue(), referenceRate);
+  await rate.fill("17800");
+  assert.equal(await received.inputValue(), "1780000.00");
+  await received.fill("1770000");
+  assert.equal(await rate.inputValue(), "17700");
+  await rate.fill("17800");
+  await page
+    .getByRole("spinbutton", { name: "Service fee (IDR)", exact: true })
+    .fill("1000");
+  assert.match(
+    await page.locator(".transfer-summary").textContent(),
+    /1,779,000/,
+  );
+  await check(page, "cross-currency-manual-rate-fee", width, height);
+  saved = await saveEditor(page);
+  fee = saved.entries.findLast((e) => e.transferId);
+  const transfer = saved.entries.find((e) => e.id === fee.transferId);
+  assert.equal(transfer.exchangeRate.value, "17800");
+  assert.equal(transfer.exchangeRate.source, "manual");
+  assert.equal(
+    balance(saved, "bank", "USD"),
+    balance(before, "bank", "USD") - 10000,
+  );
+  assert.equal(
+    balance(saved, "gopay", "IDR"),
+    balance(before, "gopay", "IDR") + 177900000,
+  );
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Edit Transfer service fee", exact: true })
+    .click();
+  assert.equal(
+    await rate.inputValue(),
+    "17800",
+    "Saved manual rate must survive reload and reference-rate suggestions.",
+  );
+  assert.equal(await received.inputValue(), "1780000.00");
+  await check(page, "saved-transfer-rate", width, height);
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await removeFeeTransfer(page);
+  restored = (await (await page.request.get(`${origin}/api/ledger`)).json())
+    .data;
+  assert.deepEqual(restored.entries, before.entries);
+
+  await page.route("**/api/exchange-rates?*", (route) =>
+    route.fulfill({ json: { suggestion: null } }),
+  );
+  await page
+    .getByRole("button", { name: "Add transaction", exact: true })
+    .click();
+  await page.getByRole("tab", { name: "transfer", exact: true }).click();
+  await choose(page, "Source currency", "USD");
+  await choose(page, "To wallet", "GoPay");
+  await page
+    .getByText(
+      "No cached rate for this date. Enter your actual rate or received amount.",
+      { exact: true },
+    )
+    .waitFor();
+  await page
+    .getByRole("spinbutton", { name: "Amount sent", exact: true })
+    .fill("100");
+  await received.fill("1780000");
+  assert.equal(await rate.inputValue(), "17800");
+  await choose(page, "Fee charged to", "Source · BCA Main Account (USD)");
+  await page
+    .getByRole("spinbutton", { name: "Service fee (USD)", exact: true })
+    .fill("1");
+  await check(page, "manual-rate-without-cache", width, height);
+  saved = await saveEditor(page);
+  fee = saved.entries.findLast((e) => e.transferId);
+  assert.equal(fee.currency, "USD");
+  assert.equal(
+    balance(saved, "bank", "USD"),
+    balance(before, "bank", "USD") - 10100,
+  );
+  assert.equal(
+    balance(saved, "gopay", "IDR"),
+    balance(before, "gopay", "IDR") + 178000000,
+  );
+  await removeFeeTransfer(page);
+  await page.unroute("**/api/exchange-rates?*");
+  await page
+    .getByRole("button", { name: "Add transaction", exact: true })
+    .click();
+  await page.getByRole("tab", { name: "transfer", exact: true }).click();
+  await choose(page, "Source currency", "CAD");
+  await choose(page, "To wallet", "GoPay");
+  const sent = page.getByRole("spinbutton", {
+    name: "Amount sent",
+    exact: true,
+  });
+  const cadRate = page.getByRole("spinbutton", {
+    name: "Exchange rate (1 CAD in IDR)",
+    exact: true,
+  });
+  await sent.fill("159.33");
+  await received.fill("2000000");
+  assert.equal(await cadRate.inputValue(), "12552.563861168644");
+  await sent.fill("160");
+  assert.equal(await received.inputValue(), "2000000");
+  assert.equal(await cadRate.inputValue(), "12500");
+  await sent.fill("159.33");
+  await choose(page, "Fee charged to", "Source · BCA Main Account (CAD)");
+  await page
+    .getByRole("spinbutton", { name: "Service fee (CAD)", exact: true })
+    .fill("1");
+  await check(page, "manual-cad-to-idr-amounts", width, height);
+  saved = await saveEditor(page);
+  fee = saved.entries.findLast((e) => e.transferId);
+  const cad = saved.entries.find((e) => e.id === fee.transferId);
+  assert.equal(cad.amount, 15933);
+  assert.equal(cad.received, 200000000);
+  assert.equal(cad.exchangeRate.value, "12552.563861168644");
+  assert.equal(cad.exchangeRate.source, "received");
+  assert.equal(
+    balance(saved, "bank", "CAD"),
+    balance(before, "bank", "CAD") - 16033,
+  );
+  assert.equal(
+    balance(saved, "gopay", "IDR"),
+    balance(before, "gopay", "IDR") + 200000000,
+  );
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Edit Transfer service fee", exact: true })
+    .click();
+  assert.equal(await received.inputValue(), "2000000.00");
+  assert.equal(await cadRate.inputValue(), "12552.563861168644");
+  await sent.fill("160");
+  assert.equal(
+    await received.inputValue(),
+    "2000000.00",
+    "Editing sent amount must preserve the actual destination amount.",
+  );
+  assert.equal(await cadRate.inputValue(), "12500");
+  saved = await saveEditor(page);
+  assert.equal(saved.entries.find((e) => e.id === cad.id).received, 200000000);
+  await removeFeeTransfer(page);
+  restored = (await (await page.request.get(`${origin}/api/ledger`)).json())
+    .data;
+  assert.deepEqual(restored.entries, before.entries);
+  const cacheAfter =
+    await sql`select rate_date, last_checked_at from public.exchange_rate_cache order by rate_date`;
+  assert.deepEqual(
+    cacheAfter,
+    cacheBefore,
+    "Opening or saving transfers must not refresh the shared provider cache.",
+  );
+}
+
 async function checkCategories(page, width, height) {
   const name = `Travel check ${width}`;
   await page
@@ -428,6 +744,15 @@ try {
     await page.goto(`${origin}/sign-in`);
     await page.getByRole("button", { name: /Google/ }).waitFor();
     await check(page, "sign-in", width, height);
+    if (width === 320)
+      assert.equal(
+        (
+          await page.request.get(
+            `${origin}/api/exchange-rates?from=USD&to=IDR&date=2026-10-01`,
+          )
+        ).status(),
+        401,
+      );
     await context.addCookies([
       {
         name: "better-auth.session_token",
@@ -438,6 +763,15 @@ try {
       },
     ]);
     await page.goto(origin);
+    if (width === 320)
+      assert.equal(
+        (
+          await page.request.get(
+            `${origin}/api/exchange-rates?from=INVALID&to=IDR&date=2026-10-01`,
+          )
+        ).status(),
+        400,
+      );
     await page
       .getByRole("button", { name: "Add transaction", exact: true })
       .waitFor();
@@ -512,7 +846,10 @@ try {
         .getByRole("spinbutton", { name: "Amount sent", exact: true })
         .fill("10");
       await dialog
-        .getByRole("spinbutton", { name: "Amount received (USD)", exact: true })
+        .getByRole("spinbutton", {
+          name: "Amount received before fee (USD)",
+          exact: true,
+        })
         .fill("0.01");
       assert.equal(
         await dialog.locator("form").evaluate((form) => form.checkValidity()),
@@ -562,11 +899,13 @@ try {
     await check(page, "wallet-editor", width, height);
     await page.mouse.click(2, 2);
     await page.getByRole("dialog").waitFor({ state: "detached" });
+    if (width === 320 || width === 1440)
+      await checkTransferFees(page, width, height);
     await context.close();
   }
   assert.deepEqual(errors, [], "JavaScript page errors");
   console.log(
-    "Responsive checks passed: seven sizes, all tabs, opened selects/month picker/calendar/confirmations, keyboard selection and date navigation, category save/removal, accessible expense reports, touch controls, and dialog save/dismissal.",
+    "Responsive checks passed: seven sizes, all tabs, accessible controls and reports, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
   );
 } finally {
   await browser?.close();

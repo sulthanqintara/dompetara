@@ -9,7 +9,13 @@ import { PopoverTrigger } from "@/components/ui/popover-trigger";
 import { PopoverContent } from "@/components/ui/popover-content";
 import { localDate } from "../format";
 
-export function DateTimeField({ defaultValue }: { defaultValue: string }) {
+export function DateTimeField({
+  defaultValue,
+  onDateChange,
+}: {
+  defaultValue: string;
+  onDateChange?: (value: string) => void;
+}) {
   const id = useId();
   const [value, setValue] = useState(defaultValue);
   const [open, setOpen] = useState(false);
@@ -42,7 +48,9 @@ export function DateTimeField({ defaultValue }: { defaultValue: string }) {
               selected={date}
               defaultMonth={date}
               onSelect={(next) => {
-                setValue(`${localDate(next).slice(0, 10)}T${value.slice(11)}`);
+                const dateTime = `${localDate(next).slice(0, 10)}T${value.slice(11)}`;
+                setValue(dateTime);
+                onDateChange?.(dateTime);
                 setOpen(false);
               }}
             />
@@ -56,7 +64,11 @@ export function DateTimeField({ defaultValue }: { defaultValue: string }) {
           type="time"
           required
           value={value.slice(11)}
-          onChange={(e) => setValue(`${value.slice(0, 10)}T${e.target.value}`)}
+          onChange={(e) => {
+            const dateTime = `${value.slice(0, 10)}T${e.target.value}`;
+            setValue(dateTime);
+            onDateChange?.(dateTime);
+          }}
         />
       </div>
       <input type="hidden" name="date" value={value} />

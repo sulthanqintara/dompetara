@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { walletName } from "../derive";
 import { format } from "../format";
+import { receivedAfterFee } from "../transfer";
 import type { Entry, Ledger } from "../ledger";
 
 export function TransactionsTab({
@@ -104,6 +105,9 @@ export function TransactionsTab({
                               ? "Balance correction"
                               : "Transfer")}
                           {e.description && ` · ${e.description}`}
+                          {e.transferId && " · Linked to transfer"}
+                          {e.exchangeRate &&
+                            ` · 1 ${e.currency} = ${e.exchangeRate.value} ${e.toCurrency}`}
                         </small>
                       </span>
                     </div>
@@ -122,7 +126,8 @@ export function TransactionsTab({
                     {e.kind === "transfer" && (
                       <small>
                         → {walletName(data, e.toWallet)} ·{" "}
-                        {format(e.received!, e.toCurrency!)}
+                        {format(receivedAfterFee(data, e), e.toCurrency!)}{" "}
+                        received
                       </small>
                     )}
                   </TableCell>
@@ -145,7 +150,15 @@ export function TransactionsTab({
                         variant="ghost"
                         className="text-button"
                         aria-label={`Edit ${e.title}`}
-                        onClick={() => onEditEntry(e)}
+                        onClick={() =>
+                          onEditEntry(
+                            e.transferId
+                              ? data.entries.find(
+                                  (entry) => entry.id === e.transferId,
+                                )!
+                              : e,
+                          )
+                        }
                       >
                         Edit
                       </Button>

@@ -1311,6 +1311,23 @@ footer span {
   padding: 0;
   background: transparent;
 }
+.transfer-summary {
+  background: var(--muted);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  overflow-wrap: anywhere;
+}
+.transfer-summary p {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 8px;
+}
+.transfer-summary small {
+  color: var(--muted-foreground);
+}
 [data-slot="tabs-trigger"].nav-item {
   white-space: normal;
 }

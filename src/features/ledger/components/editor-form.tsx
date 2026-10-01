@@ -104,7 +104,11 @@ export function EditorForm({
                 pending={pending}
                 error={error}
                 title="Delete this transaction?"
-                description="This cannot be undone. Wallet balances will be adjusted."
+                description={
+                  entry.kind === "transfer"
+                    ? "This also deletes its linked service fee. Wallet balances will be adjusted. This cannot be undone."
+                    : "This cannot be undone. Wallet balances will be adjusted."
+                }
                 action="Delete transaction"
                 trigger={
                   <Button

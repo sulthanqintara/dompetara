@@ -1,3 +1,10 @@
+import {
+  effectiveRate,
+  normalizeRate,
+  validRateDate,
+  type AppliedRate,
+} from "../exchange-rates/exchange-rates.ts";
+
 export const currencies = ["IDR", "USD", "CAD"] as const;
 export type Currency = (typeof currencies)[number];
 export type Wallet = { id: string; name: string; currencies: Currency[] };
@@ -15,6 +22,8 @@ export type Entry = {
   toWallet?: string;
   toCurrency?: Currency;
   received?: number;
+  exchangeRate?: AppliedRate;
+  transferId?: string;
 };
 export type Ledger = {
   wallets: Wallet[];
@@ -140,9 +149,13 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
     if (p.id && !existing) throw new Error("Transaction not found.");
     if (existing?.kind === "correction")
       throw new Error("Use the wallet balance to create a new correction.");
+    if (existing?.transferId)
+      throw new Error("Edit or delete this fee through its linked transfer.");
     if (p.action === "deleteEntry") {
       if (!existing) throw new Error("Transaction not found.");
-      data.entries = data.entries.filter((e) => e.id !== p.id);
+      data.entries = data.entries.filter(
+        (e) => e.id !== p.id && e.transferId !== p.id,
+      );
     } else {
       if (p.kind !== "income" && p.kind !== "expense" && p.kind !== "transfer")
         throw new Error("Invalid transaction type.");
@@ -164,6 +177,7 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
         category: "",
         description: text(p.description ?? "", "Description", true),
       };
+      let fee: Entry | undefined;
       if (p.kind === "transfer") {
         e.toCurrency = currency(p.toCurrency);
         e.toWallet = wallet(p.toWallet, e.toCurrency);
@@ -171,6 +185,62 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
           throw new Error("Choose a different destination balance.");
         e.received =
           e.currency === e.toCurrency ? e.amount : money(p.received, true);
+        if (e.currency !== e.toCurrency) {
+          const value = p.exchangeRate
+            ? normalizeRate(p.exchangeRate)
+            : effectiveRate(e.amount, e.received);
+          const source = p.exchangeRate
+            ? (p.rateSource ?? "manual")
+            : "received";
+          if (source !== "manual" && source !== "received" && source !== "ecb")
+            throw new Error("Invalid exchange-rate source.");
+          if (source === "ecb" && !validRateDate(p.referenceDate))
+            throw new Error("Invalid reference-rate date.");
+          e.exchangeRate = {
+            value,
+            source,
+            ...(source === "ecb"
+              ? { referenceDate: p.referenceDate as string }
+              : {}),
+          };
+        }
+        const feeAmount = money(p.feeAmount || "0");
+        if (feeAmount < 0) throw new Error("Service fee cannot be negative.");
+        if (feeAmount) {
+          if (p.feeChargedTo !== "source" && p.feeChargedTo !== "destination")
+            throw new Error("Choose which wallet pays the service fee.");
+          const destination = p.feeChargedTo === "destination";
+          if (destination && feeAmount >= e.received)
+            throw new Error(
+              "Destination fee must be less than the amount received.",
+            );
+          let category = data.categories.find(
+            (c) =>
+              c.kind === "expense" && c.name.toLowerCase() === "admin fees",
+          );
+          if (!category) {
+            category = {
+              id: crypto.randomUUID(),
+              name: "Admin fees",
+              kind: "expense",
+            };
+            data.categories.push(category);
+          }
+          fee = {
+            id:
+              data.entries.find((entry) => entry.transferId === e.id)?.id ??
+              crypto.randomUUID(),
+            kind: "expense",
+            transferId: e.id,
+            date: e.date,
+            wallet: destination ? e.toWallet : e.wallet,
+            currency: destination ? e.toCurrency : e.currency,
+            amount: feeAmount,
+            title: "Transfer service fee",
+            category: category.name,
+            description: "",
+          };
+        }
       } else {
         e.title = text(p.title, "Title");
         e.category = text(p.category, "Category");
@@ -183,8 +253,8 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
           throw new Error("Choose an available category.");
       }
       data.entries = data.entries
-        .filter((entry) => entry.id !== e.id)
-        .concat(e);
+        .filter((entry) => entry.id !== e.id && entry.transferId !== e.id)
+        .concat(fee ? [e, fee] : [e]);
     }
   } else throw new Error("Unknown action.");
   for (const w of data.wallets)

@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,9 +10,13 @@ import { currencies, type Currency, type Entry, type Ledger } from "../ledger";
 import { localDate } from "../format";
 import { LedgerSelect } from "./ledger-select";
 import { DateTimeField } from "./date-time-field";
+import { TransferFields } from "./transfer-fields";
+import { minorText } from "../transfer";
 
 export function EntryFields({ entry, data }: { entry?: Entry; data: Ledger }) {
-  const receivedId = useId();
+  const [amount, setAmount] = useState(entry ? minorText(entry.amount) : "");
+  const defaultDate = localDate(entry ? new Date(entry.date) : new Date());
+  const [rateDate, setRateDate] = useState(defaultDate.slice(0, 10));
   const [kind, setKind] = useState(entry?.kind ?? "expense");
   const [cur, setCur] = useState<Currency>(
     entry?.currency ?? data.wallets[0]?.currencies[0] ?? "IDR",
@@ -49,11 +53,12 @@ export function EntryFields({ entry, data }: { entry?: Entry; data: Ledger }) {
         <TabsContent value={kind}>
           <input type="hidden" name="kind" value={kind} />
           <DateTimeField
-            defaultValue={localDate(entry ? new Date(entry.date) : new Date())}
+            defaultValue={defaultDate}
+            onDateChange={(date) => setRateDate(date.slice(0, 10))}
           />
           <div className="form-row">
             <LedgerSelect
-              label="Currency"
+              label={kind === "transfer" ? "Source currency" : "Currency"}
               name="currency"
               value={cur}
               options={options}
@@ -92,7 +97,8 @@ export function EntryFields({ entry, data }: { entry?: Entry; data: Ledger }) {
               min="0.01"
               max="999999999999.99"
               required
-              defaultValue={entry ? entry.amount / 100 : ""}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
             />
           </Label>
@@ -125,25 +131,21 @@ export function EntryFields({ entry, data }: { entry?: Entry; data: Ledger }) {
                     .map((w) => ({ value: w.id, label: w.name }))}
                 />
               </div>
-              {cur !== toCur && (
-                <div className="form-field">
-                  <Label htmlFor={receivedId}>Amount received ({toCur})</Label>
-                  <Input
-                    id={receivedId}
-                    aria-describedby={`${receivedId}-help`}
-                    name="received"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    required
-                    defaultValue={entry?.received ? entry.received / 100 : ""}
-                  />
-                  <small id={`${receivedId}-help`}>
-                    Enter the actual converted amount credited to the
-                    destination.
-                  </small>
-                </div>
-              )}
+              <TransferFields
+                key={`${cur}:${toCur}`}
+                entry={
+                  entry?.currency === cur && entry?.toCurrency === toCur
+                    ? entry
+                    : undefined
+                }
+                data={data}
+                currency={cur}
+                toCurrency={toCur}
+                wallet={walletId}
+                toWallet={toWalletId}
+                amount={amount}
+                date={rateDate}
+              />
             </>
           ) : (
             <>
