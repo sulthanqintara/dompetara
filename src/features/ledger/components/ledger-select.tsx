@@ -1,0 +1,58 @@
+import { useId } from "react";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { SelectTrigger } from "@/components/ui/select-trigger";
+import { SelectValue } from "@/components/ui/select-value";
+import { SelectContent } from "@/components/ui/select-content";
+import { SelectItem } from "@/components/ui/select-item";
+
+export function LedgerSelect({
+  label,
+  options,
+  name,
+  value,
+  defaultValue,
+  onValueChange,
+  placeholder = "Choose an option",
+  required,
+  disabled,
+}: {
+  label: string;
+  options: { value: string; label: string }[];
+  name?: string;
+  value?: string;
+  defaultValue?: string;
+  onValueChange?: (value: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+}) {
+  const id = useId();
+  return (
+    <div className="form-field">
+      <Label htmlFor={id}>{label}</Label>
+      <Select
+        items={options}
+        name={name}
+        value={value === undefined ? undefined : value || null}
+        defaultValue={defaultValue}
+        required={required}
+        disabled={disabled}
+        onValueChange={(value) => {
+          if (value !== null) onValueChange?.(value);
+        }}
+      >
+        <SelectTrigger id={id}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent alignItemWithTrigger={false} align="start">
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}

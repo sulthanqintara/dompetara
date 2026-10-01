@@ -1,4 +1,6 @@
 import { currencies, type Currency } from "../ledger";
+import { LedgerSelect } from "./ledger-select";
+import { MonthPicker } from "./month-picker";
 
 export function FiltersBar({
   month,
@@ -13,26 +15,13 @@ export function FiltersBar({
 }) {
   return (
     <div className="filters">
-      <label>
-        Period{" "}
-        <input
-          aria-label="Month"
-          type="month"
-          value={month}
-          onChange={(e) => onMonthChange(e.target.value)}
-        />
-      </label>
-      <label>
-        Currency{" "}
-        <select
-          value={currency}
-          onChange={(e) => onCurrencyChange(e.target.value as Currency)}
-        >
-          {currencies.map((c) => (
-            <option key={c}>{c}</option>
-          ))}
-        </select>
-      </label>
+      <MonthPicker value={month} onChange={onMonthChange} />
+      <LedgerSelect
+        label="Currency"
+        options={currencies.map((c) => ({ value: c, label: c }))}
+        value={currency}
+        onValueChange={(value) => onCurrencyChange(value as Currency)}
+      />
       <span>Balances are kept in their original currency.</span>
     </div>
   );

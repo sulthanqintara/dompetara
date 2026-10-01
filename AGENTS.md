@@ -17,6 +17,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Give interactive controls at least 44 × 44px touch targets and use at least 16px text in form inputs.
 - Render and check every affected view at phone, tablet, and desktop sizes, including short viewports and long content. Do not consider CSS breakpoints alone proof of responsiveness.
 
+## Components: shadcn
+
+- Use the existing shadcn Base UI preset for controls, dialogs, confirmations, cards, and status states. Compose feature components from `src/components/ui/` instead of adding raw browser controls or `confirm()` calls.
+- Keep labels, form field names, required validation, keyboard navigation, and focus restoration when replacing controls.
+- Split generated files that export several React components into one component per file, and keep only the primitives the app uses.
+
 ## Architecture: feature-based
 
 - Routing lives only in `src/app/` (pages/routes stay thin; logic goes in features).

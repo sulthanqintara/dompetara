@@ -1,6 +1,17 @@
 "use client";
+import { Tabs } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs-content";
+import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { BreadcrumbList } from "@/components/ui/breadcrumb-list";
+import { BreadcrumbItem } from "@/components/ui/breadcrumb-item";
+import { BreadcrumbSeparator } from "@/components/ui/breadcrumb-separator";
+import { BreadcrumbPage } from "@/components/ui/breadcrumb-page";
 import { useState } from "react";
-import { ChevronRight, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { monthlyEntries, spendByCategory } from "../derive";
 import { localDate } from "../format";
 import { useLedger } from "../hooks";
@@ -43,14 +54,24 @@ export function LedgerApp({ name, email }: { name: string; email: string }) {
     return ok;
   }
   return (
-    <div className="app-shell">
-      <Sidebar name={name} tab={tab} onTabChange={setTab} />
+    <Tabs
+      className="app-shell"
+      value={tab}
+      onValueChange={(value) => setTab(String(value))}
+    >
+      <Sidebar name={name} tab={tab} />
       <main className="workspace">
         <header className="topbar">
-          <span>
-            My workspace <ChevronRight size={14} /> <strong>{tab}</strong>
-          </span>
-          <span className="private-badge">● Private ledger</span>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>My workspace</BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{tab}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <Badge variant="secondary">Private ledger</Badge>
         </header>
         <div className="page-content">
           <div className="page-heading">
@@ -60,8 +81,7 @@ export function LedgerApp({ name, email }: { name: string; email: string }) {
               <p>{tabDescriptions[tab]}</p>
             </div>
             {data && tab !== "Settings" && (
-              <button
-                className="primary"
+              <Button
                 onClick={() =>
                   setEditor({
                     type:
@@ -75,25 +95,36 @@ export function LedgerApp({ name, email }: { name: string; email: string }) {
                 {tab === "Wallet" || !data.wallets.length
                   ? "Add wallet"
                   : "Add transaction"}
-              </button>
+              </Button>
             )}
           </div>
           {error && (
-            <div role="alert" className="error">
+            <Alert variant="destructive" className="error">
               {error}{" "}
-              <button onClick={() => window.location.reload()}>
+              <Button
+                variant="outline"
+                onClick={() => window.location.reload()}
+              >
                 Reload ledger
-              </button>
-            </div>
+              </Button>
+            </Alert>
           )}
           {!data ? (
-            <div className="empty">
-              {error
-                ? "Your ledger could not be loaded."
-                : "Loading your ledger…"}
+            <div role="status" aria-live="polite" className="ledger-loading">
+              <p>
+                {error
+                  ? "Your ledger could not be loaded."
+                  : "Loading your ledger…"}
+              </p>
+              {!error && (
+                <>
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-64 w-full" />
+                </>
+              )}
             </div>
           ) : (
-            <>
+            <TabsContent value={tab}>
               {(tab === "Transactions" || tab === "Report") && (
                 <>
                   <FiltersBar
@@ -138,6 +169,7 @@ export function LedgerApp({ name, email }: { name: string; email: string }) {
                 <SettingsTab
                   name={name}
                   email={email}
+                  error={error}
                   data={data}
                   pending={pending}
                   setPending={setPending}
@@ -145,7 +177,7 @@ export function LedgerApp({ name, email }: { name: string; email: string }) {
                   save={handleSave}
                 />
               )}
-            </>
+            </TabsContent>
           )}
         </div>
         <footer>
@@ -170,6 +202,6 @@ export function LedgerApp({ name, email }: { name: string; email: string }) {
           save={handleSave}
         />
       )}
-    </div>
+    </Tabs>
   );
 }

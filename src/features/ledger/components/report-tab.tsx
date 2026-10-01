@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/card";
+import { Empty } from "@/components/ui/empty";
 import { ChartNoAxesCombined } from "lucide-react";
 import type { Currency } from "../ledger";
 import { ExpenseCategoryChart } from "./expense-category-chart";
@@ -14,7 +16,7 @@ export function ReportTab({
   month: string;
 }) {
   return (
-    <section className="panel report">
+    <Card className="panel report">
       <div className="panel-heading">
         <h3>Spending by category</h3>
         <span>
@@ -28,16 +30,15 @@ export function ReportTab({
           currency={currency}
         />
       ) : (
-        <div className="empty">
+        <Empty className="empty">
           <ChartNoAxesCombined />
           <h3>No spending to report yet</h3>
           <p>Your expenses will appear here, grouped by category.</p>
-        </div>
+        </Empty>
       )}
       <p className="wallet-footnote">
-        Transfers and balance corrections are excluded from income and
-        expenses.
+        Transfers and balance corrections are excluded from income and expenses.
       </p>
-    </section>
+    </Card>
   );
 }

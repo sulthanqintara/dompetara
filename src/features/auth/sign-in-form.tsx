@@ -1,4 +1,7 @@
 "use client";
+import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { ArrowUpRight, Layers3, ShieldCheck } from "lucide-react";
@@ -56,15 +59,20 @@ export function SignInForm() {
           <span className="eyebrow">WELCOME TO YOUR LEDGER</span>
           <h2>Make room for clarity.</h2>
           <p>Sign in to start keeping track of your money.</p>
-          <button className="google-button" onClick={signIn} disabled={pending}>
-            <strong className="google-g">G</strong>
+          <Button
+            variant="outline"
+            className="google-button"
+            onClick={signIn}
+            disabled={pending}
+          >
+            {pending ? <Spinner /> : <strong className="google-g">G</strong>}
             {pending ? "Connecting…" : "Continue with Google"}
             <ArrowUpRight size={18} />
-          </button>
+          </Button>
           {error && (
-            <p role="alert" className="error">
+            <Alert variant="destructive" className="error">
               {error}
-            </p>
+            </Alert>
           )}
           <div className="privacy">
             <ShieldCheck size={18} /> Your ledger is private to your Google

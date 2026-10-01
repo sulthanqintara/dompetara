@@ -1,3 +1,8 @@
+import { TabsList } from "@/components/ui/tabs-list";
+import { TabsTrigger } from "@/components/ui/tabs-trigger";
+import { Avatar } from "@/components/ui/avatar";
+import { AvatarFallback } from "@/components/ui/avatar-fallback";
+import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import {
   ChartNoAxesCombined,
@@ -14,35 +19,26 @@ const tabs = [
   { name: "Settings", icon: Settings2 },
 ];
 
-export function Sidebar({
-  name,
-  tab,
-  onTabChange,
-}: {
-  name: string;
-  tab: string;
-  onTabChange: (tab: string) => void;
-}) {
+export function Sidebar({ name, tab }: { name: string; tab: string }) {
   return (
     <aside className="sidebar">
       <Link href="/" className="brand">
         <Layers3 /> personal ledger<span className="brand-dot">.</span>
       </Link>
       <span className="nav-label">YOUR WORKSPACE</span>
-      <nav>
+      <TabsList className="workspace-tabs" aria-label="Workspace">
         {tabs.map(({ name, icon: Icon }) => (
-          <button
+          <TabsTrigger
             key={name}
             className={tab === name ? "nav-item active" : "nav-item"}
-            onClick={() => onTabChange(name)}
-            aria-current={tab === name ? "page" : undefined}
+            value={name}
           >
             <Icon size={19} />
             {name}
             {tab === name && <span className="active-dot" />}
-          </button>
+          </TabsTrigger>
         ))}
-      </nav>
+      </TabsList>
       <div className="sidebar-bottom">
         <div className="private-note">
           <Layers3 size={23} />{" "}
@@ -52,8 +48,11 @@ export function Sidebar({
             <small>One transaction at a time.</small>
           </span>
         </div>
+        <Separator />
         <div className="profile">
-          <span className="avatar">{name.slice(0, 1).toUpperCase()}</span>
+          <Avatar>
+            <AvatarFallback>{name.slice(0, 1).toUpperCase()}</AvatarFallback>
+          </Avatar>
           <div>
             <strong>{name}</strong>
             <small>Personal account</small>

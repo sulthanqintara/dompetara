@@ -1,3 +1,13 @@
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Empty } from "@/components/ui/empty";
+import { Badge } from "@/components/ui/badge";
+import { Table } from "@/components/ui/table";
+import { TableHeader } from "@/components/ui/table-header";
+import { TableBody } from "@/components/ui/table-body";
+import { TableRow } from "@/components/ui/table-row";
+import { TableHead } from "@/components/ui/table-head";
+import { TableCell } from "@/components/ui/table-cell";
 import {
   ArrowDownLeft,
   ArrowLeftRight,
@@ -22,59 +32,62 @@ export function TransactionsTab({
   onAddWallet: () => void;
 }) {
   return (
-    <section className="panel">
+    <Card className="panel">
       <div className="panel-heading">
         <h3>
-          Transaction history <span className="count">{entries.length}</span>
+          Transaction history{" "}
+          <Badge variant="secondary">{entries.length}</Badge>
         </h3>
         <span>Selected month · all currencies</span>
       </div>
       {!data.wallets.length ? (
-        <div className="empty">
+        <Empty className="empty">
           <WalletIcon />
           <h3>Start with your first wallet</h3>
-          <p>
-            Add an account and its opening balance to start your ledger.
-          </p>
-          <button className="primary" onClick={onAddWallet}>
+          <p>Add an account and its opening balance to start your ledger.</p>
+          <Button onClick={onAddWallet}>
             <Plus size={16} />
             Create a wallet
-          </button>
-        </div>
+          </Button>
+        </Empty>
       ) : !entries.length ? (
-        <div className="empty">
+        <Empty className="empty">
           <List />
           <h3>A fresh page for this month</h3>
           <p>Add your first income, expense, or transfer.</p>
-        </div>
+        </Empty>
       ) : (
         <div className="table-wrap">
-          <table role="table" aria-label="Transaction history">
-            <thead role="rowgroup">
-              <tr role="row">
-                <th role="columnheader" scope="col">
+          <Table role="table" aria-label="Transaction history">
+            <TableHeader role="rowgroup">
+              <TableRow role="row">
+                <TableHead role="columnheader" scope="col">
                   Transaction
-                </th>
-                <th role="columnheader" scope="col">
+                </TableHead>
+                <TableHead role="columnheader" scope="col">
                   Date & time
-                </th>
-                <th role="columnheader" scope="col">
+                </TableHead>
+                <TableHead role="columnheader" scope="col">
                   Wallet
-                </th>
-                <th role="columnheader" scope="col">
+                </TableHead>
+                <TableHead role="columnheader" scope="col">
                   Amount
-                </th>
-                <th role="columnheader" scope="col">
+                </TableHead>
+                <TableHead role="columnheader" scope="col">
                   <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody role="rowgroup">
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody role="rowgroup">
               {entries.map((e) => (
-                <tr role="row" key={e.id}>
-                  <td role="cell" className="transaction-detail">
+                <TableRow role="row" key={e.id}>
+                  <TableCell role="cell" className="transaction-detail">
                     <div className="transaction-name">
-                      <span className={`entry-icon ${e.kind}`}>
+                      <Badge
+                        variant="secondary"
+                        className={`entry-icon ${e.kind}`}
+                        aria-label={e.kind}
+                      >
                         {e.kind === "transfer" ? (
                           <ArrowLeftRight size={18} />
                         ) : e.kind === "income" ? (
@@ -82,7 +95,7 @@ export function TransactionsTab({
                         ) : (
                           <ArrowUpRight size={18} />
                         )}
-                      </span>
+                      </Badge>
                       <span>
                         <strong>{e.title}</strong>
                         <small>
@@ -94,8 +107,8 @@ export function TransactionsTab({
                         </small>
                       </span>
                     </div>
-                  </td>
-                  <td role="cell" className="transaction-date">
+                  </TableCell>
+                  <TableCell role="cell" className="transaction-date">
                     {new Date(e.date).toLocaleDateString()}
                     <small>
                       {new Date(e.date).toLocaleTimeString([], {
@@ -103,8 +116,8 @@ export function TransactionsTab({
                         minute: "2-digit",
                       })}
                     </small>
-                  </td>
-                  <td role="cell" className="transaction-wallet">
+                  </TableCell>
+                  <TableCell role="cell" className="transaction-wallet">
                     {walletName(data, e.wallet)}
                     {e.kind === "transfer" && (
                       <small>
@@ -112,8 +125,8 @@ export function TransactionsTab({
                         {format(e.received!, e.toCurrency!)}
                       </small>
                     )}
-                  </td>
-                  <td
+                  </TableCell>
+                  <TableCell
                     role="cell"
                     className={
                       e.kind === "income" ? "positive amount" : "amount"
@@ -125,24 +138,25 @@ export function TransactionsTab({
                         ? "+"
                         : ""}
                     {format(e.amount, e.currency)}
-                  </td>
-                  <td role="cell" className="transaction-actions">
+                  </TableCell>
+                  <TableCell role="cell" className="transaction-actions">
                     {e.kind !== "correction" && (
-                      <button
+                      <Button
+                        variant="ghost"
                         className="text-button"
                         aria-label={`Edit ${e.title}`}
                         onClick={() => onEditEntry(e)}
                       >
                         Edit
-                      </button>
+                      </Button>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

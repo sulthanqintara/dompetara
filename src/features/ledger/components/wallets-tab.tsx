@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ChevronRight, Plus, Wallet as WalletIcon } from "lucide-react";
 import { format } from "../format";
 import { balance, type Currency, type Ledger, type Wallet } from "../ledger";
@@ -12,21 +14,23 @@ export function WalletsTab({
   return (
     <div className="wallet-grid">
       {data.wallets.map((w) => (
-        <article className="panel wallet-card" key={w.id}>
+        <Card className="panel wallet-card" key={w.id}>
           <div className="panel-heading">
             <h3>
               <WalletIcon size={20} />
               {w.name}
             </h3>
-            <button
+            <Button
+              variant="ghost"
               className="text-button"
               onClick={() => onEditWallet(w)}
             >
               Edit / add currency
-            </button>
+            </Button>
           </div>
           {w.currencies.map((c) => (
-            <button
+            <Button
+              variant="ghost"
               className="wallet-balance"
               key={c}
               onClick={() => onEditWallet(w, c)}
@@ -34,18 +38,22 @@ export function WalletsTab({
               <span>{c}</span>
               <strong>{format(balance(data, w.id, c), c)}</strong>
               <ChevronRight size={17} />
-            </button>
+            </Button>
           ))}
           <p className="wallet-footnote">
             Balance edits are recorded as corrections.
           </p>
-        </article>
+        </Card>
       ))}
-      <button className="add-wallet" onClick={() => onEditWallet()}>
+      <Button
+        variant="outline"
+        className="add-wallet"
+        onClick={() => onEditWallet()}
+      >
         <Plus />
         <strong>Add a wallet</strong>
         <span>Bank account, cash, or e-wallet</span>
-      </button>
+      </Button>
     </div>
   );
 }
