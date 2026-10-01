@@ -101,6 +101,85 @@ const data = {
   ],
 };
 
+async function switchView(page, name) {
+  const navigation = page.getByRole("tab", { name, exact: true });
+  if (!(await navigation.isVisible())) {
+    await page.getByRole("button", { name: "Toggle navigation", exact: true }).click();
+  }
+  await navigation.click();
+  if (page.viewportSize().width < 1200) {
+    await page.getByRole("dialog", { name: "Workspace navigation", exact: true }).waitFor({ state: "detached" });
+    assert.equal(await page.getByRole("button", { name: "Toggle navigation", exact: true }).evaluate((el) => el === document.activeElement), true);
+  }
+  await page.getByRole("heading", { name, exact: true, level: 1 }).waitFor();
+}
+
+async function checkNavigation(page, width, height) {
+  const toggle = page.locator('[data-sidebar="trigger"]');
+  const sheet = page.getByRole("dialog", { name: "Workspace navigation", exact: true });
+  if (width < 1200) {
+    assert.equal(await page.getByRole("tab", { name: "Report", exact: true }).count(), 0, "Mobile navigation stays in the Sheet");
+    await toggle.focus();
+    await page.keyboard.press("Enter");
+    await sheet.waitFor();
+    assert.equal(await sheet.getAttribute("aria-modal"), "true");
+    assert.equal(await toggle.getAttribute("aria-expanded"), "true");
+    assert.equal(await sheet.getByRole("tab").count(), 4);
+    assert.equal(await sheet.getByText("Personal account", { exact: true }).count(), 1);
+    await check(page, "navigation-sheet", width, height);
+    await sheet.getByRole("button", { name: "Close", exact: true }).focus();
+    await page.keyboard.press("Tab");
+    assert.equal(await sheet.evaluate((el) => el.contains(document.activeElement)), true, "Sheet traps keyboard focus");
+    await sheet.getByRole("tab", { name: "Transactions", exact: true }).focus();
+    await page.keyboard.press("ArrowDown");
+    assert.equal(await sheet.getByRole("tablist").getAttribute("aria-orientation"), "vertical");
+    await page.waitForFunction(() => document.activeElement.textContent.trim() === "Wallet");
+    await page.keyboard.press("Enter");
+    await sheet.waitFor({ state: "detached" });
+    await page.getByRole("heading", { name: "Wallet", exact: true, level: 1 }).waitFor();
+    assert.equal(await toggle.evaluate((el) => el === document.activeElement), true);
+    await toggle.click();
+    await sheet.waitFor();
+    await page.keyboard.press("Escape");
+    await sheet.waitFor({ state: "detached" });
+    assert.equal(await toggle.evaluate((el) => el === document.activeElement), true);
+    await toggle.click();
+    await sheet.waitFor();
+    await sheet.getByRole("button", { name: "Close", exact: true }).click();
+    await sheet.waitFor({ state: "detached" });
+    assert.equal(await toggle.evaluate((el) => el === document.activeElement), true);
+    await toggle.click();
+    await sheet.waitFor();
+    await page.mouse.click(width - 2, height / 2);
+    await sheet.waitFor({ state: "detached" });
+    assert.equal(await toggle.evaluate((el) => el === document.activeElement), true);
+    assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+    if (width === 320) {
+      await toggle.click();
+      await sheet.waitFor();
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await sheet.waitFor({ state: "detached" });
+      await page.getByRole("tab", { name: "Wallet", exact: true }).waitFor();
+      await check(page, "navigation-resized-desktop", 1440, 900);
+      await page.setViewportSize({ width, height });
+      await page.waitForFunction(() => !document.querySelector('.ledger-desktop-sidebar'));
+      assert.equal(await sheet.count(), 0, "Returning to mobile must not reopen a stale Sheet");
+      assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+    }
+    await switchView(page, "Transactions");
+  } else {
+    assert.equal(await toggle.getAttribute("aria-expanded"), "true");
+    await toggle.click();
+    assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+    assert.equal(await page.getByRole("tab", { name: "Transactions", exact: true }).count(), 0, "Collapsed desktop navigation is inaccessible to focus");
+    await check(page, "navigation-collapsed", width, height);
+    assert.ok(await page.locator(".workspace").evaluate((el) => el.getBoundingClientRect().left < 1), "Collapsing the sidebar reclaims its width");
+    await toggle.click();
+    await check(page, "navigation-expanded", width, height);
+    assert.equal(await page.getByRole("tab", { name: "Transactions", exact: true }).count(), 1);
+  }
+}
+
 async function choose(page, label, option) {
   await page.getByRole("combobox", { name: label, exact: true }).click();
   await check(
@@ -189,7 +268,7 @@ async function check(page, name, width, height) {
       ).length,
       overflow: [
         ...document.querySelectorAll(
-          ".table-wrap, .editor, [data-slot=select-content], [data-slot=popover-content], [data-slot=alert-dialog-content]",
+          ".table-wrap, .editor, [data-slot=select-content], [data-slot=popover-content], [data-slot=alert-dialog-content], [data-slot=sheet-content]",
         ),
       ]
         .filter((el) => el.scrollWidth > el.clientWidth + 1)
@@ -201,7 +280,7 @@ async function check(page, name, width, height) {
         })),
       clippedPopups: [
         ...document.querySelectorAll(
-          '[data-slot="select-content"], [data-slot="popover-content"], [data-slot="alert-dialog-content"]',
+          '[data-slot="select-content"], [data-slot="popover-content"], [data-slot="alert-dialog-content"], [data-slot="sheet-content"]',
         ),
       ]
         .filter(
@@ -317,7 +396,7 @@ async function removeFeeTransfer(page) {
 }
 
 async function checkTransferFees(page, width, height) {
-  await page.getByRole("tab", { name: "Transactions", exact: true }).click();
+  await switchView(page, "Transactions");
   const before = (await (await page.request.get(`${origin}/api/ledger`)).json())
     .data;
   const cacheBefore =
@@ -387,13 +466,13 @@ async function checkTransferFees(page, width, height) {
     balance(saved, "gopay", "IDR"),
     balance(before, "gopay", "IDR") + 20000000,
   );
-  await page.getByRole("tab", { name: "Report", exact: true }).click();
+  await switchView(page, "Report");
   const admin = page
     .locator(".expense-category-list .report-row")
     .filter({ hasText: "Admin fees" });
   assert.match(await admin.textContent(), /1,000/);
   await check(page, "admin-fee-report", width, height);
-  await page.getByRole("tab", { name: "Transactions", exact: true }).click();
+  await switchView(page, "Transactions");
   await removeFeeTransfer(page);
   let restored = (await (await page.request.get(`${origin}/api/ledger`)).json())
     .data;
@@ -725,7 +804,7 @@ async function checkDateRange(page, width, height) {
   assert.notEqual(await daily.getAttribute("tabindex"), "0");
   assert.equal(await page.locator(".spending-history").first().locator(".report-row").count(), 2);
   await check(page, "report-custom-range", width, height);
-  await page.getByRole("tab", { name: "Transactions", exact: true }).click();
+  await switchView(page, "Transactions");
   assert.equal(await page.getByRole("button", { name: "Edit Previous month bill", exact: true }).count(), 1);
   assert.equal(await page.getByLabel("Start date", { exact: true }).inputValue(), singleDate.toISOString().slice(0, 10));
   assert.equal(await page.locator(".balance-stat h2").innerText(), currentBalance, "Changing the period must not change current balances");
@@ -746,7 +825,7 @@ async function checkDateRange(page, width, height) {
   await check(page, "invalid-date-range", width, height);
   await choose(page, "Period type", "Month");
   await chooseMonth(page, date.slice(0, 7));
-  await page.getByRole("tab", { name: "Report", exact: true }).click();
+  await switchView(page, "Report");
 }
 
 async function checkExpenseReport(page, width, height) {
@@ -905,8 +984,9 @@ try {
     await page
       .getByRole("button", { name: "Add transaction", exact: true })
       .waitFor();
+    await checkNavigation(page, width, height);
     for (const tab of ["Transactions", "Wallet", "Report", "Settings"]) {
-      await page.getByRole("tab", { name: tab, exact: true }).click();
+      await switchView(page, tab);
       await check(page, tab.toLowerCase(), width, height);
       if (tab === "Report") {
         await checkExpenseReport(page, width, height);
@@ -921,7 +1001,7 @@ try {
       await context.close();
       continue;
     }
-    await page.getByRole("tab", { name: "Transactions", exact: true }).click();
+    await switchView(page, "Transactions");
     await page
       .getByRole("button", { name: "Edit Lunch and groceries", exact: true })
       .click();
@@ -1033,7 +1113,7 @@ try {
       await page.evaluate(() => document.activeElement.textContent.trim()),
       "Add transaction",
     );
-    await page.getByRole("tab", { name: "Wallet", exact: true }).click();
+    await switchView(page, "Wallet");
     await page.getByRole("button", { name: "Add wallet", exact: true }).click();
     await page.getByRole("dialog").waitFor();
     await check(page, "wallet-editor", width, height);

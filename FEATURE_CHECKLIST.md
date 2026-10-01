@@ -28,8 +28,8 @@ Design requirement: mobile first, then tablet, then desktop. Every feature must 
 
 - [x] Start with a usable single-column phone layout, adding tablet and desktop layouts as space allows.
 - [x] Give transaction history a readable phone layout with amounts and actions visible, without squeezed table columns or page-wide horizontal scrolling.
-- [x] Fit all navigation tabs on narrow phones without clipping or overflow.
-- [x] Adapt summary cards, wallet cards, and transaction history to tablet space before introducing a full desktop sidebar and multi-column layout.
+- [x] Keep navigation usable on narrow phones without clipping or overflow: a menu button opens the shadcn Sidebar in a left-side Sheet on phone/tablet; desktop has an expanded, collapsible sidebar.
+- [x] Adapt summary cards, wallet cards, and transaction history to tablet space. Navigation uses a Sheet below 1200px and a desktop sidebar at 1200px and above.
 - [x] Keep action buttons, filters, dialog close buttons, and category removal controls comfortably tappable; target at least 44 × 44 CSS pixels for primary touch controls.
 - [x] Keep forms readable on phones, with appropriate input sizes and dialogs that scroll while keeping actions reachable.
 - [x] Verify short viewports and landscape, including scrolling to dialog actions, saving edits, Escape dismissal, outside-click dismissal, and restored focus.
@@ -110,7 +110,7 @@ Replaced the native/custom controls on 2026-10-01 using the existing shadcn Base
 | Summary, wallet, report, transaction, and settings panels | shadcn Card in the respective views; preserve single-column phone and wider-screen grids. |
 | Transaction history | shadcn Table primitives, with explicit table semantics and the existing readable phone row layout. Table styles are scoped so Calendar is unaffected. |
 | Transaction kind markers, transaction count, and private-ledger status | shadcn Badge. |
-| Workspace navigation | shadcn Tabs; compact desktop sidebar rows and phone tab-strip layouts use the same accessible view-switch controls. Workspace triggers override full-height tab styling to prevent stretched desktop items. |
+| Workspace navigation | shadcn SidebarProvider, Sidebar, Header/Content/Footer, and SidebarTrigger; left-side Sheet below 1200px, expanded/collapsible sidebar on desktop. Existing shadcn Tabs remain the section controls, now with actual vertical orientation forwarded to Base UI. Selecting a section closes the Sheet and restores focus to the menu button. |
 | Profile initial and divider | shadcn Avatar/Fallback and Separator in `ledger/components/sidebar.tsx`. |
 | Workspace breadcrumb | shadcn Breadcrumb primitives in `ledger/components/ledger-app.tsx`. |
 | Errors, loading, pending, and empty states | shadcn Alert, Skeleton, Spinner, and Empty in ledger views and sign-in. |
@@ -122,6 +122,8 @@ Remaining custom markup is intentional: responsive page/sidebar layout, branding
 Verification: `pnpm test:responsive` passed against development and production servers at all seven viewport sizes listed above. It checks open selects, month picker, Calendar, and AlertDialogs as well as all tabs and editors. It covers compact desktop navigation, keyboard selection, date navigation, focus restoration, required transfer wallets, category saves/removals, transaction edits, and cross-currency transfer saves. Transfer checks cover source/destination fees, fee spending reports, atomic edits/deletion, cached/manual rate snapshots, missing-cache fallback, and CAD 159.33 → IDR 2,000,000 with exact amounts preserved through edits and reloads. Ordinary transfer operations leave the shared rate cache unchanged. Lint, TypeScript, domain/database checks, and the production build passed. The linked Supabase migration, protected refresh function, named weekday cron, initial cache, and a real conditional HTTP 304 refresh were verified; unauthorized refresh requests were rejected. Test accounts and ledgers are removed afterward. Real-device keyboard, screen-reader, Safari, and text-enlargement checks remain outstanding.
 
 Export verification (2026-10-01): `pnpm test` passed for complete JSON snapshots, exact minor-unit amounts, transfer/rate/fee preservation, empty ledgers, quoted multiline CSV, and formula-like text escaping. The final production `pnpm test:responsive` passed at all seven sizes with actual JSON/CSV downloads, latest-data refetches, failure/retry handling without partial downloads, authenticated reads, and unchanged ledger data/version after export. Existing transaction edits and transfer/fee saves, reloads, and deletions also passed. Lint, TypeScript, and production build passed; live database checks passed during this work. Temporary test accounts and ledgers were removed. Real-device Safari, keyboard, text-enlargement, and screen-reader checks remain outstanding.
+
+Sidebar verification (2026-10-01): navigation/report checks passed against development and the complete `pnpm test:responsive` passed against production at all seven viewport sizes. Checks cover the mobile Sheet, vertical keyboard navigation, focus trapping/restoration, section selection, Escape/close-button/outside dismissal, resizing across the desktop breakpoint, and desktop collapse reclaiming workspace width. Existing editors, exports, persistence, and transfer/fee flows passed. Phone, tablet, short landscape, and expanded/collapsed desktop screenshots were inspected. Lint, TypeScript, domain checks, and production build passed; temporary test accounts and ledgers were removed. Real-device Safari, keyboard, text-enlargement, and screen-reader checks remain outstanding.
 
 ## Decisions needed before the relevant feature
 

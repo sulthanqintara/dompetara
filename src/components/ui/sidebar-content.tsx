@@ -1,0 +1,17 @@
+import type * as React from "react";
+import { cn } from "cn";
+
+// Adapted from the shadcn Base UI preset.
+export function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="sidebar-content"
+      data-sidebar="content"
+      className={cn(
+        "flex min-h-0 flex-1 flex-col gap-0 overflow-auto",
+        className
+      )}
+      {...props}
+    />
+  )
+}

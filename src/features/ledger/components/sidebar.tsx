@@ -1,3 +1,8 @@
+import { Sidebar as SidebarPanel } from "@/components/ui/sidebar";
+import { SidebarHeader } from "@/components/ui/sidebar-header";
+import { SidebarContent } from "@/components/ui/sidebar-content";
+import { SidebarFooter } from "@/components/ui/sidebar-footer";
+import { useSidebar } from "@/components/ui/use-sidebar";
 import { TabsList } from "@/components/ui/tabs-list";
 import { TabsTrigger } from "@/components/ui/tabs-trigger";
 import { Avatar } from "@/components/ui/avatar";
@@ -20,26 +25,32 @@ const tabs = [
 ];
 
 export function Sidebar({ name, tab }: { name: string; tab: string }) {
+  const { setOpenMobile } = useSidebar();
   return (
-    <aside className="sidebar">
-      <Link href="/" className="brand">
-        <Layers3 /> personal ledger<span className="brand-dot">.</span>
-      </Link>
-      <span className="nav-label">YOUR WORKSPACE</span>
-      <TabsList className="workspace-tabs" aria-label="Workspace">
-        {tabs.map(({ name, icon: Icon }) => (
-          <TabsTrigger
-            key={name}
-            className={tab === name ? "nav-item active" : "nav-item"}
-            value={name}
-          >
-            <Icon size={19} />
-            {name}
-            {tab === name && <span className="active-dot" />}
-          </TabsTrigger>
-        ))}
-      </TabsList>
-      <div className="sidebar-bottom">
+    <SidebarPanel>
+      <SidebarHeader className="ledger-sidebar-header">
+        <Link href="/" className="brand">
+          <Layers3 /> personal ledger<span className="brand-dot">.</span>
+        </Link>
+      </SidebarHeader>
+      <SidebarContent className="ledger-sidebar-content">
+        <span className="nav-label">YOUR WORKSPACE</span>
+        <TabsList className="workspace-tabs" aria-label="Workspace">
+          {tabs.map(({ name, icon: Icon }) => (
+            <TabsTrigger
+              key={name}
+              className={tab === name ? "nav-item active" : "nav-item"}
+              value={name}
+              onClick={() => setOpenMobile(false)}
+            >
+              <Icon size={19} />
+              {name}
+              {tab === name && <span className="active-dot" />}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </SidebarContent>
+      <SidebarFooter className="sidebar-bottom">
         <div className="private-note">
           <Layers3 size={23} />{" "}
           <span>
@@ -58,7 +69,7 @@ export function Sidebar({ name, tab }: { name: string; tab: string }) {
             <small>Personal account</small>
           </div>
         </div>
-      </div>
-    </aside>
+      </SidebarFooter>
+    </SidebarPanel>
   );
 }
