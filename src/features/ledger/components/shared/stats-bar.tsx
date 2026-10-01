@@ -1,8 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { CurrentBalanceCard } from "./current-balance-card";
-import { format } from "../format";
-import type { Currency, Ledger } from "../ledger";
+import { format } from "../../format";
+import type { Currency, Ledger } from "../../ledger";
 
 export function StatsBar({
   income,

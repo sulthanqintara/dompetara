@@ -1,5 +1,5 @@
 "use client";
-import { useLedgerContext } from "../use-ledger-context";
+import { useLedgerContext } from "../../use-ledger-context";
 import { EditorForm } from "./editor-form";
 
 export function LedgerEditor() {

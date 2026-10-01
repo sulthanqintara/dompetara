@@ -4,7 +4,7 @@ import { TabsIndicator } from "@/components/ui/tabs-indicator";
 import { useSidebar } from "@/components/ui/use-sidebar";
 import { ChartNoAxesCombined, List, Settings2, Wallet } from "lucide-react";
 import Link from "next/link";
-import { ledgerSections } from "../navigation";
+import { ledgerSections } from "../../navigation";
 
 const icons = [List, Wallet, ChartNoAxesCombined, Settings2];
 

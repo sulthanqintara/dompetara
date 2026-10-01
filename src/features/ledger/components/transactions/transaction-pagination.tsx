@@ -4,7 +4,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { PaginationContent } from "@/components/ui/pagination-content";
 import { PaginationItem } from "@/components/ui/pagination-item";
 import { Button } from "@/components/ui/button";
-import type { transactionPage } from "../pagination";
+import type { transactionPage } from "../../pagination";
 
 export function TransactionPagination({ page, pages, start, end, total }: Omit<ReturnType<typeof transactionPage>, "rows">) {
   return <div className="transaction-pagination">

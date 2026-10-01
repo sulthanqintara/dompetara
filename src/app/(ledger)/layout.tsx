@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { readLedger } from "@/features/ledger/read-ledger";
 import { localDate } from "@/features/ledger/format";
-import { LedgerProvider } from "@/features/ledger/components/ledger-provider";
-import { LedgerShell } from "@/features/ledger/components/ledger-shell";
+import { LedgerProvider } from "@/features/ledger/components/layout/ledger-provider";
+import { LedgerShell } from "@/features/ledger/components/layout/ledger-shell";
 
 export default async function LedgerLayout({ children }: { children: React.ReactNode }) {
   const session = await auth.api.getSession({ headers: await headers() });

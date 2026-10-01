@@ -5,15 +5,15 @@ import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
 import { useCachedRate } from "@/features/exchange-rates/hooks";
 import type { AppliedRate } from "@/features/exchange-rates/exchange-rates";
-import type { Currency, Entry, Ledger } from "../ledger";
-import { format } from "../format";
+import type { Currency, Entry, Ledger } from "../../ledger";
+import { format } from "../../format";
 import {
   convertedAmount,
   minorText,
   rateFromAmounts,
   transferTotals,
-} from "../transfer";
-import { LedgerSelect } from "./ledger-select";
+} from "../../transfer";
+import { LedgerSelect } from "../shared/ledger-select";
 
 export function TransferFields({
   entry,

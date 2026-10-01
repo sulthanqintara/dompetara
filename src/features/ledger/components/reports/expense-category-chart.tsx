@@ -3,9 +3,9 @@
 import { useId } from "react";
 import { Pie, PieChart } from "recharts";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
-import { categoryBreakdown } from "../derive";
-import { format, formatShare } from "../format";
-import type { Currency } from "../ledger";
+import { categoryBreakdown } from "../../derive";
+import { format, formatShare } from "../../format";
+import type { Currency } from "../../ledger";
 
 export function ExpenseCategoryChart({
   groups,

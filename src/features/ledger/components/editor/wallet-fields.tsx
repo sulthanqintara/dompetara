@@ -7,8 +7,8 @@ import {
   type Currency,
   type Ledger,
   type Wallet,
-} from "../ledger";
-import { LedgerSelect } from "./ledger-select";
+} from "../../ledger";
+import { LedgerSelect } from "../shared/ledger-select";
 
 export function WalletFields({
   wallet,

@@ -1,5 +1,5 @@
 "use client";
-import { useLedgerContext } from "../use-ledger-context";
+import { useLedgerContext } from "../../use-ledger-context";
 import { WalletsTab } from "./wallets-tab";
 
 export function WalletPage() {

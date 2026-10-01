@@ -13,11 +13,11 @@ import { BreadcrumbItem } from "@/components/ui/breadcrumb-item";
 import { BreadcrumbSeparator } from "@/components/ui/breadcrumb-separator";
 import { BreadcrumbPage } from "@/components/ui/breadcrumb-page";
 import { Plus } from "lucide-react";
-import { useLedgerContext } from "../use-ledger-context";
-import { ledgerSections } from "../navigation";
-import { WorkspaceTabs } from "./workspace-tabs";
-import { Sidebar } from "./sidebar";
-import { LedgerEditor } from "./ledger-editor";
+import { useLedgerContext } from "../../use-ledger-context";
+import { ledgerSections } from "../../navigation";
+import { WorkspaceTabs } from "../navigation/workspace-tabs";
+import { Sidebar } from "../navigation/sidebar";
+import { LedgerEditor } from "../editor/ledger-editor";
 
 export function LedgerShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

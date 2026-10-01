@@ -33,7 +33,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - `api.ts` — network calls for the feature.
   - `hooks.ts` — React hooks (state, data fetching).
   - `derive.ts` / `format.ts` — pure derived-data and formatting helpers.
-  - `components/` — UI components for the feature.
+  - `components/` — UI components grouped in folders by responsibility (for example, navigation, transactions, reports, and shared).
 - Cross-cutting concerns (auth, db) stay in `src/lib/`; shadcn primitives in `src/components/ui/`.
 
 ## File granularity: one component/function per file

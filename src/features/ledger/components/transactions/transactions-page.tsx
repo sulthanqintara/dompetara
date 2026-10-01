@@ -1,7 +1,7 @@
 "use client";
-import { useLedgerContext } from "../use-ledger-context";
-import { periodEntries, periodLabel } from "../derive";
-import { LedgerSummary } from "./ledger-summary";
+import { useLedgerContext } from "../../use-ledger-context";
+import { periodEntries, periodLabel } from "../../derive";
+import { LedgerSummary } from "../shared/ledger-summary";
 import { TransactionsTab } from "./transactions-tab";
 
 export function TransactionsPage({ page }: { page: string | string[] | undefined }) {

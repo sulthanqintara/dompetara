@@ -3,8 +3,8 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { periodLabel, periodRange, validPeriod, type Period } from "../derive";
-import { LedgerSelect } from "./ledger-select";
+import { periodLabel, periodRange, validPeriod, type Period } from "../../derive";
+import { LedgerSelect } from "../shared/ledger-select";
 import { MonthPicker } from "./month-picker";
 
 export function PeriodPicker({ period, onChange }: {

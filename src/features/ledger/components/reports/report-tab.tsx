@@ -1,8 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Empty } from "@/components/ui/empty";
 import { ChartNoAxesCombined } from "lucide-react";
-import { periodLabel, type Period } from "../derive";
-import type { Currency } from "../ledger";
+import { periodLabel, type Period } from "../../derive";
+import type { Currency } from "../../ledger";
 import { ExpenseCategoryChart } from "./expense-category-chart";
 import { SpendingHistoryChart } from "./spending-history-chart";
 

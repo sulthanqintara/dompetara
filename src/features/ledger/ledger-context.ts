@@ -3,7 +3,7 @@ import { createContext, type Dispatch, type SetStateAction } from "react";
 import type { useLedger } from "./hooks";
 import type { Currency } from "./ledger";
 import type { Period } from "./derive";
-import type { Editor } from "./components/editor-form";
+import type { Editor } from "./components/editor/editor-form";
 
 export const LedgerContext = createContext<(ReturnType<typeof useLedger> & {
   name: string; email: string; timeZone: string;

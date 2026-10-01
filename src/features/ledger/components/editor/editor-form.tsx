@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { localDate } from "../format";
+import { localDate } from "../../format";
 import { Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -7,10 +7,10 @@ import { DialogContent } from "@/components/ui/dialog-content";
 import { DialogTitle } from "@/components/ui/dialog-title";
 import { Alert } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
-import type { Currency, Entry, Ledger, Wallet } from "../ledger";
+import type { Currency, Entry, Ledger, Wallet } from "../../ledger";
 import { EntryFields } from "./entry-fields";
 import { WalletFields } from "./wallet-fields";
-import { ConfirmationDialog } from "./confirmation-dialog";
+import { ConfirmationDialog } from "../shared/confirmation-dialog";
 
 export type Editor =
   | { type: "entry"; entry?: Entry }

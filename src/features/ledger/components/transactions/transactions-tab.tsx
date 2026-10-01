@@ -16,11 +16,11 @@ import {
   Plus,
   Wallet as WalletIcon,
 } from "lucide-react";
-import { walletName } from "../derive";
-import { format } from "../format";
-import { receivedAfterFee } from "../transfer";
-import type { Entry, Ledger } from "../ledger";
-import { transactionPage } from "../pagination";
+import { walletName } from "../../derive";
+import { format } from "../../format";
+import { receivedAfterFee } from "../../transfer";
+import type { Entry, Ledger } from "../../ledger";
+import { transactionPage } from "../../pagination";
 import { TransactionPagination } from "./transaction-pagination";
 
 export function TransactionsTab({

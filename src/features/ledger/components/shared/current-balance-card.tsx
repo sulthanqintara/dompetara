@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Wallet } from "lucide-react";
 import { useCachedRate } from "@/features/exchange-rates/hooks";
-import { balanceBreakdown } from "../balances";
-import { format, localDate } from "../format";
-import type { Currency, Ledger } from "../ledger";
+import { balanceBreakdown } from "../../balances";
+import { format, localDate } from "../../format";
+import type { Currency, Ledger } from "../../ledger";
 
 export function CurrentBalanceCard({ data, currency }: { data: Ledger; currency: Currency }) {
   const [attempt, setAttempt] = useState(0);

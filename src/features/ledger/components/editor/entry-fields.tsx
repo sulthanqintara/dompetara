@@ -6,12 +6,12 @@ import { Tabs } from "@/components/ui/tabs";
 import { TabsList } from "@/components/ui/tabs-list";
 import { TabsTrigger } from "@/components/ui/tabs-trigger";
 import { TabsContent } from "@/components/ui/tabs-content";
-import { currencies, type Currency, type Entry, type Ledger } from "../ledger";
-import { localDate } from "../format";
-import { LedgerSelect } from "./ledger-select";
+import { currencies, type Currency, type Entry, type Ledger } from "../../ledger";
+import { localDate } from "../../format";
+import { LedgerSelect } from "../shared/ledger-select";
 import { DateTimeField } from "./date-time-field";
 import { TransferFields } from "./transfer-fields";
-import { minorText } from "../transfer";
+import { minorText } from "../../transfer";
 
 export function EntryFields({ entry, data }: { entry?: Entry; data: Ledger }) {
   const [amount, setAmount] = useState(entry ? minorText(entry.amount) : "");

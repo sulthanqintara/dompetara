@@ -1,8 +1,8 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
-import { useLedgerContext } from "../use-ledger-context";
-import { periodEntries, periodTotals } from "../derive";
-import { FiltersBar } from "./filters-bar";
+import { useLedgerContext } from "../../use-ledger-context";
+import { periodEntries, periodTotals } from "../../derive";
+import { FiltersBar } from "../filters/filters-bar";
 import { StatsBar } from "./stats-bar";
 
 export function LedgerSummary() {

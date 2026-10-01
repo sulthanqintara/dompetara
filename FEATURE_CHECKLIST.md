@@ -99,27 +99,27 @@ Replaced the native/custom controls on 2026-10-01 using the existing shadcn Base
 
 | UI element | Current component and feature location |
 | --- | --- |
-| Wallet, source/destination wallet, currency, category, and category type | shadcn Select composed by `ledger/components/ledger-select.tsx`; form values retain their field names and required validation. Long option labels wrap inside the popup. |
-| Period / month / custom dates | shadcn Select, Popover, Button, Input, and Label composed by `ledger/components/period-picker.tsx` and `month-picker.tsx`. Choose a month or apply inclusive start/end dates; invalid ranges preserve the last applied period. |
-| Transaction date and time | shadcn Calendar + Popover and a time Input in `ledger/components/date-time-field.tsx`; local date/time semantics are retained. |
+| Wallet, source/destination wallet, currency, category, and category type | shadcn Select composed by `ledger/components/shared/ledger-select.tsx`; form values retain their field names and required validation. Long option labels wrap inside the popup. |
+| Period / month / custom dates | shadcn Select, Popover, Button, Input, and Label composed by `ledger/components/filters/period-picker.tsx` and `month-picker.tsx`. Choose a month or apply inclusive start/end dates; invalid ranges preserve the last applied period. |
+| Transaction date and time | shadcn Calendar + Popover and a time Input in `ledger/components/editor/date-time-field.tsx`; local date/time semantics are retained. |
 | Wallet/category names, title, amounts, balances, description, and labels | shadcn Input, Textarea, and Label in `wallet-fields.tsx`, `entry-fields.tsx`, and `categories-settings.tsx`. Transfer help text is associated with its input separately from the label. |
-| Wallet and transaction editors | shadcn Dialog in `ledger/components/editor-form.tsx`; scrollable body, sticky heading/actions, Escape/outside dismissal, pending guards, and restored focus. |
-| Transaction/category removal | shadcn AlertDialog composed by `ledger/components/confirmation-dialog.tsx`; cancel preserves data, errors remain visible, and the dialog closes after a successful save. Browser `confirm()` calls are removed. |
-| Income / expense / transfer switch | shadcn Tabs in `ledger/components/entry-fields.tsx`. |
-| Income and expense category pills | Rounded shadcn Badge with a 44px remove Button in `ledger/components/categories-settings.tsx`. |
+| Wallet and transaction editors | shadcn Dialog in `ledger/components/editor/editor-form.tsx`; scrollable body, sticky heading/actions, Escape/outside dismissal, pending guards, and restored focus. |
+| Transaction/category removal | shadcn AlertDialog composed by `ledger/components/shared/confirmation-dialog.tsx`; cancel preserves data, errors remain visible, and the dialog closes after a successful save. Browser `confirm()` calls are removed. |
+| Income / expense / transfer switch | shadcn Tabs in `ledger/components/editor/entry-fields.tsx`. |
+| Income and expense category pills | Rounded shadcn Badge with a 44px remove Button in `ledger/components/settings/categories-settings.tsx`. |
 | All actions, including Google sign-in, sign-out, balance corrections, and add-wallet tile | shadcn Button throughout ledger views and `auth/sign-in-form.tsx`. |
 | Summary, wallet, report, transaction, and settings panels | shadcn Card in the respective views; preserve single-column phone and wider-screen grids. |
-| Converted current balance | shadcn Card, Skeleton, Alert, and retry Button in `ledger/components/current-balance-card.tsx`; native totals and selected-currency equivalents remain visible with the cached reference date. Income/expense summaries retain their original currency filter. |
+| Converted current balance | shadcn Card, Skeleton, Alert, and retry Button in `ledger/components/shared/current-balance-card.tsx`; native totals and selected-currency equivalents remain visible with the cached reference date. Income/expense summaries retain their original currency filter. |
 | Transaction history | shadcn Table primitives, with explicit table semantics and the existing readable phone row layout. Table styles are scoped so Calendar is unaffected. |
 | Transaction kind markers, transaction count, and private-ledger status | shadcn Badge. |
 | Workspace routes | Server-rendered `/transactions`, `/wallet`, `/report`, and `/settings`; `/` redirects to transactions. Next.js links keep the shared shell mounted, preserve refresh/history navigation, and animate page content with reduced-motion support. Initial ledger data is read on the server; subsequent saves update the shared client state. Device timezone is saved for later server renders. |
 | Transaction pagination | shadcn Pagination and Button with Next.js links render 20 rows per page. `?page=` survives refresh and browser history; invalid or out-of-range values are safely clamped, and changing the period resets to page one. Equal timestamps are ordered consistently across edits. |
 | Workspace navigation | Floating shadcn Tabs below 768px: History (Transactions), Wallet, Report, and Settings switch directly and return to the section top. The compact 56px bar shows an icon beside only the active label; icons animate between zero and full width, and the Base UI indicator slides with CSS transitions. Both respect reduced motion. Bottom padding reserves 80px plus the safe area. shadcn SidebarProvider, Sidebar, Header/Content/Footer, and SidebarTrigger provide a left-side Sheet on tablet and a desktop sidebar that collapses to a 72px icon rail, with its expand/collapse toggle inside the header. Tabs use horizontal keyboard navigation on phones and vertical navigation at wider sizes. Selecting a tablet section closes the Sheet and restores focus to the menu button. |
-| Profile initial and divider | shadcn Avatar/Fallback and Separator in `ledger/components/sidebar.tsx`. |
-| Workspace breadcrumb | shadcn Breadcrumb primitives in `ledger/components/ledger-shell.tsx`. |
+| Profile initial and divider | shadcn Avatar/Fallback and Separator in `ledger/components/navigation/sidebar.tsx`. |
+| Workspace breadcrumb | shadcn Breadcrumb primitives in `ledger/components/layout/ledger-shell.tsx`. |
 | Errors, loading, pending, and empty states | shadcn Alert, Skeleton, Spinner, and Empty in ledger views and sign-in. |
 | Expense pie and spending history | shadcn Chart container and Recharts; category, daily, and monthly amount lists and captions remain accessible without hover. Monthly history is labeled All history. |
-| Ledger exports | shadcn Card, Button, Spinner, and Alert in `ledger/components/export-settings.tsx`; download a complete JSON backup or CSV transaction history from the latest authenticated ledger. |
+| Ledger exports | shadcn Card, Button, Spinner, and Alert in `ledger/components/settings/export-settings.tsx`; download a complete JSON backup or CSV transaction history from the latest authenticated ledger. |
 
 Remaining custom markup is intentional: responsive page/sidebar layout, branding, headings, help text, privacy notes, footer, ordinary borders, and the semantic chart breakdown. The month picker is a feature composition of shadcn primitives. Time and number fields use browser input behavior inside shadcn Input. There are no visible raw buttons, selects, text inputs, textareas, native editor dialogs, or browser confirmation calls in feature views; hidden form values remain plain HTML.
 
@@ -136,6 +136,10 @@ Desktop icon rail verification (2026-10-01): production navigation/report checks
 Converted balance verification (2026-10-01): lint, TypeScript, all domain tests, production build, and the full production `pnpm test:responsive` passed. Checks cover all eight sizes and all three target currencies, exact native totals and converted equivalents, missing-rate retry, stale-rate labels, unchanged ledger/version and shared cache, and balances independent of report dates. Domain checks also cover negative/zero balances, rounding to zero, mixed reference dates, invalid rates, and overflow. Existing editors, exports, transfers, linked fees, reloads, and sidebar navigation passed. Phone and desktop screenshots were inspected; temporary test accounts and ledgers were removed. Real-device Safari and screen-reader checks remain outstanding.
 
 Routing and pagination verification (2026-10-01): lint, TypeScript, domain checks, production build, and the complete production responsive suite passed at all eight sizes. Authenticated HTML and JavaScript-disabled browsers render all four pages. Checks cover the default redirect, persistent navigation during soft route changes, refresh, Back/Forward, 20-row limits, page URLs, edits without timestamp/order drift, last-page controls, and period resets. Existing balances, reports, exports, editors, transfers, and linked fees passed. Phone, short landscape, and desktop screenshots were inspected; temporary test accounts and ledgers were removed.
+
+Component organization verification (2026-10-01): lint, TypeScript, domain tests, and production build passed after the moves. Production navigation/report browser checks passed again at all eight sizes, including server-rendered HTML, refresh/history navigation, pagination edits, currency conversion, all sections, and responsive controls.
+
+Component organization: ledger UI lives in `components/layout`, `navigation`, `transactions`, `wallets`, `reports`, `settings`, `filters`, `editor`, and `shared`. Sign-in UI lives in `auth/components`. shadcn primitives remain in `src/components/ui/`; routing stays in `src/app/`, and domain/API/hooks stay in their feature roots.
 
 ## Decisions needed before the relevant feature
 

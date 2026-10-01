@@ -3,8 +3,8 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 import { Card } from "@/components/ui/card";
 import { Empty } from "@/components/ui/empty";
-import { format } from "../format";
-import type { Currency } from "../ledger";
+import { format } from "../../format";
+import type { Currency } from "../../ledger";
 
 export function SpendingHistoryChart({ points, currency, interval, periodLabel }: {
   points: { date: string; amount: number }[];

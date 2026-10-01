@@ -1,4 +1,4 @@
-import type { Ledger } from "../ledger";
+import type { Ledger } from "../../ledger";
 import { ExportSettings } from "./export-settings";
 import { AccountSettings } from "./account-settings";
 import { CategoriesSettings } from "./categories-settings";

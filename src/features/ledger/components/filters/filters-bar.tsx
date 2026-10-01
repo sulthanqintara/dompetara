@@ -1,6 +1,6 @@
-import { currencies, type Currency } from "../ledger";
-import { LedgerSelect } from "./ledger-select";
-import type { Period } from "../derive";
+import { currencies, type Currency } from "../../ledger";
+import { LedgerSelect } from "../shared/ledger-select";
+import type { Period } from "../../derive";
 import { PeriodPicker } from "./period-picker";
 
 export function FiltersBar({

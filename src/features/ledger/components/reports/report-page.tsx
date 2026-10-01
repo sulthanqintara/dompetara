@@ -1,7 +1,7 @@
 "use client";
-import { useLedgerContext } from "../use-ledger-context";
-import { periodEntries, periodTotals, spendByCategory, spendingHistory } from "../derive";
-import { LedgerSummary } from "./ledger-summary";
+import { useLedgerContext } from "../../use-ledger-context";
+import { periodEntries, periodTotals, spendByCategory, spendingHistory } from "../../derive";
+import { LedgerSummary } from "../shared/ledger-summary";
 import { ReportTab } from "./report-tab";
 
 export function ReportPage() {

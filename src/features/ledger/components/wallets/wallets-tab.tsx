@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ChevronRight, Plus, Wallet as WalletIcon } from "lucide-react";
-import { format } from "../format";
-import { balance, type Currency, type Ledger, type Wallet } from "../ledger";
+import { format } from "../../format";
+import { balance, type Currency, type Ledger, type Wallet } from "../../ledger";
 
 export function WalletsTab({
   data,
