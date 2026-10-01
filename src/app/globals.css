@@ -193,7 +193,6 @@ a:focus-visible {
 }
 .brand-dot {
   color: var(--muted-foreground);
-  margin-left: -8px;
 }
 .eyebrow {
   font-size: 10px;
@@ -1200,17 +1199,45 @@ footer span {
     width: 246px;
     height: 100dvh;
     border-right: 1px solid #e8ecec;
-    transition: transform 200ms;
+    transition: width 200ms;
   }
   .ledger-desktop-sidebar[data-state="collapsed"] [data-slot="sidebar-gap"] {
-    width: 0;
+    width: 72px;
   }
   .ledger-desktop-sidebar[data-state="collapsed"] .ledger-sidebar-panel {
-    transform: translateX(-100%);
-    visibility: hidden;
+    width: 72px;
   }
   .ledger-sidebar-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
     padding: 24px 16px 8px;
+  }
+  .ledger-sidebar-header .brand {
+    font-size: 14px;
+    gap: 6px;
+  }
+  .ledger-desktop-sidebar[data-state="collapsed"] .ledger-sidebar-header {
+    flex-direction: column;
+    padding-inline: 12px;
+  }
+  .ledger-desktop-sidebar[data-state="collapsed"] .brand {
+    width: 48px;
+    justify-content: center;
+  }
+  .ledger-desktop-sidebar[data-state="collapsed"] :is(.brand-name, .nav-label, .nav-text, .active-dot, .private-note, .profile > div:last-child) {
+    display: none;
+  }
+  .ledger-desktop-sidebar[data-state="collapsed"] :is(.ledger-sidebar-content, .sidebar-bottom) {
+    padding-inline: 12px;
+  }
+  .ledger-desktop-sidebar[data-state="collapsed"] .nav-item {
+    justify-content: center;
+    padding: 12px;
+  }
+  .ledger-desktop-sidebar[data-state="collapsed"] .profile {
+    justify-content: center;
   }
   .page-content {
     padding: 43px 42px;

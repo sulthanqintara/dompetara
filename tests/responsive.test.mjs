@@ -212,11 +212,21 @@ async function checkNavigation(page, width, height) {
     assert.equal(await toggle.getAttribute("aria-expanded"), "true");
     await toggle.click();
     assert.equal(await toggle.getAttribute("aria-expanded"), "false");
-    assert.equal(await page.getByRole("tab", { name: "Transactions", exact: true }).count(), 0, "Collapsed desktop navigation is inaccessible to focus");
+    assert.equal(await page.getByRole("tab", { name: "Transactions", exact: true }).count(), 1, "Collapsed desktop navigation remains usable");
     await check(page, "navigation-collapsed", width, height);
-    assert.ok(await page.locator(".workspace").evaluate((el) => el.getBoundingClientRect().left < 1), "Collapsing the sidebar reclaims its width");
-    await toggle.click();
+    assert.equal(await page.locator(".ledger-sidebar-panel").evaluate((el) => el.getBoundingClientRect().width), 72);
+    assert.equal(await page.locator(".workspace").evaluate((el) => el.getBoundingClientRect().left), 72, "Collapsing the sidebar leaves an icon rail");
+    assert.equal(await page.locator(".ledger-sidebar-panel .nav-text").first().isVisible(), false);
+    assert.equal(await toggle.getAttribute("aria-label"), "Expand sidebar");
+    assert.equal(await toggle.evaluate((el) => !!el.closest(".ledger-sidebar-panel")), true, "Desktop toggle belongs inside the sidebar");
+    await switchView(page, "Report");
+    await check(page, "navigation-collapsed-report", width, height);
+    await switchView(page, "Transactions");
+    await toggle.focus();
+    await page.keyboard.press("Enter");
     await check(page, "navigation-expanded", width, height);
+    assert.equal(await toggle.getAttribute("aria-label"), "Collapse sidebar");
+    assert.equal(await page.locator(".ledger-sidebar-panel .nav-text").first().isVisible(), true);
     assert.equal(await page.getByRole("tab", { name: "Transactions", exact: true }).count(), 1);
   }
 }

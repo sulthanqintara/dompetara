@@ -7,7 +7,7 @@ import { SheetContent } from "./sheet-content";
 import { SheetTitle } from "./sheet-title";
 import { SheetDescription } from "./sheet-description";
 
-// Adapted from shadcn Sidebar; unused variants and icon-rail behavior are omitted.
+// Adapted from shadcn Sidebar with a desktop icon rail and tablet Sheet.
 export function Sidebar({ className, children, ...props }: ComponentProps<"div">) {
   const { isMobile, open, openMobile, setOpenMobile } = useSidebar();
   if (isMobile) {
@@ -28,7 +28,7 @@ export function Sidebar({ className, children, ...props }: ComponentProps<"div">
     <div data-slot="sidebar" data-state={open ? "expanded" : "collapsed"} className="ledger-desktop-sidebar">
       <div data-slot="sidebar-gap" />
       <div id="workspace-navigation" data-slot="sidebar-container" className={cn("ledger-sidebar-panel", className)}
-        inert={!open} {...props}>
+        {...props}>
         {children}
       </div>
     </div>

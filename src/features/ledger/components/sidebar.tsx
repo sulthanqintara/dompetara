@@ -2,6 +2,7 @@ import { Sidebar as SidebarPanel } from "@/components/ui/sidebar";
 import { SidebarHeader } from "@/components/ui/sidebar-header";
 import { SidebarContent } from "@/components/ui/sidebar-content";
 import { SidebarFooter } from "@/components/ui/sidebar-footer";
+import { SidebarTrigger } from "@/components/ui/sidebar-trigger";
 import { useSidebar } from "@/components/ui/use-sidebar";
 import { WorkspaceNavigation } from "./workspace-navigation";
 import { Avatar } from "@/components/ui/avatar";
@@ -16,9 +17,10 @@ export function Sidebar({ name, tab }: { name: string; tab: string }) {
   return (
     <SidebarPanel>
       <SidebarHeader className="ledger-sidebar-header">
-        <Link href="/" className="brand">
-          <Layers3 /> personal ledger<span className="brand-dot">.</span>
+        <Link href="/" className="brand" aria-label="Personal ledger">
+          <Layers3 /><span className="brand-name">personal ledger<span className="brand-dot">.</span></span>
         </Link>
+        <SidebarTrigger placement="sidebar" />
       </SidebarHeader>
       <SidebarContent className="ledger-sidebar-content">
         <span className="nav-label">YOUR WORKSPACE</span>
@@ -34,7 +36,7 @@ export function Sidebar({ name, tab }: { name: string; tab: string }) {
           </span>
         </div>
         <Separator />
-        <div className="profile">
+        <div className="profile" title={name}>
           <Avatar>
             <AvatarFallback>{name.slice(0, 1).toUpperCase()}</AvatarFallback>
           </Avatar>
