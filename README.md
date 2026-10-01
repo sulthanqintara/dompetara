@@ -43,7 +43,7 @@ The job runs at 17:00 UTC on weekdays, with 18:00/19:00 retry slots. Fresh snaps
 
 The table has RLS enabled and denies direct access to `anon` and `authenticated`; the app's existing server connection reads it. Only the protected refresh function writes through the service role. The function does not accept rates or provider URLs from callers, and refresh secrets never reach the browser. Inspect the job in Supabase Cron and its response in `net._http_response`; a queued HTTP request does not by itself prove the refresh succeeded.
 
-Supabase Free projects can still pause for low activity. An internal cron is not a guaranteed exemption and cannot run while Postgres is paused. See [Supabase's pausing policy](https://supabase.com/docs/guides/platform/free-project-pausing). Provider details: [Frankfurter](https://frankfurter.dev/) and [ECB reference rates](https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html).
+Supabase Free projects can still pause for low activity. An internal cron is not a guaranteed exemption and cannot run while Postgres is paused. The GitHub Actions keep-alive workflow runs `select now()` against Postgres daily; add the pooler connection string as the repository Actions secret `DATABASE_URL`, then use **Actions → Supabase keep-alive → Run workflow** to verify it. See [Supabase's pausing policy](https://supabase.com/docs/guides/platform/free-project-pausing). Provider details: [Frankfurter](https://frankfurter.dev/) and [ECB reference rates](https://www.ecb.europa.eu/stats/policy_and_exchange_rates/html/index.en.html).
 
 ## Checks
 
