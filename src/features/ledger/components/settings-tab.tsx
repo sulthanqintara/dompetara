@@ -1,4 +1,5 @@
 import type { Ledger } from "../ledger";
+import { ExportSettings } from "./export-settings";
 import { AccountSettings } from "./account-settings";
 import { CategoriesSettings } from "./categories-settings";
 
@@ -30,6 +31,7 @@ export function SettingsTab({
         setPending={setPending}
         setError={setError}
       />
+      <ExportSettings pending={pending} />
       <CategoriesSettings
         data={data}
         pending={pending}

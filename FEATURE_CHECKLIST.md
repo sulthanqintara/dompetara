@@ -9,7 +9,7 @@ Design requirement: mobile first, then tablet, then desktop. Every feature must 
 - [x] Google sign-in through Better Auth, with Supabase Postgres persistence. Login and persistence confirmed by the user.
 - [x] Private ledger per signed-in user; authenticated server routes scope operations to that user.
 - [x] Create, edit, and delete manual income and expenses.
-- [x] Transaction history with monthly income, expenses, and current balance.
+- [x] Transaction history with selected-period income, expenses, and a clearly labeled current balance.
 - [x] Named wallets for bank accounts, cash, and e-wallets such as GoPay.
 - [x] Wallet opening balances and balance corrections recorded separately from income and expenses.
 - [x] Same-currency and cross-currency transfers with explicit source/destination currencies and editable exchange rates. Manually entering sent and received amounts calculates the effective rate while preserving both actual amounts.
@@ -17,7 +17,7 @@ Design requirement: mobile first, then tablet, then desktop. Every feature must 
 - [x] Shared Supabase Postgres exchange-rate cache using ECB data through Frankfurter, with a protected weekday refresh cron, ETag/304 validation, and manual fallback. Saved transfers retain their applied rate/source/date.
 - [x] IDR, USD, and CAD balances kept separately; exact amounts stored as integer minor units.
 - [x] Income and expense category management, preserving category names in transaction history.
-- [x] Month selection and currency selection for summaries and reports. Transaction history currently includes all currencies for the selected month.
+- [x] Month/custom date selection and currency selection for summaries and reports. Transaction history includes all currencies for the selected period.
 - [x] Expense category pie chart using the shadcn Chart container and Recharts, with visible category names, exact amounts, and percentages. Daily and monthly spending history charts are also available.
 - [x] Version checks reject conflicting saves instead of overwriting another tab's changes.
 - [x] Database migrations, public API table permissions, ledger RLS, and a runnable live database check.
@@ -35,7 +35,7 @@ Design requirement: mobile first, then tablet, then desktop. Every feature must 
 - [x] Verify short viewports and landscape, including scrolling to dialog actions, saving edits, Escape dismissal, outside-click dismissal, and restored focus.
 - [ ] Verify text enlargement, Safari, and the on-screen keyboard on real devices.
 - [x] Verify every tab, sign-in, and all editors at 320px and 390px phone widths, 768px tablet width, and 1024px/1440px desktop widths.
-- [ ] Apply the same mobile-first checks to future receipt review, charts, date filters, and saved insights.
+- [ ] Apply the same mobile-first checks to future receipt review and saved insights. Charts and date filters have passed the seven-size rendered checks.
 
 Before the layout fix, a rendered audit on 2026-10-01 used local Chromium with a temporary account and persisted sample ledger, removed afterward:
 
@@ -99,7 +99,7 @@ Replaced the native/custom controls on 2026-10-01 using the existing shadcn Base
 | UI element | Current component and feature location |
 | --- | --- |
 | Wallet, source/destination wallet, currency, category, and category type | shadcn Select composed by `ledger/components/ledger-select.tsx`; form values retain their field names and required validation. Long option labels wrap inside the popup. |
-| Period / month | shadcn Popover, Button, Input, and Label composed by `ledger/components/month-picker.tsx`. Select a whole month and year; custom date ranges remain a separate feature. |
+| Period / month / custom dates | shadcn Select, Popover, Button, Input, and Label composed by `ledger/components/period-picker.tsx` and `month-picker.tsx`. Choose a month or apply inclusive start/end dates; invalid ranges preserve the last applied period. |
 | Transaction date and time | shadcn Calendar + Popover and a time Input in `ledger/components/date-time-field.tsx`; local date/time semantics are retained. |
 | Wallet/category names, title, amounts, balances, description, and labels | shadcn Input, Textarea, and Label in `wallet-fields.tsx`, `entry-fields.tsx`, and `categories-settings.tsx`. Transfer help text is associated with its input separately from the label. |
 | Wallet and transaction editors | shadcn Dialog in `ledger/components/editor-form.tsx`; scrollable body, sticky heading/actions, Escape/outside dismissal, pending guards, and restored focus. |
@@ -114,11 +114,14 @@ Replaced the native/custom controls on 2026-10-01 using the existing shadcn Base
 | Profile initial and divider | shadcn Avatar/Fallback and Separator in `ledger/components/sidebar.tsx`. |
 | Workspace breadcrumb | shadcn Breadcrumb primitives in `ledger/components/ledger-app.tsx`. |
 | Errors, loading, pending, and empty states | shadcn Alert, Skeleton, Spinner, and Empty in ledger views and sign-in. |
-| Expense pie | shadcn Chart container and Recharts; the visible semantic category list, swatches, and caption remain accessible without hover. |
+| Expense pie and spending history | shadcn Chart container and Recharts; category, daily, and monthly amount lists and captions remain accessible without hover. Monthly history is labeled All history. |
+| Ledger exports | shadcn Card, Button, Spinner, and Alert in `ledger/components/export-settings.tsx`; download a complete JSON backup or CSV transaction history from the latest authenticated ledger. |
 
 Remaining custom markup is intentional: responsive page/sidebar layout, branding, headings, help text, privacy notes, footer, ordinary borders, and the semantic chart breakdown. The month picker is a feature composition of shadcn primitives. Time and number fields use browser input behavior inside shadcn Input. There are no visible raw buttons, selects, text inputs, textareas, native editor dialogs, or browser confirmation calls in feature views; hidden form values remain plain HTML.
 
 Verification: `pnpm test:responsive` passed against development and production servers at all seven viewport sizes listed above. It checks open selects, month picker, Calendar, and AlertDialogs as well as all tabs and editors. It covers compact desktop navigation, keyboard selection, date navigation, focus restoration, required transfer wallets, category saves/removals, transaction edits, and cross-currency transfer saves. Transfer checks cover source/destination fees, fee spending reports, atomic edits/deletion, cached/manual rate snapshots, missing-cache fallback, and CAD 159.33 → IDR 2,000,000 with exact amounts preserved through edits and reloads. Ordinary transfer operations leave the shared rate cache unchanged. Lint, TypeScript, domain/database checks, and the production build passed. The linked Supabase migration, protected refresh function, named weekday cron, initial cache, and a real conditional HTTP 304 refresh were verified; unauthorized refresh requests were rejected. Test accounts and ledgers are removed afterward. Real-device keyboard, screen-reader, Safari, and text-enlargement checks remain outstanding.
+
+Export verification (2026-10-01): `pnpm test` passed for complete JSON snapshots, exact minor-unit amounts, transfer/rate/fee preservation, empty ledgers, quoted multiline CSV, and formula-like text escaping. The final production `pnpm test:responsive` passed at all seven sizes with actual JSON/CSV downloads, latest-data refetches, failure/retry handling without partial downloads, authenticated reads, and unchanged ledger data/version after export. Existing transaction edits and transfer/fee saves, reloads, and deletions also passed. Lint, TypeScript, and production build passed; live database checks passed during this work. Temporary test accounts and ledgers were removed. Real-device Safari, keyboard, text-enlargement, and screen-reader checks remain outstanding.
 
 ## Decisions needed before the relevant feature
 
@@ -136,7 +139,8 @@ These extend the original request and are optional.
 - [ ] Search transactions and filter by wallet, category, type, and currency.
 - [ ] Add a reason and optional effective date to balance corrections so later reconciliation is understandable.
 - [ ] Archive wallets without losing their history.
-- [ ] Export CSV/JSON for backups; validate any future restore/import before changing balances.
+- [x] Export CSV/JSON for backups. JSON preserves the complete ledger; CSV includes all transactions, exact minor-unit amounts, transfer destinations/rates, and linked fees.
+- [ ] Validate any future restore/import before changing balances.
 - [ ] Add budget targets or recurring transaction reminders if the basic reports and AI advice are not enough.
 - [ ] Let users reload the latest ledger after a version conflict while preserving their unsaved form values.
 - [ ] Before production deployment, configure its Google callback, app URL, server secrets, and database connection; verify login and persistence there.
@@ -144,16 +148,17 @@ These extend the original request and are optional.
 
 ## Suggested implementation order
 
-1. Fix and verify the phone layout, then tablet and desktop layouts.
-2. Finish reports and date ranges; this can ship using existing ledger data.
+1. Completed: phone layout, then tablet and desktop verification.
+2. Completed: reports, custom date ranges, balance labeling, and JSON/CSV export.
 3. Resolve AI access, then build image upload → extraction → review → confirmed save.
 4. Add saved daily insights using the same reporting totals and chosen AI provider.
 5. Choose optional improvements based on actual use.
 
 ## Acceptance checks for the new work
 
-- [ ] Complete the feature on a narrow phone first, then verify tablet and desktop layouts without page overflow or inaccessible controls.
+- [x] Complete reports/date ranges/exports on a narrow phone first, then verify tablet and desktop layouts without page overflow or inaccessible controls. Apply these checks again to future AI features.
 - [ ] A representative receipt saves the correct total, wallet, currency, date, and items; a retry does not charge the wallet twice.
 - [x] Charts and totals agree across month boundaries and custom ranges, including currencies, transfers, and corrections.
+- [x] JSON/CSV exports include all dates and currencies, fetch the latest saved ledger, handle failures/retries, and leave balances and ledger versions unchanged.
 - [ ] Saved daily insights survive reloads and cannot be accessed by another signed-in user.
 - [ ] Existing manual transactions, Google login, and database persistence still work after each feature.

@@ -1386,3 +1386,16 @@ footer span {
     padding: 0 24px 24px;
   }
 }
+
+.export-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+@media (min-width: 640px) {
+  .export-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

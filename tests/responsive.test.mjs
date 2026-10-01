@@ -1,7 +1,7 @@
 import "dotenv/config";
 import assert from "node:assert/strict";
 import { createHmac, randomUUID } from "node:crypto";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import { chromium } from "playwright";
 import postgres from "postgres";
 import { balance } from "../src/features/ledger/ledger.ts";
@@ -18,6 +18,7 @@ singleDate.setUTCDate(1);
 singleDate.setUTCHours(0, 0, 0, 0);
 singleDate.setUTCMonth(singleDate.getUTCMonth() - 1);
 const errors = [];
+let expectedExportFailure = false;
 const sizes = [
   [320, 568],
   [390, 844],
@@ -643,6 +644,69 @@ async function checkCategories(page, width, height) {
   await remove.waitFor({ state: "detached" });
 }
 
+async function checkExports(page, width, height) {
+  const initial = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const beforeBalance = initial.data.wallets.reduce((total, wallet) => total + balance(initial.data, wallet.id, "IDR"), 0);
+  const jsonButton = page.getByRole("button", { name: "Download JSON backup", exact: true });
+  const csvButton = page.getByRole("button", { name: "Download CSV", exact: true });
+  const downloadContent = async (button, extension) => {
+    const downloading = page.waitForEvent("download");
+    await button.click();
+    const download = await downloading;
+    assert.ok(download.suggestedFilename().endsWith(`.${extension}`));
+    const content = await readFile(await download.path(), "utf8");
+    await page.getByRole("status").filter({ hasText: `${extension.toUpperCase()} download started.` }).waitFor();
+    return content;
+  };
+  const exported = JSON.parse(await downloadContent(jsonButton, "json"));
+  assert.deepEqual(exported.data, initial.data, "JSON backup must contain the authenticated user's complete ledger");
+  assert.equal(exported.ledgerVersion, initial.version);
+  await check(page, "json-export", width, height);
+  const latest = structuredClone(initial);
+  latest.version += 1;
+  latest.data.entries[1].title = '=SUM(1,2)';
+  latest.data.entries[1].description = 'Fresh saved change, with "quotes"\nSecond line';
+  let reads = 0;
+  await page.route("**/api/ledger", (route) => {
+    reads += 1;
+    return route.fulfill({ json: latest });
+  });
+  const freshJson = JSON.parse(await downloadContent(jsonButton, "json"));
+  assert.deepEqual(freshJson.data, latest.data, "Export must refetch data instead of downloading the stale screen snapshot");
+  assert.equal(freshJson.ledgerVersion, latest.version);
+  const csv = await downloadContent(csvButton, "csv");
+  assert.ok(csv.startsWith('\uFEFF"id","kind","date_utc"'));
+  assert.ok(csv.includes(`"'=SUM(1,2)"`));
+  assert.ok(csv.includes('"Fresh saved change, with ""quotes""\nSecond line"'));
+  assert.ok(csv.includes('"previous"'), "Export includes transactions outside the selected month");
+  assert.ok(csv.includes('"transfer"'), "Export includes transfers");
+  assert.ok(csv.includes('"opening"'), "Export includes balance movements");
+  assert.equal(reads, 2, "Each export fetches the latest authenticated ledger once");
+  await page.unroute("**/api/ledger");
+  await check(page, "csv-export", width, height);
+  if (width === 320) {
+    const downloadEvents = [];
+    const onDownload = (download) => downloadEvents.push(download);
+    page.on("download", onDownload);
+    expectedExportFailure = true;
+    await page.route("**/api/ledger", (route) => route.abort("failed"));
+    await jsonButton.click();
+    await page.getByRole("alert").filter({ hasText: "Could not export your ledger" }).waitFor();
+    assert.equal(downloadEvents.length, 0, "A failed fetch must not produce a partial backup");
+    assert.equal(await jsonButton.isEnabled(), true);
+    assert.equal(await csvButton.isEnabled(), true);
+    await check(page, "export-error", width, height);
+    await page.unroute("**/api/ledger");
+    await downloadContent(jsonButton, "json");
+    page.off("download", onDownload);
+    expectedExportFailure = false;
+    assert.equal(await page.getByRole("alert").filter({ hasText: "Could not export your ledger" }).count(), 0);
+  }
+  const after = await (await page.request.get(`${origin}/api/ledger`)).json();
+  assert.deepEqual(after, initial, "Downloading must not mutate or increment the ledger version");
+  assert.equal(after.data.wallets.reduce((total, wallet) => total + balance(after.data, wallet.id, "IDR"), 0), beforeBalance);
+}
+
 async function checkDateRange(page, width, height) {
   const currentBalance = await page.locator(".balance-stat h2").innerText();
   assert.match(await page.locator(".balance-stat").innerText(), /Current balance.*all recorded transactions/s);
@@ -803,12 +867,13 @@ try {
     const page = await context.newPage();
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => {
-      if (message.type() === "error") errors.push(message.text());
+      if (message.type() === "error" && !(expectedExportFailure && message.text().includes("net::ERR_FAILED"))) errors.push(message.text());
     });
     await page.goto(`${origin}/sign-in`);
     await page.getByRole("button", { name: /Google/ }).waitFor();
     await check(page, "sign-in", width, height);
-    if (width === 320)
+    if (width === 320) {
+      assert.equal((await page.request.get(`${origin}/api/ledger`)).status(), 401);
       assert.equal(
         (
           await page.request.get(
@@ -817,6 +882,7 @@ try {
         ).status(),
         401,
       );
+    }
     await context.addCookies([
       {
         name: "better-auth.session_token",
@@ -846,7 +912,10 @@ try {
         await checkExpenseReport(page, width, height);
         await checkDateRange(page, width, height);
       }
-      if (tab === "Settings" && !reportsOnly) await checkCategories(page, width, height);
+      if (tab === "Settings" && !reportsOnly) {
+        await checkCategories(page, width, height);
+        await checkExports(page, width, height);
+      }
     }
     if (reportsOnly) {
       await context.close();
@@ -978,7 +1047,7 @@ try {
   console.log(
     reportsOnly
       ? "Report browser checks passed: seven sizes, all tabs, custom dates, daily/monthly charts, exact amounts, empty periods, currencies, and accessible controls."
-      : "Responsive checks passed: seven sizes, all tabs, accessible controls and reports, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
+      : "Responsive checks passed: seven sizes, all tabs, date ranges, daily/monthly reports, JSON/CSV downloads and retry, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
   );
 } finally {
   await browser?.close();

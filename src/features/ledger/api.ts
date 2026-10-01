@@ -1,3 +1,4 @@
+import { ledgerExport, type ExportFormat } from "./export";
 import type { Ledger } from "./ledger";
 
 export type LedgerState = { data: Ledger; version: number };
@@ -23,4 +24,19 @@ export async function saveLedger(
   if (!response.ok)
     throw new Error(result.error || "Could not save. Please try again.");
   return result;
+}
+
+export async function downloadLedger(format: ExportFormat) {
+  const file = ledgerExport(await fetchLedger(), format);
+  const url = URL.createObjectURL(new Blob([file.content], { type: file.mimeType }));
+  const link = document.createElement("a");
+  try {
+    link.href = url;
+    link.download = file.filename;
+    document.body.append(link);
+    link.click();
+  } finally {
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 }
