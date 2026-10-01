@@ -15,6 +15,13 @@
       "when": 1788952118323,
       "tag": "0001_white_boomerang",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790838231557,
+      "tag": "0002_protect_server_tables",
+      "breakpoints": true
     }
   ]
 }

@@ -4,13 +4,13 @@ A private Google-account ledger built with Next.js, Better Auth, Drizzle, and Su
 
 ## Setup
 
-1. Copy `.env.example` to `.env` if you do not already have one. Set `DATABASE_URL` to your Supabase Postgres connection string (the session pooler is suitable for local development). Set a random `BETTER_AUTH_SECRET` and your app origin as `BETTER_AUTH_URL`.
+1. Copy `.env.example` to `.env` if you do not already have one. In Supabase's Connect dialog, choose Direct, then Session pooler, and copy its Postgres connection string into `DATABASE_URL`. Replace the password placeholder, URL-encode special characters in the password, and add `?sslmode=require`. Copy the actual pooler host from the dialog. Set a random `BETTER_AUTH_SECRET` and your app origin as `BETTER_AUTH_URL`.
 2. Create a Google OAuth **Web application** client. Add `http://localhost:3000` as an authorized JavaScript origin and `http://localhost:3000/api/auth/callback/google` as an authorized redirect URI. Add your own Google account as a test user if the consent screen is in testing mode.
 3. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. For production, register the corresponding production origin and callback and update `BETTER_AUTH_URL`. See [Better Auth’s Google setup](https://better-auth.com/docs/authentication/google).
 4. Run `pnpm install`, `pnpm db:migrate`, and `pnpm dev`.
 5. Sign in and create your first wallet with its opening balance. Edit the wallet to add other currencies.
 
-Better Auth manages identity and sessions; Supabase supplies Postgres, not Supabase Auth. Keep database credentials server-side. The ledger table has RLS enabled with no public policies; the server database role must own the table or have BYPASSRLS. Do not expose the auth tables through public Supabase Data API permissions.
+Better Auth manages identity and sessions; Supabase supplies Postgres, not Supabase Auth. Keep database credentials server-side. The ledger table has RLS enabled with no public policies; the server database role must own the table or have BYPASSRLS. Migrations revoke access to the auth and ledger tables from Supabase's public API roles.
 
 ## Ledger behavior
 
@@ -30,9 +30,12 @@ Requires Node 22.18+ (Node 24 recommended).
 
 ```sh
 pnpm test
+pnpm test:db
 pnpm lint
 pnpm typecheck
 pnpm build
 ```
 
 Tests cover exact money parsing, opening balances, corrections, editing/deleting entries, same-currency and cross-currency transfers, category history, and invalid wallet references. A live Google sign-in and persistence check requires working OAuth credentials and a reachable, migrated database.
+
+`pnpm test:db` uses `.env` to check the live database connection, applied migrations, table permissions, and server reads/writes. Its sample records are rolled back.
