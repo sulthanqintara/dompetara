@@ -24,11 +24,13 @@ import type { Entry, Ledger } from "../ledger";
 export function TransactionsTab({
   data,
   entries,
+  periodLabel,
   onEditEntry,
   onAddWallet,
 }: {
   data: Ledger;
   entries: Entry[];
+  periodLabel: string;
   onEditEntry: (entry: Entry) => void;
   onAddWallet: () => void;
 }) {
@@ -39,7 +41,7 @@ export function TransactionsTab({
           Transaction history{" "}
           <Badge variant="secondary">{entries.length}</Badge>
         </h3>
-        <span>Selected month · all currencies</span>
+        <span>{periodLabel} · all currencies</span>
       </div>
       {!data.wallets.length ? (
         <Empty className="empty">
@@ -54,7 +56,7 @@ export function TransactionsTab({
       ) : !entries.length ? (
         <Empty className="empty">
           <List />
-          <h3>A fresh page for this month</h3>
+          <h3>No transactions in this period</h3>
           <p>Add your first income, expense, or transfer.</p>
         </Empty>
       ) : (

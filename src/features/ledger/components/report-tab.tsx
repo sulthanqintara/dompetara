@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Empty } from "@/components/ui/empty";
 import { ChartNoAxesCombined } from "lucide-react";
+import { periodLabel, type Period } from "../derive";
 import type { Currency } from "../ledger";
 import { ExpenseCategoryChart } from "./expense-category-chart";
 
@@ -8,19 +9,19 @@ export function ReportTab({
   groups,
   expense,
   currency,
-  month,
+  period,
 }: {
   groups: [string, number][];
   expense: number;
   currency: Currency;
-  month: string;
+  period: Period;
 }) {
   return (
     <Card className="panel report">
       <div className="panel-heading">
         <h3>Spending by category</h3>
         <span>
-          {currency} · {month}
+          {currency} · {periodLabel(period)}
         </span>
       </div>
       {groups.length ? (

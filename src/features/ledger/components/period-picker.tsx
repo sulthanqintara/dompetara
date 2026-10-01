@@ -1,0 +1,62 @@
+import { useId, useState } from "react";
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { periodLabel, periodRange, validPeriod, type Period } from "../derive";
+import { LedgerSelect } from "./ledger-select";
+import { MonthPicker } from "./month-picker";
+
+export function PeriodPicker({ period, onChange }: {
+  period: Period;
+  onChange: (period: Period) => void;
+}) {
+  const id = useId();
+  const [mode, setMode] = useState("month" in period ? "month" : "custom");
+  const [draft, setDraft] = useState(() => periodRange(period));
+  const [error, setError] = useState("");
+  return (
+    <>
+      <LedgerSelect
+        label="Period type"
+        value={mode}
+        options={[{ value: "month", label: "Month" }, { value: "custom", label: "Custom dates" }]}
+        onValueChange={(value) => {
+          setMode(value);
+          setDraft(periodRange(period));
+          setError("");
+          if (value === "month") onChange({ month: periodRange(period).start.slice(0, 7) });
+        }}
+      />
+      {mode === "month" ? (
+        <MonthPicker value={periodRange(period).start.slice(0, 7)} onChange={(month) => onChange({ month })} />
+      ) : (
+        <form className="date-range-form" onSubmit={(event) => {
+          event.preventDefault();
+          if (!validPeriod(draft.start, draft.end)) {
+            setError("Enter valid dates with the end on or after the start.");
+            return;
+          }
+          setError("");
+          onChange(draft);
+        }}>
+          <div className="form-field">
+            <Label htmlFor={`${id}-start`}>Start date</Label>
+            <Input id={`${id}-start`} name="start" type="date" required min="0001-01-01" max="9999-12-31"
+              value={draft.start} onChange={(event) => setDraft({ ...draft, start: event.target.value })} />
+          </div>
+          <div className="form-field">
+            <Label htmlFor={`${id}-end`}>End date</Label>
+            <Input id={`${id}-end`} name="end" type="date" required min="0001-01-01" max="9999-12-31"
+              value={draft.end} onChange={(event) => setDraft({ ...draft, end: event.target.value })} />
+          </div>
+          <Button type="submit">Apply dates</Button>
+          {error && <Alert variant="destructive" className="period-status">{error}</Alert>}
+          <p className="period-status" role="status">
+            Showing {periodLabel(period)}. Dates use your device timezone; both endpoints are included.
+          </p>
+        </form>
+      )}
+    </>
+  );
+}

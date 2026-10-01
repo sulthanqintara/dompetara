@@ -12,7 +12,13 @@ import { BreadcrumbSeparator } from "@/components/ui/breadcrumb-separator";
 import { BreadcrumbPage } from "@/components/ui/breadcrumb-page";
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { monthlyEntries, spendByCategory } from "../derive";
+import {
+  periodEntries,
+  periodLabel,
+  periodTotals,
+  spendByCategory,
+  type Period,
+} from "../derive";
 import { localDate } from "../format";
 import { useLedger } from "../hooks";
 import { balance, type Currency } from "../ledger";
@@ -35,19 +41,16 @@ const tabDescriptions: Record<string, string> = {
 export function LedgerApp({ name, email }: { name: string; email: string }) {
   const { data, error, setError, pending, setPending, save } = useLedger();
   const [tab, setTab] = useState("Transactions");
-  const [month, setMonth] = useState(() => localDate().slice(0, 7));
+  const [period, setPeriod] = useState<Period>(() => ({
+    month: localDate().slice(0, 7),
+  }));
   const [currency, setCurrency] = useState<Currency>("IDR");
   const [editor, setEditor] = useState<Editor>();
-  const entries = data ? monthlyEntries(data, month) : [];
-  const income = entries
-    .filter((e) => e.kind === "income" && e.currency === currency)
-    .reduce((n, e) => n + e.amount, 0);
-  const expense = entries
-    .filter((e) => e.kind === "expense" && e.currency === currency)
-    .reduce((n, e) => n + e.amount, 0);
+  const entries = data ? periodEntries(data, period) : [];
+  const { income, expense } = periodTotals(entries, currency);
   const total =
     data?.wallets.reduce((n, w) => n + balance(data, w.id, currency), 0) ?? 0;
-  const groups = data ? spendByCategory(data, month, currency) : [];
+  const groups = spendByCategory(entries, currency);
   async function handleSave(payload: Record<string, unknown>) {
     const ok = await save(payload);
     if (ok) setEditor(undefined);
@@ -128,9 +131,9 @@ export function LedgerApp({ name, email }: { name: string; email: string }) {
               {(tab === "Transactions" || tab === "Report") && (
                 <>
                   <FiltersBar
-                    month={month}
+                    period={period}
                     currency={currency}
-                    onMonthChange={setMonth}
+                    onPeriodChange={setPeriod}
                     onCurrencyChange={setCurrency}
                   />
                   <StatsBar
@@ -145,6 +148,7 @@ export function LedgerApp({ name, email }: { name: string; email: string }) {
                 <TransactionsTab
                   data={data}
                   entries={entries}
+                  periodLabel={periodLabel(period)}
                   onEditEntry={(entry) => setEditor({ type: "entry", entry })}
                   onAddWallet={() => setEditor({ type: "wallet" })}
                 />
@@ -162,7 +166,7 @@ export function LedgerApp({ name, email }: { name: string; email: string }) {
                   groups={groups}
                   expense={expense}
                   currency={currency}
-                  month={month}
+                  period={period}
                 />
               )}
               {tab === "Settings" && (

@@ -54,11 +54,13 @@ After the fix, `pnpm test:responsive` passed at 320×568, 390×844, 768×1024, 8
 
 - [x] Add an expense category pie chart with amounts, percentages, and an accessible legend.
 - [ ] Add a spending history graph with daily totals within a period and monthly totals across history.
-- [ ] Add custom start/end date filters alongside the existing month filter.
-- [ ] Use the same selected period for transaction history, income/expense totals, category breakdown, and charts.
+- [x] Add custom start/end date filters alongside the existing month filter.
+- [x] Use the same selected period for transaction history, income/expense totals, and the category chart. History charts follow in the next step.
 - [ ] Keep currencies separate and exclude transfers, opening balances, and corrections from spending charts.
 - [ ] Label current balance clearly when a historical period is selected; decide whether a separate period-end balance is needed.
 - [ ] Handle empty periods, single-category periods, and month/date boundaries correctly.
+
+Date range verification (2026-10-01): production `pnpm test:responsive` passed at all seven sizes, including custom ranges across months, matching totals/category breakdown/history, invalid-range preservation, and existing editor/transfer persistence checks. Report domain checks passed in Asia/Jakarta and America/New_York; lint, TypeScript, production build, and live database checks passed. Dates retain device-timezone behavior.
 
 Pie chart verification: `pnpm test:responsive` passed against both development and production servers at all seven viewport sizes listed above. Checks cover the chart's accessible name, visible semantic category breakdown, exact amounts, tiny nonzero percentages, long labels, month/currency filtering, excluded transfers/corrections, and single/empty periods. The pie has no animation or hover-only information. Lint, TypeScript, ledger checks, and the production build passed. Real-device screen-reader and Safari verification remains outstanding.
 

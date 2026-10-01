@@ -22,14 +22,14 @@ export function StatsBar({
     <div className="stats">
       <Card className="stat">
         <span>
-          Monthly income <ArrowDownLeft size={19} />
+          Period income <ArrowDownLeft size={19} />
         </span>
         <h2 className="positive">{format(income, currency)}</h2>
         <small>Money coming in</small>
       </Card>
       <Card className="stat">
         <span>
-          Monthly expenses <ArrowUpRight size={19} />
+          Period expenses <ArrowUpRight size={19} />
         </span>
         <h2>{format(expense, currency)}</h2>
         <small>Money going out</small>

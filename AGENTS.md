@@ -19,6 +19,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Components: shadcn
 
+- Always use shadcn components for new or changed UI elements. Reuse the existing Base UI preset primitives; if a required primitive is missing, add it in `src/components/ui/` before composing the feature. Ordinary semantic content and layout markup may remain HTML.
+
 - Use the existing shadcn Base UI preset for controls, dialogs, confirmations, cards, and status states. Compose feature components from `src/components/ui/` instead of adding raw browser controls or `confirm()` calls.
 - Keep labels, form field names, required validation, keyboard navigation, and focus restoration when replacing controls.
 - Split generated files that export several React components into one component per file, and keep only the primitives the app uses.

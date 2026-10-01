@@ -1,21 +1,22 @@
 import { currencies, type Currency } from "../ledger";
 import { LedgerSelect } from "./ledger-select";
-import { MonthPicker } from "./month-picker";
+import type { Period } from "../derive";
+import { PeriodPicker } from "./period-picker";
 
 export function FiltersBar({
-  month,
+  period,
   currency,
-  onMonthChange,
+  onPeriodChange,
   onCurrencyChange,
 }: {
-  month: string;
+  period: Period;
   currency: Currency;
-  onMonthChange: (month: string) => void;
+  onPeriodChange: (period: Period) => void;
   onCurrencyChange: (currency: Currency) => void;
 }) {
   return (
     <div className="filters">
-      <MonthPicker value={month} onChange={onMonthChange} />
+      <PeriodPicker period={period} onChange={onPeriodChange} />
       <LedgerSelect
         label="Currency"
         options={currencies.map((c) => ({ value: c, label: c }))}

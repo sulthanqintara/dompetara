@@ -642,6 +642,33 @@ async function checkCategories(page, width, height) {
   await remove.waitFor({ state: "detached" });
 }
 
+async function checkDateRange(page, width, height) {
+  await choose(page, "Period type", "Custom dates");
+  await page.getByLabel("Start date", { exact: true }).fill(singleDate.toISOString().slice(0, 10));
+  await page.getByLabel("End date", { exact: true }).fill(date.slice(0, 10));
+  await page.getByRole("button", { name: "Apply dates", exact: true }).click();
+  const groups = page.locator(".expense-category-list .report-row");
+  assert.equal(await groups.count(), 3, "Custom range includes both months");
+  assert.match(await groups.filter({ hasText: "Bills" }).innerText(), /100/);
+  const expected = data.entries.filter((e) => e.kind === "expense" && e.currency === "IDR").reduce((n, e) => n + e.amount, 0);
+  const totalText = new Intl.NumberFormat("en", { style: "currency", currency: "IDR", maximumFractionDigits: 2 }).format(expected / 100);
+  assert.equal(await page.locator(".stats .stat").nth(1).locator("h2").innerText(), totalText);
+  await check(page, "report-custom-range", width, height);
+  await page.getByRole("tab", { name: "Transactions", exact: true }).click();
+  assert.equal(await page.getByRole("button", { name: "Edit Previous month bill", exact: true }).count(), 1);
+  assert.equal(await page.getByLabel("Start date", { exact: true }).inputValue(), singleDate.toISOString().slice(0, 10));
+  await check(page, "transactions-custom-range", width, height);
+  await page.getByLabel("Start date", { exact: true }).fill("2026-03-02");
+  await page.getByLabel("End date", { exact: true }).fill("2026-03-01");
+  await page.getByRole("button", { name: "Apply dates", exact: true }).click();
+  await page.getByRole("alert").filter({ hasText: "Enter valid dates" }).waitFor();
+  assert.equal(await page.getByRole("button", { name: "Edit Previous month bill", exact: true }).count(), 1, "Invalid ranges preserve the applied period");
+  await check(page, "invalid-date-range", width, height);
+  await choose(page, "Period type", "Month");
+  await chooseMonth(page, date.slice(0, 7));
+  await page.getByRole("tab", { name: "Report", exact: true }).click();
+}
+
 async function checkExpenseReport(page, width, height) {
   const chart = page.getByRole("img", { name: "Expense category pie chart" });
   await chart.waitFor();
@@ -778,7 +805,10 @@ try {
     for (const tab of ["Transactions", "Wallet", "Report", "Settings"]) {
       await page.getByRole("tab", { name: tab, exact: true }).click();
       await check(page, tab.toLowerCase(), width, height);
-      if (tab === "Report") await checkExpenseReport(page, width, height);
+      if (tab === "Report") {
+        await checkExpenseReport(page, width, height);
+        await checkDateRange(page, width, height);
+      }
       if (tab === "Settings") await checkCategories(page, width, height);
     }
     await page.getByRole("tab", { name: "Transactions", exact: true }).click();
