@@ -41,3 +41,7 @@ pnpm build
 Tests cover exact money parsing, opening balances, corrections, editing/deleting entries, same-currency and cross-currency transfers, category history, and invalid wallet references. A live Google sign-in and persistence check requires working OAuth credentials and a reachable, migrated database.
 
 `pnpm test:db` uses `.env` to check the live database connection, applied migrations, table permissions, and server reads/writes. Its sample records are rolled back.
+
+The layout starts with phones and adds tablet/desktop layouts using `min-width` media queries. `AGENTS.md` makes mobile-first design a rule for future features.
+
+With the app running and the same `.env` database/auth configuration, run `pnpm exec playwright install chromium` once, then `pnpm test:responsive`. This renders sign-in, every tab, and the editors at seven phone/tablet/desktop and landscape sizes. It checks overflow, touch controls, input text, long content, and dialog save/dismissal. It creates a temporary account and ledger and deletes them afterward. Set `RESPONSIVE_SCREENSHOTS` to a directory to capture screenshots, `LEDGER_TEST_URL` to another local app URL, or `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an existing Chromium executable. If you use another port, start the app with a matching `BETTER_AUTH_URL` so its origin check permits saving.

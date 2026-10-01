@@ -10,6 +10,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Code rules
 
+## Design: mobile first
+
+- Design and implement the phone layout first, then adapt it for tablet and desktop with `min-width` media queries.
+- Keep navigation, amounts, forms, and actions readable and usable at 320px without page-wide horizontal scrolling.
+- Give interactive controls at least 44 × 44px touch targets and use at least 16px text in form inputs.
+- Render and check every affected view at phone, tablet, and desktop sizes, including short viewports and long content. Do not consider CSS breakpoints alone proof of responsiveness.
+
 ## Architecture: feature-based
 
 - Routing lives only in `src/app/` (pages/routes stay thin; logic goes in features).
@@ -27,4 +34,3 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - No god files: split multi-view, modal, and helper code into separate files.
 - Domain modules (`src/features/*/*.ts`) are the exception: they may group cohesive pure functions.
 - Extract API calls into `api.ts` instead of `fetch` inside components; extract business math into `derive.ts`/domain modules instead of computing inside components.
-

@@ -49,22 +49,30 @@ export function TransactionsTab({
         </div>
       ) : (
         <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Transaction</th>
-                <th>Date & time</th>
-                <th>Wallet</th>
-                <th>Amount</th>
-                <th>
+          <table role="table" aria-label="Transaction history">
+            <thead role="rowgroup">
+              <tr role="row">
+                <th role="columnheader" scope="col">
+                  Transaction
+                </th>
+                <th role="columnheader" scope="col">
+                  Date & time
+                </th>
+                <th role="columnheader" scope="col">
+                  Wallet
+                </th>
+                <th role="columnheader" scope="col">
+                  Amount
+                </th>
+                <th role="columnheader" scope="col">
                   <span className="sr-only">Actions</span>
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody role="rowgroup">
               {entries.map((e) => (
-                <tr key={e.id}>
-                  <td>
+                <tr role="row" key={e.id}>
+                  <td role="cell" className="transaction-detail">
                     <div className="transaction-name">
                       <span className={`entry-icon ${e.kind}`}>
                         {e.kind === "transfer" ? (
@@ -87,7 +95,7 @@ export function TransactionsTab({
                       </span>
                     </div>
                   </td>
-                  <td>
+                  <td role="cell" className="transaction-date">
                     {new Date(e.date).toLocaleDateString()}
                     <small>
                       {new Date(e.date).toLocaleTimeString([], {
@@ -96,7 +104,7 @@ export function TransactionsTab({
                       })}
                     </small>
                   </td>
-                  <td>
+                  <td role="cell" className="transaction-wallet">
                     {walletName(data, e.wallet)}
                     {e.kind === "transfer" && (
                       <small>
@@ -106,6 +114,7 @@ export function TransactionsTab({
                     )}
                   </td>
                   <td
+                    role="cell"
                     className={
                       e.kind === "income" ? "positive amount" : "amount"
                     }
@@ -117,10 +126,11 @@ export function TransactionsTab({
                         : ""}
                     {format(e.amount, e.currency)}
                   </td>
-                  <td>
+                  <td role="cell" className="transaction-actions">
                     {e.kind !== "correction" && (
                       <button
                         className="text-button"
+                        aria-label={`Edit ${e.title}`}
                         onClick={() => onEditEntry(e)}
                       >
                         Edit
