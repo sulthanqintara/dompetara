@@ -21,3 +21,7 @@ assert.equal(spendingHistory(entries, "IDR", "daily", "Asia/Jakarta")[0].date, "
 console.log("Pagination checks passed: row limits, boundaries, invalid pages, shrinking histories, unchanged data, and explicit timezone dates.");
 
 assert.deepEqual(periodEntries({ entries, wallets: [], categories: [] }, { month: "2026-10" }, "Asia/Jakarta"), periodEntries({ entries: [...entries].reverse(), wallets: [], categories: [] }, { month: "2026-10" }, "Asia/Jakarta"), "Equal timestamps have stable ordering after edits");
+
+import { walletTotalIdr } from "../src/features/ledger/derive.ts";
+assert.deepEqual(walletTotalIdr([{ currency: "IDR", amount: 100 }, { currency: "USD", amount: 2 }], { USD: "17800" }), { total: 35700, partial: false });
+assert.deepEqual(walletTotalIdr([{ currency: "IDR", amount: 100 }, { currency: "CAD", amount: 2 }], {}), { total: 100, partial: true });

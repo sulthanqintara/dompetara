@@ -1,4 +1,4 @@
-import { validRateDate } from "../exchange-rates/exchange-rates.ts";
+import { convertBalanceMinor, validRateDate } from "../exchange-rates/exchange-rates.ts";
 import { localDate } from "./format.ts";
 import type { Currency, Entry, Ledger } from "./ledger.ts";
 
@@ -85,4 +85,18 @@ export function spendingHistory(
   }
   // ponytail: omit zero-spending buckets; fill them if a continuous time axis is needed.
   return Object.keys(totals).sort().map((date) => ({ date, amount: totals[date] }));
+}
+
+// Sum balances in IDR; `rates` maps currency to its X->IDR rate. Unconvertible rows set `partial`.
+export function walletTotalIdr(rows: { currency: Currency; amount: number }[], rates: Partial<Record<Currency, string | null>>) {
+  let total = 0;
+  let partial = false;
+  for (const { currency, amount } of rows) {
+    const rate = rates[currency];
+    if (currency === "IDR" || amount === 0) total += amount;
+    else if (rate) {
+      try { total += convertBalanceMinor(amount, rate); } catch { partial = true; }
+    } else partial = true;
+  }
+  return { total, partial };
 }
