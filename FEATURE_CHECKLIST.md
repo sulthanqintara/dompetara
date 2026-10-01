@@ -57,8 +57,10 @@ After the fix, `pnpm test:responsive` passed at 320×568, 390×844, 768×1024, 8
 - [x] Add custom start/end date filters alongside the existing month filter.
 - [x] Use the same selected period for transaction history, income/expense totals, category breakdown, and daily charts. Monthly history is explicitly labeled All history.
 - [x] Keep currencies separate and exclude transfers, opening balances, and corrections from spending charts. Linked service fees count as expenses.
-- [ ] Label current balance clearly when a historical period is selected; decide whether a separate period-end balance is needed.
-- [ ] Handle empty periods, single-category periods, and month/date boundaries correctly.
+- [x] Label current balance clearly when a historical period is selected. It includes all recorded transactions; a separate period-end balance is deferred.
+- [x] Handle empty periods, single-category periods, and month/date boundaries correctly.
+
+Balance and boundary verification (2026-10-01): `pnpm test` covers fixed UTC instants in UTC, Asia/Jakarta, and America/New_York, 23/25-hour DST days, inclusive midnight endpoints, leap years, and years 0001/9999. Report browser checks passed at all seven sizes with same-day ranges, zero totals in empty periods, and current balances preserved across historical selections. Lint, TypeScript, and the production build passed.
 
 Spending history verification (2026-10-01): domain checks cover sorted daily/monthly totals, fee inclusion, excluded transfers/corrections, and currency isolation. `RESPONSIVE_SCOPE=reports pnpm test:responsive` passed at all seven sizes, including exact visible amounts, single-day/month data, empty periods, custom ranges, and the independent all-history chart. Zero-spending buckets are omitted with an explicit caption. Lint and TypeScript passed.
 
@@ -152,6 +154,6 @@ These extend the original request and are optional.
 
 - [ ] Complete the feature on a narrow phone first, then verify tablet and desktop layouts without page overflow or inaccessible controls.
 - [ ] A representative receipt saves the correct total, wallet, currency, date, and items; a retry does not charge the wallet twice.
-- [ ] Charts and totals agree across month boundaries and custom ranges, including currencies, transfers, and corrections.
+- [x] Charts and totals agree across month boundaries and custom ranges, including currencies, transfers, and corrections.
 - [ ] Saved daily insights survive reloads and cannot be accessed by another signed-in user.
 - [ ] Existing manual transactions, Google login, and database persistence still work after each feature.

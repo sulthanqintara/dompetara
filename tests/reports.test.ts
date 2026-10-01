@@ -46,3 +46,38 @@ assert.deepEqual(spendingHistory(data.entries, "IDR", "monthly"), [
 assert.deepEqual(spendingHistory(entries, "USD", "daily"), [{ date: "2026-02-01", amount: 999 }]);
 assert.deepEqual(spendingHistory([], "IDR", "daily"), []);
 console.log("Spending history checks passed: daily/monthly grouping, sorting, currency isolation, fees, and exact totals.");
+
+// Fixed UTC instants exercise actual device-timezone boundaries independently
+// of the local-date fixtures above.
+const originalTimezone = process.env.TZ;
+try {
+  const midnightData = emptyLedger();
+  midnightData.entries = [entry("midnight", "2026-01-31T17:00:00Z", "expense", "IDR", 123)];
+  for (const [timezone, expectedDay] of [
+    ["UTC", "2026-01-31"],
+    ["Asia/Jakarta", "2026-02-01"],
+    ["America/New_York", "2026-01-31"],
+  ]) {
+    process.env.TZ = timezone;
+    assert.deepEqual(spendingHistory(midnightData.entries, "IDR", "daily"), [{ date: expectedDay, amount: 123 }]);
+    assert.equal(periodEntries(midnightData, { start: expectedDay, end: expectedDay }).length, 1);
+    assert.equal(periodEntries(midnightData, { month: expectedDay.slice(0, 7) }).length, 1);
+    assert.equal(periodRange({ month: "0001-02" }).end, "0001-02-28");
+    assert.equal(periodRange({ month: "9999-12" }).end, "9999-12-31");
+  }
+  process.env.TZ = "America/New_York";
+  for (const [day, instants] of [
+    ["2026-03-08", ["2026-03-08T04:59:59Z", "2026-03-08T05:00:00Z", "2026-03-09T03:59:59Z", "2026-03-09T04:00:00Z"]],
+    ["2026-11-01", ["2026-11-01T03:59:59Z", "2026-11-01T04:00:00Z", "2026-11-02T04:59:59Z", "2026-11-02T05:00:00Z"]],
+  ] as const) {
+    const dstData = emptyLedger();
+    dstData.entries = instants.map((instant, index) => entry(String(index), instant, "expense", "IDR", 100));
+    const included = periodEntries(dstData, { start: day, end: day });
+    assert.deepEqual(included.map((e) => e.id), ["2", "1"]);
+    assert.deepEqual(spendingHistory(included, "IDR", "daily"), [{ date: day, amount: 200 }]);
+  }
+} finally {
+  if (originalTimezone === undefined) delete process.env.TZ;
+  else process.env.TZ = originalTimezone;
+}
+console.log("Timezone checks passed: UTC/Jakarta/New York midnight, year limits, and 23/25-hour DST days.");

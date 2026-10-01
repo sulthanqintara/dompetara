@@ -644,6 +644,8 @@ async function checkCategories(page, width, height) {
 }
 
 async function checkDateRange(page, width, height) {
+  const currentBalance = await page.locator(".balance-stat h2").innerText();
+  assert.match(await page.locator(".balance-stat").innerText(), /Current balance.*all recorded transactions/s);
   await choose(page, "Period type", "Custom dates");
   await page.getByLabel("Start date", { exact: true }).fill(singleDate.toISOString().slice(0, 10));
   await page.getByLabel("End date", { exact: true }).fill(date.slice(0, 10));
@@ -662,7 +664,16 @@ async function checkDateRange(page, width, height) {
   await page.getByRole("tab", { name: "Transactions", exact: true }).click();
   assert.equal(await page.getByRole("button", { name: "Edit Previous month bill", exact: true }).count(), 1);
   assert.equal(await page.getByLabel("Start date", { exact: true }).inputValue(), singleDate.toISOString().slice(0, 10));
+  assert.equal(await page.locator(".balance-stat h2").innerText(), currentBalance, "Changing the period must not change current balances");
   await check(page, "transactions-custom-range", width, height);
+  const singleDay = singleDate.toISOString().slice(0, 10);
+  await page.getByLabel("Start date", { exact: true }).fill(singleDay);
+  await page.getByLabel("End date", { exact: true }).fill(singleDay);
+  await page.getByRole("button", { name: "Apply dates", exact: true }).click();
+  assert.match(await page.locator(".stats .stat").nth(1).locator("h2").innerText(), /^IDR\s+100$/);
+  assert.equal(await page.getByRole("button", { name: /^Edit / }).count(), 1, "Same-day range includes only that day's entries");
+  assert.equal(await page.locator(".balance-stat h2").innerText(), currentBalance);
+  await check(page, "transactions-single-day", width, height);
   await page.getByLabel("Start date", { exact: true }).fill("2026-03-02");
   await page.getByLabel("End date", { exact: true }).fill("2026-03-01");
   await page.getByRole("button", { name: "Apply dates", exact: true }).click();
@@ -746,6 +757,7 @@ async function checkExpenseReport(page, width, height) {
   assert.equal(await page.getByRole("img", { name: "Monthly spending chart", exact: true }).count(), 0);
   await choose(page, "Currency", "IDR");
   const originalMonth = date.slice(0, 7);
+  const currentBalance = await page.locator(".balance-stat h2").innerText();
   await chooseMonth(page, singleDate.toISOString().slice(0, 7));
   await chart.waitFor();
   assert.equal(await page.locator(".recharts-pie-sector").count(), 1);
@@ -760,6 +772,9 @@ async function checkExpenseReport(page, width, height) {
     .waitFor();
   assert.equal(await page.getByRole("img", { name: "Daily spending chart", exact: true }).count(), 0);
   assert.equal(await page.getByRole("img", { name: "Monthly spending chart", exact: true }).count(), 1, "All-history chart remains independent of the selected period");
+  assert.match(await page.locator(".stats .stat").first().locator("h2").innerText(), /^IDR\s+0$/);
+  assert.match(await page.locator(".stats .stat").nth(1).locator("h2").innerText(), /^IDR\s+0$/);
+  assert.equal(await page.locator(".balance-stat h2").innerText(), currentBalance, "An empty historical period still shows current balances");
   await check(page, "report-empty", width, height);
   await chooseMonth(page, originalMonth);
 }

@@ -36,10 +36,10 @@ export function StatsBar({
       </Card>
       <Card className="stat balance-stat">
         <span>
-          Total balance <WalletIcon size={19} />
+          Current balance <WalletIcon size={19} />
         </span>
         <h2>{format(total, currency)}</h2>
-        <small>Current balance across all wallets · {currency}</small>
+        <small>All wallets · {currency} · all recorded transactions</small>
       </Card>
     </div>
   );
