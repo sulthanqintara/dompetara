@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { periodEntries, periodRange, periodTotals, spendByCategory, validPeriod } from "../src/features/ledger/derive.ts";
+import { periodEntries, periodRange, periodTotals, spendByCategory, spendingHistory, validPeriod } from "../src/features/ledger/derive.ts";
 import { emptyLedger, type Entry } from "../src/features/ledger/ledger.ts";
 
 const data = emptyLedger();
@@ -34,3 +34,15 @@ for (const [start, end] of [["2026-02-30", "2026-03-01"], ["", "2026-03-01"], ["
   assert.deepEqual(periodEntries(data, { start, end }), []);
 }
 console.log(`Report checks passed (${process.env.TZ ?? "device timezone"}): inclusive dates, month boundaries, leap years, currencies, fees, and excluded balance movements.`);
+
+assert.deepEqual(spendingHistory(entries, "IDR", "daily"), [
+  { date: "2026-01-31", amount: 100 },
+  { date: "2026-02-01", amount: 250 },
+]);
+assert.deepEqual(spendingHistory(data.entries, "IDR", "monthly"), [
+  { date: "2026-01", amount: 600 },
+  { date: "2026-02", amount: 750 },
+]);
+assert.deepEqual(spendingHistory(entries, "USD", "daily"), [{ date: "2026-02-01", amount: 999 }]);
+assert.deepEqual(spendingHistory([], "IDR", "daily"), []);
+console.log("Spending history checks passed: daily/monthly grouping, sorting, currency isolation, fees, and exact totals.");

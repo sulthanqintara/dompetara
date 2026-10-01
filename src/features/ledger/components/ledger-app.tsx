@@ -17,6 +17,7 @@ import {
   periodLabel,
   periodTotals,
   spendByCategory,
+  spendingHistory,
   type Period,
 } from "../derive";
 import { localDate } from "../format";
@@ -167,6 +168,8 @@ export function LedgerApp({ name, email }: { name: string; email: string }) {
                   expense={expense}
                   currency={currency}
                   period={period}
+                  daily={spendingHistory(entries, currency, "daily")}
+                  monthly={spendingHistory(data.entries, currency, "monthly")}
                 />
               )}
               {tab === "Settings" && (

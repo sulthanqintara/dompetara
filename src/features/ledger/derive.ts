@@ -70,3 +70,18 @@ export function categoryBreakdown(groups: [string, number][], expense: number) {
 export function walletName(data: Ledger, id?: string) {
   return data.wallets.find((w) => w.id === id)?.name ?? "Wallet";
 }
+
+export function spendingHistory(
+  entries: Entry[],
+  currency: Currency,
+  interval: "daily" | "monthly",
+) {
+  const totals: Record<string, number> = {};
+  for (const entry of entries) {
+    if (entry.kind !== "expense" || entry.currency !== currency) continue;
+    const date = localDate(new Date(entry.date)).slice(0, interval === "daily" ? 10 : 7);
+    totals[date] = (totals[date] ?? 0) + entry.amount;
+  }
+  // ponytail: omit zero-spending buckets; fill them if a continuous time axis is needed.
+  return Object.keys(totals).sort().map((date) => ({ date, amount: totals[date] }));
+}

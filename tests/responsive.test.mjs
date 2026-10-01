@@ -8,6 +8,7 @@ import { balance } from "../src/features/ledger/ledger.ts";
 
 const origin = process.env.LEDGER_TEST_URL ?? "http://localhost:3000";
 const screenshots = process.env.RESPONSIVE_SCREENSHOTS;
+const reportsOnly = process.env.RESPONSIVE_SCOPE === "reports";
 const sql = postgres(process.env.DATABASE_URL, { prepare: false, max: 1 });
 const id = randomUUID();
 const token = randomUUID();
@@ -653,6 +654,10 @@ async function checkDateRange(page, width, height) {
   const expected = data.entries.filter((e) => e.kind === "expense" && e.currency === "IDR").reduce((n, e) => n + e.amount, 0);
   const totalText = new Intl.NumberFormat("en", { style: "currency", currency: "IDR", maximumFractionDigits: 2 }).format(expected / 100);
   assert.equal(await page.locator(".stats .stat").nth(1).locator("h2").innerText(), totalText);
+  await page.getByRole("img", { name: "Daily spending chart", exact: true }).waitFor();
+  const daily = page.getByRole("img", { name: "Daily spending chart", exact: true });
+  assert.notEqual(await daily.getAttribute("tabindex"), "0");
+  assert.equal(await page.locator(".spending-history").first().locator(".report-row").count(), 2);
   await check(page, "report-custom-range", width, height);
   await page.getByRole("tab", { name: "Transactions", exact: true }).click();
   assert.equal(await page.getByRole("button", { name: "Edit Previous month bill", exact: true }).count(), 1);
@@ -672,6 +677,19 @@ async function checkDateRange(page, width, height) {
 async function checkExpenseReport(page, width, height) {
   const chart = page.getByRole("img", { name: "Expense category pie chart" });
   await chart.waitFor();
+  await page.getByRole("img", { name: "Daily spending chart", exact: true }).waitFor();
+  await page.getByRole("img", { name: "Monthly spending chart", exact: true }).waitFor();
+  const dailyRows = page.locator(".spending-history").first().locator(".report-row");
+  const monthlyRows = page.locator(".spending-history").nth(1).locator(".report-row");
+  assert.equal(await dailyRows.count(), 1);
+  assert.equal(await monthlyRows.count(), 2);
+  const currentExpense = data.entries.filter((e) => e.kind === "expense" && e.id !== "previous").reduce((n, e) => n + e.amount, 0);
+  const amountText = new Intl.NumberFormat("en", { style: "currency", currency: "IDR", maximumFractionDigits: 2 }).format(currentExpense / 100);
+  assert.match(await dailyRows.first().innerText(), new RegExp(date.slice(0, 10)));
+  assert.ok((await dailyRows.first().innerText()).includes(amountText));
+  assert.ok((await monthlyRows.last().innerText()).includes(amountText));
+  assert.match(await monthlyRows.first().innerText(), /100/);
+  assert.match(await page.getByRole("definition").first().ariaSnapshot(), /IDR/);
   assert.equal(await page.locator(".recharts-pie-sector").count(), 2);
   const rows = page.locator(".expense-category-list .report-row");
   assert.equal(
@@ -724,6 +742,8 @@ async function checkExpenseReport(page, width, height) {
     0,
     "A transfer into USD must not count as spending",
   );
+  assert.equal(await page.getByRole("img", { name: "Daily spending chart", exact: true }).count(), 0);
+  assert.equal(await page.getByRole("img", { name: "Monthly spending chart", exact: true }).count(), 0);
   await choose(page, "Currency", "IDR");
   const originalMonth = date.slice(0, 7);
   await chooseMonth(page, singleDate.toISOString().slice(0, 7));
@@ -738,6 +758,8 @@ async function checkExpenseReport(page, width, height) {
   await page
     .getByRole("heading", { name: "No spending to report yet" })
     .waitFor();
+  assert.equal(await page.getByRole("img", { name: "Daily spending chart", exact: true }).count(), 0);
+  assert.equal(await page.getByRole("img", { name: "Monthly spending chart", exact: true }).count(), 1, "All-history chart remains independent of the selected period");
   await check(page, "report-empty", width, height);
   await chooseMonth(page, originalMonth);
 }
@@ -809,7 +831,11 @@ try {
         await checkExpenseReport(page, width, height);
         await checkDateRange(page, width, height);
       }
-      if (tab === "Settings") await checkCategories(page, width, height);
+      if (tab === "Settings" && !reportsOnly) await checkCategories(page, width, height);
+    }
+    if (reportsOnly) {
+      await context.close();
+      continue;
     }
     await page.getByRole("tab", { name: "Transactions", exact: true }).click();
     await page
@@ -935,7 +961,9 @@ try {
   }
   assert.deepEqual(errors, [], "JavaScript page errors");
   console.log(
-    "Responsive checks passed: seven sizes, all tabs, accessible controls and reports, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
+    reportsOnly
+      ? "Report browser checks passed: seven sizes, all tabs, custom dates, daily/monthly charts, exact amounts, empty periods, currencies, and accessible controls."
+      : "Responsive checks passed: seven sizes, all tabs, accessible controls and reports, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
   );
 } finally {
   await browser?.close();

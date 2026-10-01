@@ -18,7 +18,7 @@ Design requirement: mobile first, then tablet, then desktop. Every feature must 
 - [x] IDR, USD, and CAD balances kept separately; exact amounts stored as integer minor units.
 - [x] Income and expense category management, preserving category names in transaction history.
 - [x] Month selection and currency selection for summaries and reports. Transaction history currently includes all currencies for the selected month.
-- [x] Expense category pie chart using the shadcn Chart container and Recharts, with visible category names, exact amounts, and percentages. History charts are still missing.
+- [x] Expense category pie chart using the shadcn Chart container and Recharts, with visible category names, exact amounts, and percentages. Daily and monthly spending history charts are also available.
 - [x] Version checks reject conflicting saves instead of overwriting another tab's changes.
 - [x] Database migrations, public API table permissions, ledger RLS, and a runnable live database check.
 
@@ -53,12 +53,14 @@ After the fix, `pnpm test:responsive` passed at 320×568, 390×844, 768×1024, 8
 ### 1. Reports and date ranges
 
 - [x] Add an expense category pie chart with amounts, percentages, and an accessible legend.
-- [ ] Add a spending history graph with daily totals within a period and monthly totals across history.
+- [x] Add a spending history graph with daily totals within a period and monthly totals across history.
 - [x] Add custom start/end date filters alongside the existing month filter.
-- [x] Use the same selected period for transaction history, income/expense totals, and the category chart. History charts follow in the next step.
-- [ ] Keep currencies separate and exclude transfers, opening balances, and corrections from spending charts.
+- [x] Use the same selected period for transaction history, income/expense totals, category breakdown, and daily charts. Monthly history is explicitly labeled All history.
+- [x] Keep currencies separate and exclude transfers, opening balances, and corrections from spending charts. Linked service fees count as expenses.
 - [ ] Label current balance clearly when a historical period is selected; decide whether a separate period-end balance is needed.
 - [ ] Handle empty periods, single-category periods, and month/date boundaries correctly.
+
+Spending history verification (2026-10-01): domain checks cover sorted daily/monthly totals, fee inclusion, excluded transfers/corrections, and currency isolation. `RESPONSIVE_SCOPE=reports pnpm test:responsive` passed at all seven sizes, including exact visible amounts, single-day/month data, empty periods, custom ranges, and the independent all-history chart. Zero-spending buckets are omitted with an explicit caption. Lint and TypeScript passed.
 
 Date range verification (2026-10-01): production `pnpm test:responsive` passed at all seven sizes, including custom ranges across months, matching totals/category breakdown/history, invalid-range preservation, and existing editor/transfer persistence checks. Report domain checks passed in Asia/Jakarta and America/New_York; lint, TypeScript, production build, and live database checks passed. Dates retain device-timezone behavior.
 

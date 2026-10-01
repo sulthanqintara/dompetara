@@ -1355,3 +1355,34 @@ footer span {
     align-items: end;
   }
 }
+
+.spending-history {
+  margin-top: 22px;
+}
+.spending-history-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  padding: 0 16px 16px;
+}
+.spending-history-body figure,
+.spending-history-values {
+  min-width: 0;
+}
+.spending-history-chart {
+  width: 100%;
+  height: 260px;
+  aspect-ratio: auto;
+}
+.spending-history-body figcaption {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 768px) {
+  .spending-history-body {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    padding: 0 24px 24px;
+  }
+}
