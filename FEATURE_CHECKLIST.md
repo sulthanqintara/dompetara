@@ -2,6 +2,8 @@
 
 Reviewed: 2026-10-01. Checked items exist today; unchecked items remain. This is a plan, not a record of completed feature work.
 
+Design requirement: mobile first, then tablet, then desktop. Every feature must remain usable at each size; the existing responsive breakpoints are not enough to meet this requirement yet.
+
 ## Already working
 
 - [x] Google sign-in through Better Auth, with Supabase Postgres persistence. Login and persistence confirmed by the user.
@@ -19,6 +21,29 @@ Reviewed: 2026-10-01. Checked items exist today; unchecked items remain. This is
 - [x] Database migrations, public API table permissions, ledger RLS, and a runnable live database check.
 
 ## Remaining original requirements
+
+### 0. Mobile-first layout (priority before new features)
+
+- [ ] Start with a usable single-column phone layout, adding tablet and desktop layouts as space allows.
+- [ ] Give transaction history a readable phone layout with amounts and actions visible, without squeezed table columns or page-wide horizontal scrolling.
+- [ ] Fit all navigation tabs on narrow phones without clipping or overflow.
+- [ ] Adapt summary cards, wallet cards, and transaction history to tablet space before introducing a full desktop sidebar and multi-column layout.
+- [ ] Keep action buttons, filters, dialog close buttons, and category removal controls comfortably tappable; target at least 44 × 44 CSS pixels for primary touch controls.
+- [ ] Keep forms readable on phones, with appropriate input sizes and dialogs that scroll while keeping actions reachable.
+- [ ] Verify short viewports, landscape, text enlargement, and the on-screen keyboard; avoid hidden form controls and page overflow.
+- [ ] Verify every tab, sign-in, and all editors at 320px and 390px phone widths, 768px tablet width, and 1024px/1440px desktop widths.
+- [ ] Apply the same mobile-first checks to future receipt review, charts, date filters, and saved insights.
+
+Rendered audit on 2026-10-01 used local Chromium with a temporary account and persisted sample ledger, removed afterward:
+
+| Size | Findings |
+| --- | --- |
+| Phone, 320px | Transactions expanded the page to 474px; navigation overflowed, and other tabs expanded to 343–345px. |
+| Phone, 390px | Transactions expanded the page to 474px; titles wrapped into one-letter-wide columns. Wallet, report, and settings fit the page width. |
+| Tablet, 768px | No page overflow, but the desktop sidebar left transactions cramped and summary amounts broke across lines. |
+| Desktop, 1024px/1440px | No page overflow in the tested tabs and editors; the 1440px transaction layout was readable. |
+
+Sign-in fit all tested widths, and the editors opened and scrolled. Touch controls still need work: transaction Edit was approximately 19 × 17px, category removal 14 × 14px, and dialog Close 24 × 24px. No JavaScript page errors occurred. Real-device keyboard and Safari checks remain unverified. This audit records gaps; layout fixes are not implemented yet.
 
 ### 1. Reports and date ranges
 
@@ -78,13 +103,15 @@ These extend the original request and are optional.
 
 ## Suggested implementation order
 
-1. Finish reports and date ranges; this can ship using existing ledger data.
-2. Resolve AI access, then build image upload → extraction → review → confirmed save.
-3. Add saved daily insights using the same reporting totals and chosen AI provider.
-4. Choose optional improvements based on actual use.
+1. Fix and verify the phone layout, then tablet and desktop layouts.
+2. Finish reports and date ranges; this can ship using existing ledger data.
+3. Resolve AI access, then build image upload → extraction → review → confirmed save.
+4. Add saved daily insights using the same reporting totals and chosen AI provider.
+5. Choose optional improvements based on actual use.
 
 ## Acceptance checks for the new work
 
+- [ ] Complete the feature on a narrow phone first, then verify tablet and desktop layouts without page overflow or inaccessible controls.
 - [ ] A representative receipt saves the correct total, wallet, currency, date, and items; a retry does not charge the wallet twice.
 - [ ] Charts and totals agree across month boundaries and custom ranges, including currencies, transfers, and corrections.
 - [ ] Saved daily insights survive reloads and cannot be accessed by another signed-in user.
