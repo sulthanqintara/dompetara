@@ -1,6 +1,6 @@
 import { ChartNoAxesCombined } from "lucide-react";
-import { format } from "../format";
 import type { Currency } from "../ledger";
+import { ExpenseCategoryChart } from "./expense-category-chart";
 
 export function ReportTab({
   groups,
@@ -22,26 +22,11 @@ export function ReportTab({
         </span>
       </div>
       {groups.length ? (
-        groups.map(([category, amount]) => (
-          <div className="report-row" key={category}>
-            <div>
-              <strong>{category}</strong>
-              <span>
-                {format(amount, currency)}{" "}
-                <small>
-                  {" "}
-                  · {Math.round((amount / expense) * 100)}%
-                </small>
-              </span>
-            </div>
-            <meter
-              min={0}
-              max={expense}
-              value={amount}
-              aria-label={`${category} spending`}
-            />
-          </div>
-        ))
+        <ExpenseCategoryChart
+          groups={groups}
+          expense={expense}
+          currency={currency}
+        />
       ) : (
         <div className="empty">
           <ChartNoAxesCombined />

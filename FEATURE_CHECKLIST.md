@@ -16,7 +16,7 @@ Design requirement: mobile first, then tablet, then desktop. Every feature must 
 - [x] IDR, USD, and CAD balances kept separately; exact amounts stored as integer minor units.
 - [x] Income and expense category management, preserving category names in transaction history.
 - [x] Month selection and currency selection for summaries and reports. Transaction history currently includes all currencies for the selected month.
-- [x] Spending by category with amounts, percentages, and meters. Pie and history charts are still missing.
+- [x] Expense category pie chart using the shadcn Chart container and Recharts, with visible category names, exact amounts, and percentages. History charts are still missing.
 - [x] Version checks reject conflicting saves instead of overwriting another tab's changes.
 - [x] Database migrations, public API table permissions, ledger RLS, and a runnable live database check.
 
@@ -50,13 +50,15 @@ After the fix, `pnpm test:responsive` passed at 320×568, 390×844, 768×1024, 8
 
 ### 1. Reports and date ranges
 
-- [ ] Add an expense category pie chart with amounts, percentages, and an accessible legend.
+- [x] Add an expense category pie chart with amounts, percentages, and an accessible legend.
 - [ ] Add a spending history graph with daily totals within a period and monthly totals across history.
 - [ ] Add custom start/end date filters alongside the existing month filter.
 - [ ] Use the same selected period for transaction history, income/expense totals, category breakdown, and charts.
 - [ ] Keep currencies separate and exclude transfers, opening balances, and corrections from spending charts.
 - [ ] Label current balance clearly when a historical period is selected; decide whether a separate period-end balance is needed.
 - [ ] Handle empty periods, single-category periods, and month/date boundaries correctly.
+
+Pie chart verification: `pnpm test:responsive` passed against both development and production servers at all seven viewport sizes listed above. Checks cover the chart's accessible name, visible semantic category breakdown, exact amounts, tiny nonzero percentages, long labels, month/currency filtering, excluded transfers/corrections, and single/empty periods. The pie has no animation or hover-only information. Lint, TypeScript, ledger checks, and the production build passed. Real-device screen-reader and Safari verification remains outstanding.
 
 ### 2. Screenshot and receipt import
 
@@ -81,6 +83,41 @@ After the fix, `pnpm test:responsive` passed at 320×568, 390×844, 768×1024, 8
 - [ ] Define when an analysis is generated: on demand, first visit of the day, or an automatic daily schedule.
 - [ ] Avoid duplicate daily records and repeated charges for unchanged inputs; show when a saved analysis is stale after ledger edits.
 - [ ] Scope saved analyses to the authenticated user and use the same timezone rules as reports.
+
+## Design audit: native and custom UI remaining
+
+Reviewed after the pie chart on 2026-10-01. These are candidates for the next design pass, not changes made in this feature. The app currently imports only the shadcn Chart container; the installed Button, Card, Input, and Label components are unused by app views. Use the existing Base UI preset when adding components. Suggested components are listed in the [official shadcn catalog](https://ui.shadcn.com/docs/components).
+
+All paths below are relative to `src/features/`; ledger view files live in `ledger/components/`.
+
+| UI element | Current implementation and locations | Suggested shadcn component/pattern |
+| --- | --- | --- |
+| Wallet, source/destination wallet, currency, destination currency, category, and category-type dropdowns | Native `select` in `filters-bar.tsx`, `editor-form.tsx`, `settings-tab.tsx` | Select; preserve labels, required validation, keyboard access, and dependent wallet choices. |
+| Period / month filter | Native `input type="month"` in `filters-bar.tsx` | Popover with month/year selection; Calendar for the planned custom date range. Preserve whole-month selection. |
+| Transaction date and time | Native `datetime-local` in `editor-form.tsx` | Calendar + Popover for date, Input for time; retain local-timezone semantics. |
+| Wallet/category names, transaction title, amounts, and balances | Native text/number inputs in `editor-form.tsx`, `settings-tab.tsx` | Input; preserve money limits, steps, required fields, and mobile input size. |
+| Description | Native textarea in `editor-form.tsx` | Textarea. |
+| Form labels, optional markers, help text, and field errors | HTML labels/text in `filters-bar.tsx`, `editor-form.tsx`, `settings-tab.tsx` | Field / Label with associated descriptions and errors. |
+| Wallet and transaction editors | Native dialog with custom backdrop, focus restoration, body scroll lock, and sticky actions in `editor-form.tsx` | Dialog; consider Drawer on phones if it improves long-form editing. Keep actions reachable. |
+| Delete transaction and remove category confirmations | Browser `confirm()` in `editor-form.tsx`, `settings-tab.tsx` | AlertDialog. No browser `alert()` calls were found. |
+| Income / expense / transfer switch | Custom segmented buttons in `editor-form.tsx` | Single-selection ToggleGroup or Tabs, with selected state announced. |
+| Income and expense category chips | Custom rectangular spans and remove buttons in `settings-tab.tsx` | Badge styled as a pill + accessible remove Button; maintain a 44px touch target. |
+| Action buttons throughout the app | Native buttons for add/edit/save/cancel/delete/close, correction balance rows, add category, sign out, reload, and Google sign-in | Button in `ledger-app.tsx`, `editor-form.tsx`, `transactions-tab.tsx`, `wallets-tab.tsx`, `settings-tab.tsx`, and `auth/sign-in-form.tsx`; retain navigation-specific patterns below. |
+| Summary, wallet, report, transaction, and settings panels | Custom articles/sections in `stats-bar.tsx`, `wallets-tab.tsx`, `report-tab.tsx`, `transactions-tab.tsx`, `settings-tab.tsx` | Card; preserve responsive grids. Add-wallet tile uses Button within an appropriate container. |
+| Transaction history | HTML table with custom phone row layout in `transactions-tab.tsx` | Table on desktop with a readable mobile list/card layout; retain table semantics where used. No data-table framework needed yet. |
+| Transaction kind markers | Custom icon backgrounds in `transactions-tab.tsx` | Badge styling where useful; keep income/expense/transfer/correction distinguishable beyond color. |
+| Workspace navigation | Custom aside/nav/buttons, desktop sidebar and phone tab strip in `sidebar.tsx` | Sidebar on desktop; Tabs or Buttons for the phone view switch. |
+| Profile initial | Custom avatar span in `sidebar.tsx` | Avatar with fallback initial. |
+| Transaction count and private-ledger status | Custom spans in `transactions-tab.tsx`, `ledger-app.tsx` | Badge. |
+| Workspace breadcrumb | Custom span/ChevronRight in `ledger-app.tsx` | Breadcrumb. |
+| Sign-in, loading, and save errors | Custom `role="alert"` blocks in `auth/sign-in-form.tsx`, `ledger-app.tsx`, `editor-form.tsx` | Alert; keep retry actions and form error announcements. |
+| Loading and pending states | Custom loading text in `ledger-app.tsx`; changing button text in editor/sign-in | Skeleton for initial loading, Spinner or Button pending state for actions. |
+| Empty ledger, no wallets, no transactions, and no spending | Custom icon/heading/text blocks in `transactions-tab.tsx`, `report-tab.tsx`, `ledger-app.tsx` | Empty with appropriate action buttons. |
+| Pie chart category breakdown | Custom semantic definition list, swatches, caption, and spacing in `expense-category-chart.tsx`; chart itself uses shadcn | Retain the visible accessible list; theme its typography and separators alongside the design pass. No hover tooltip is required to read values. |
+| Panel/profile/footer dividers | Custom CSS borders in `globals.css` | Separator where a semantic divider is useful; ordinary card borders can remain CSS. |
+| Sign-in page composition, branding, headings, descriptions, privacy note, and footer | Custom HTML/CSS in `auth/sign-in-form.tsx`, `ledger-app.tsx`, `sidebar.tsx` | Align typography, spacing, colors, and icons with the chosen theme; these do not each require a new shadcn component. |
+
+Start the next mobile-first design pass with Select, Dialog/AlertDialog, Button, Input/Field/Label, Textarea, and category Badges. Then address the period picker and shared cards/navigation/status states. Re-render phone, tablet, desktop, and short landscape views after each group, including opened dropdowns, confirmations, keyboard focus, and long category/wallet names.
 
 ## Decisions needed before the relevant feature
 

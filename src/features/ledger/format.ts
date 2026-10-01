@@ -13,3 +13,11 @@ export function format(amount: number, currency: Currency) {
     maximumFractionDigits: 2,
   }).format(amount / 100);
 }
+
+export function formatShare(share: number) {
+  if (share > 0 && share < 0.001) return "<0.1%";
+  return new Intl.NumberFormat("en", {
+    style: "percent",
+    maximumFractionDigits: 1,
+  }).format(share);
+}

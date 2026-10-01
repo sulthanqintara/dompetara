@@ -11,6 +11,10 @@ const sql = postgres(process.env.DATABASE_URL, { prepare: false, max: 1 });
 const id = randomUUID();
 const token = randomUUID();
 const date = new Date().toISOString();
+const singleDate = new Date(date);
+singleDate.setUTCDate(1);
+singleDate.setUTCHours(0, 0, 0, 0);
+singleDate.setUTCMonth(singleDate.getUTCMonth() - 1);
 const errors = [];
 const sizes = [[320, 568], [390, 844], [768, 1024], [844, 390], [1024, 768], [1200, 800], [1440, 900]];
 const data = {
@@ -22,12 +26,14 @@ const data = {
   categories: [
     { id: "food", name: "Food & drink", kind: "expense" },
     { id: "long", name: "Category".repeat(20), kind: "expense" },
+    { id: "bills", name: "Bills", kind: "expense" },
   ],
   entries: [
     { id: "opening", kind: "correction", date, wallet: "bank", currency: "IDR", amount: 1500000000, title: "Opening balance", category: "", description: "" },
     { id: "lunch", kind: "expense", date, wallet: "bank", currency: "IDR", amount: 8750000, title: "Lunch and groceries", category: "Food & drink", description: "Weekly groceries and lunch with friends" },
     { id: "long", kind: "expense", date, wallet: "long", currency: "IDR", amount: 123456789012, title: "LongTransactionTitle".repeat(12), category: "Category".repeat(20), description: "Long receipt description ".repeat(20) },
     { id: "transfer", kind: "transfer", date, wallet: "bank", currency: "IDR", amount: 160000000, toWallet: "bank", toCurrency: "USD", received: 10000, title: "Transfer", category: "", description: "Converted savings" },
+    { id: "previous", kind: "expense", date: singleDate.toISOString(), wallet: "bank", currency: "IDR", amount: 10000, title: "Previous month bill", category: "Bills", description: "" },
   ],
 };
 
@@ -56,6 +62,37 @@ async function check(page, name, width, height) {
   if (screenshots) await page.screenshot({ path: `${screenshots}/${width}x${height}-${name}.png`, fullPage: true });
 }
 
+async function checkExpenseReport(page, width, height) {
+  const chart = page.getByRole("img", { name: "Expense category pie chart" });
+  await chart.waitFor();
+  assert.equal(await page.locator(".recharts-pie-sector").count(), 2);
+  const rows = page.locator(".expense-category-list .report-row");
+  assert.equal(await rows.count(), 2, "Only expenses in this period/currency belong in the pie");
+  const food = rows.filter({ hasText: "Food & drink" });
+  assert.match(await food.innerText(), /IDR\s+87,500/);
+  assert.match(await food.innerText(), /<0\.1% of expenses/, "Small nonzero spending must not display as 0%");
+  const accessibleText = await page.locator(".expense-category-list").ariaSnapshot();
+  assert.match(accessibleText, /Food & drink/);
+  assert.match(accessibleText, /87,500/);
+  assert.match(accessibleText, /<0\.1% of expenses/);
+  assert.notEqual(await chart.getAttribute("tabindex"), "0", "A static chart must not create an unnecessary keyboard stop");
+  await page.getByRole("combobox", { name: "Currency", exact: true }).selectOption("USD");
+  await page.getByRole("heading", { name: "No spending to report yet" }).waitFor();
+  assert.equal(await page.locator(".expense-pie-chart").count(), 0, "A transfer into USD must not count as spending");
+  await page.getByRole("combobox", { name: "Currency", exact: true }).selectOption("IDR");
+  const month = page.getByLabel("Month", { exact: true });
+  const originalMonth = await month.inputValue();
+  await month.fill(singleDate.toISOString().slice(0, 7));
+  await chart.waitFor();
+  assert.equal(await page.locator(".recharts-pie-sector").count(), 1);
+  assert.match(await page.locator(".expense-category-list").innerText(), /Bills.*100%/s);
+  await check(page, "report-single-category", width, height);
+  await month.fill("1999-12");
+  await page.getByRole("heading", { name: "No spending to report yet" }).waitFor();
+  await check(page, "report-empty", width, height);
+  await month.fill(originalMonth);
+}
+
 let browser;
 try {
   if (screenshots) await mkdir(screenshots, { recursive: true });
@@ -79,6 +116,7 @@ try {
     for (const tab of ["Transactions", "Wallet", "Report", "Settings"]) {
       await page.getByRole("button", { name: tab, exact: true }).click();
       await check(page, tab.toLowerCase(), width, height);
+      if (tab === "Report") await checkExpenseReport(page, width, height);
     }
     await page.getByRole("button", { name: "Transactions", exact: true }).click();
     await page.getByRole("button", { name: "Edit Lunch and groceries", exact: true }).click();
@@ -112,7 +150,7 @@ try {
     await context.close();
   }
   assert.deepEqual(errors, [], "JavaScript page errors");
-  console.log("Responsive checks passed: seven viewport sizes, all tabs, long content, touch controls, dialog scrolling, save, and dismissal.");
+  console.log("Responsive checks passed: seven sizes, all tabs, accessible expense charts and visible breakdowns, currency/month filters, single/empty periods, touch controls, and dialog save/dismissal.");
 } finally {
   await browser?.close();
   await sql`delete from public."user" where id = ${id}`;

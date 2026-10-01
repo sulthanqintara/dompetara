@@ -22,6 +22,14 @@ export function spendByCategory(
   ).sort((a, b) => b[1] - a[1]);
 }
 
+export function categoryBreakdown(groups: [string, number][], expense: number) {
+  return groups.map(([category, amount]) => ({
+    category,
+    amount,
+    share: expense > 0 ? amount / expense : 0,
+  }));
+}
+
 export function walletName(data: Ledger, id?: string) {
   return data.wallets.find((w) => w.id === id)?.name ?? "Wallet";
 }
