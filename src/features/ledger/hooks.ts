@@ -1,22 +1,10 @@
-import { useEffect, useState } from "react";
-import { fetchLedger, saveLedger, type LedgerState } from "./api";
+import { useState } from "react";
+import { saveLedger, type LedgerState } from "./api";
 
-export function useLedger() {
-  const [state, setState] = useState<LedgerState>();
+export function useLedger(initialState: LedgerState) {
+  const [state, setState] = useState(initialState);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-
-  useEffect(() => {
-    fetchLedger()
-      .then(setState)
-      .catch((e) =>
-        setError(
-          e instanceof Error
-            ? e.message
-            : "Could not load your ledger.",
-        ),
-      );
-  }, []);
 
   async function save(payload: Record<string, unknown>): Promise<boolean> {
     if (!state || pending) return false;
@@ -36,7 +24,7 @@ export function useLedger() {
   }
 
   return {
-    data: state?.data,
+    data: state.data,
     error,
     setError,
     pending,

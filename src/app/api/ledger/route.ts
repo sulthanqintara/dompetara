@@ -1,23 +1,16 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ledger } from "@/lib/db/schema";
-import { emptyLedger, mutateLedger } from "@/features/ledger/ledger";
+import { mutateLedger } from "@/features/ledger/ledger";
+import { readLedger } from "@/features/ledger/read-ledger";
 import { and, eq } from "drizzle-orm";
 
 export async function GET(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session)
     return Response.json({ error: "Please sign in." }, { status: 401 });
-  await db
-    .insert(ledger)
-    .values({ userId: session.user.id, data: emptyLedger() })
-    .onConflictDoNothing();
-  const [row] = await db
-    .select()
-    .from(ledger)
-    .where(eq(ledger.userId, session.user.id));
   return Response.json(
-    { data: row.data, version: row.version },
+    await readLedger(session.user.id),
     { headers: { "Cache-Control": "no-store" } },
   );
 }

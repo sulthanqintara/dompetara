@@ -1,6 +1,18 @@
 import type { Currency } from "./ledger";
 
-export function localDate(date = new Date()) {
+export function localDate(date = new Date(), timeZone?: string) {
+  if (timeZone) {
+    return new Intl.DateTimeFormat("sv-SE", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).format(date).replace(" ", "T")
+      .replace(/^(\d{1,3})-/, (_, year: string) => `${year.padStart(4, "0")}-`);
+  }
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
     .toISOString()
     .slice(0, 16);

@@ -18,7 +18,7 @@ export function MonthPicker({
   const [open, setOpen] = useState(false);
   const [year, setYear] = useState(Number(value.slice(0, 4)));
   const monthNames = Array.from({ length: 12 }, (_, month) =>
-    new Date(2000, month, 1).toLocaleDateString(undefined, { month: "short" }),
+    new Date(2000, month, 1).toLocaleDateString("en", { month: "short" }),
   );
   const date = new Date(`${value}-01T12:00`);
   return (
@@ -41,7 +41,7 @@ export function MonthPicker({
             />
           }
         >
-          {date.toLocaleDateString(undefined, {
+          {date.toLocaleDateString("en", {
             month: "long",
             year: "numeric",
           })}

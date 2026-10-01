@@ -23,15 +23,15 @@ export function periodLabel(period: Period) {
   return "month" in period ? period.month : `${period.start} – ${period.end}`;
 }
 
-export function periodEntries(data: Ledger, period: Period): Entry[] {
+export function periodEntries(data: Ledger, period: Period, timeZone?: string): Entry[] {
   const { start, end } = periodRange(period);
   if (!validPeriod(start, end)) return [];
   return data.entries
     .filter((e) => {
-      const date = localDate(new Date(e.date)).slice(0, 10);
+      const date = localDate(new Date(e.date), timeZone).slice(0, 10);
       return date >= start && date <= end;
     })
-    .sort((a, b) => b.date.localeCompare(a.date));
+    .sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
 }
 
 export function periodTotals(entries: Entry[], currency: Currency) {
@@ -75,11 +75,12 @@ export function spendingHistory(
   entries: Entry[],
   currency: Currency,
   interval: "daily" | "monthly",
+  timeZone?: string,
 ) {
   const totals: Record<string, number> = {};
   for (const entry of entries) {
     if (entry.kind !== "expense" || entry.currency !== currency) continue;
-    const date = localDate(new Date(entry.date)).slice(0, interval === "daily" ? 10 : 7);
+    const date = localDate(new Date(entry.date), timeZone).slice(0, interval === "daily" ? 10 : 7);
     totals[date] = (totals[date] ?? 0) + entry.amount;
   }
   // ponytail: omit zero-spending buckets; fill them if a continuous time axis is needed.

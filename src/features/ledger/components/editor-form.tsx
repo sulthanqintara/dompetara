@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { localDate } from "../format";
 import { Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -43,7 +44,7 @@ export function EditorForm({
       action: editor.type,
       id: entry?.id ?? wallet?.id,
       ...(editor.type === "entry"
-        ? { date: new Date(String(values.date)).toISOString() }
+        ? { date: entry && String(values.date) === localDate(new Date(entry.date)) ? entry.date : new Date(String(values.date)).toISOString() }
         : {}),
     });
   }

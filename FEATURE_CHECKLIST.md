@@ -112,9 +112,11 @@ Replaced the native/custom controls on 2026-10-01 using the existing shadcn Base
 | Converted current balance | shadcn Card, Skeleton, Alert, and retry Button in `ledger/components/current-balance-card.tsx`; native totals and selected-currency equivalents remain visible with the cached reference date. Income/expense summaries retain their original currency filter. |
 | Transaction history | shadcn Table primitives, with explicit table semantics and the existing readable phone row layout. Table styles are scoped so Calendar is unaffected. |
 | Transaction kind markers, transaction count, and private-ledger status | shadcn Badge. |
+| Workspace routes | Server-rendered `/transactions`, `/wallet`, `/report`, and `/settings`; `/` redirects to transactions. Next.js links keep the shared shell mounted, preserve refresh/history navigation, and animate page content with reduced-motion support. Initial ledger data is read on the server; subsequent saves update the shared client state. Device timezone is saved for later server renders. |
+| Transaction pagination | shadcn Pagination and Button with Next.js links render 20 rows per page. `?page=` survives refresh and browser history; invalid or out-of-range values are safely clamped, and changing the period resets to page one. Equal timestamps are ordered consistently across edits. |
 | Workspace navigation | Floating shadcn Tabs below 768px: History (Transactions), Wallet, Report, and Settings switch directly and return to the section top. The compact 56px bar shows an icon beside only the active label; icons animate between zero and full width, and the Base UI indicator slides with CSS transitions. Both respect reduced motion. Bottom padding reserves 80px plus the safe area. shadcn SidebarProvider, Sidebar, Header/Content/Footer, and SidebarTrigger provide a left-side Sheet on tablet and a desktop sidebar that collapses to a 72px icon rail, with its expand/collapse toggle inside the header. Tabs use horizontal keyboard navigation on phones and vertical navigation at wider sizes. Selecting a tablet section closes the Sheet and restores focus to the menu button. |
 | Profile initial and divider | shadcn Avatar/Fallback and Separator in `ledger/components/sidebar.tsx`. |
-| Workspace breadcrumb | shadcn Breadcrumb primitives in `ledger/components/ledger-app.tsx`. |
+| Workspace breadcrumb | shadcn Breadcrumb primitives in `ledger/components/ledger-shell.tsx`. |
 | Errors, loading, pending, and empty states | shadcn Alert, Skeleton, Spinner, and Empty in ledger views and sign-in. |
 | Expense pie and spending history | shadcn Chart container and Recharts; category, daily, and monthly amount lists and captions remain accessible without hover. Monthly history is labeled All history. |
 | Ledger exports | shadcn Card, Button, Spinner, and Alert in `ledger/components/export-settings.tsx`; download a complete JSON backup or CSV transaction history from the latest authenticated ledger. |
@@ -132,6 +134,8 @@ Floating navigation verification (2026-10-01): the full production `pnpm test:re
 Desktop icon rail verification (2026-10-01): production navigation/report checks passed at all eight sizes. Desktop collapse keeps all four section buttons accessible in a 72px rail; the internal toggle expands with the keyboard and restores labels/profile details. Expanded and collapsed desktop screenshots were inspected, and phone navigation and tablet Sheet checks passed. Lint, TypeScript, and production build passed. Temporary test accounts and ledgers were removed.
 
 Converted balance verification (2026-10-01): lint, TypeScript, all domain tests, production build, and the full production `pnpm test:responsive` passed. Checks cover all eight sizes and all three target currencies, exact native totals and converted equivalents, missing-rate retry, stale-rate labels, unchanged ledger/version and shared cache, and balances independent of report dates. Domain checks also cover negative/zero balances, rounding to zero, mixed reference dates, invalid rates, and overflow. Existing editors, exports, transfers, linked fees, reloads, and sidebar navigation passed. Phone and desktop screenshots were inspected; temporary test accounts and ledgers were removed. Real-device Safari and screen-reader checks remain outstanding.
+
+Routing and pagination verification (2026-10-01): lint, TypeScript, domain checks, production build, and the complete production responsive suite passed at all eight sizes. Authenticated HTML and JavaScript-disabled browsers render all four pages. Checks cover the default redirect, persistent navigation during soft route changes, refresh, Back/Forward, 20-row limits, page URLs, edits without timestamp/order drift, last-page controls, and period resets. Existing balances, reports, exports, editors, transfers, and linked fees passed. Phone, short landscape, and desktop screenshots were inspected; temporary test accounts and ledgers were removed.
 
 ## Decisions needed before the relevant feature
 
@@ -154,7 +158,9 @@ These extend the original request and are optional.
 - [ ] Add budget targets or recurring transaction reminders if the basic reports and AI advice are not enough.
 - [ ] Let users reload the latest ledger after a version conflict while preserving their unsaved form values.
 - [ ] Before production deployment, configure its Google callback, app URL, server secrets, and database connection; verify login and persistence there.
-- [ ] Normalize entries and add pagination only when real history size makes the current JSON ledger slow.
+- [x] Paginate transaction history at 20 rows per page, with the page in the URL.
+- [x] Give each section its own server-rendered route: `/transactions` (default), `/wallet`, `/report`, and `/settings`. Refresh and browser history retain the route; shared navigation and mobile animations persist.
+- [ ] Normalize entries and paginate database reads when the JSON ledger becomes slow; current pagination limits rendered rows while retaining the existing ledger storage.
 
 ## Suggested implementation order
 

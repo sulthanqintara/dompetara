@@ -116,7 +116,77 @@ async function switchView(page, name) {
     assert.equal(await page.getByRole("button", { name: "Toggle navigation", exact: true }).evaluate((el) => el === document.activeElement), true);
   }
   await page.getByRole("heading", { name, exact: true, level: 1 }).waitFor();
+  assert.equal(new URL(page.url()).pathname, name === "Transactions" ? "/transactions" : `/${name.toLowerCase()}`);
   if (name === "Transactions" || name === "Report") await page.locator('.balance-stat[aria-busy="false"]').waitFor();
+}
+
+async function checkRoutes(page, context, browser) {
+  await page.evaluate(() => { window.ledgerNavigation = document.querySelector('[aria-label="Workspace"]'); });
+  for (const name of ["Wallet", "Report", "Settings", "Transactions"]) {
+    await switchView(page, name);
+    assert.equal(await page.evaluate(() => window.ledgerNavigation === document.querySelector('[aria-label="Workspace"]')), true, "Navigation stays mounted across routes");
+    const response = await page.request.get(page.url());
+    assert.equal(response.status(), 200);
+    assert.ok((await response.text()).includes(`<h1>${name}</h1>`), "Route headings are rendered on the server");
+  }
+  await switchView(page, "Wallet");
+  await page.reload();
+  await page.getByRole("heading", { name: "Wallet", exact: true, level: 1 }).waitFor();
+  assert.equal(new URL(page.url()).pathname, "/wallet");
+  await switchView(page, "Report");
+  await page.goBack();
+  await page.getByRole("heading", { name: "Wallet", exact: true, level: 1 }).waitFor();
+  await page.goForward();
+  await page.getByRole("heading", { name: "Report", exact: true, level: 1 }).waitFor();
+  const noJs = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1440, height: 900 } });
+  try {
+    await noJs.addCookies(await context.cookies());
+    const serverPage = await noJs.newPage();
+    for (const [path, name] of [["transactions", "Transactions"], ["wallet", "Wallet"], ["report", "Report"], ["settings", "Settings"]]) {
+      await serverPage.goto(`${origin}/${path}`);
+      await serverPage.getByRole("heading", { name, exact: true, level: 1 }).waitFor();
+      if (path === "transactions") assert.ok(await serverPage.getByRole("table", { name: "Transaction history", exact: true }).count());
+    }
+  } finally { await noJs.close(); }
+  await switchView(page, "Transactions");
+}
+
+async function checkPagination(page, width, height) {
+  const before = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const extra = Array.from({ length: 41 }, (_, index) => ({ id: `pagination-${index}`, kind: "expense", wallet: "bank", currency: "IDR", amount: 1, date, title: `Pagination transaction ${String(index).padStart(2, "0")}`, category: "Food & drink", description: "Pagination verification" }));
+  await sql`update public.ledger set data = ${sql.json({ ...before.data, entries: [...extra, ...before.data.entries] })} where user_id = ${id}`;
+  try {
+    await page.goto(`${origin}/transactions`);
+    const rows = page.locator('[aria-label="Transaction history"] tbody tr');
+    await page.getByText("Page 1 of 3", { exact: true }).waitFor();
+    assert.equal(await rows.count(), 20);
+    assert.equal(await page.getByRole("button", { name: "Previous page", exact: true }).isDisabled(), true);
+    await page.getByRole("button", { name: "Next page", exact: true }).click();
+    await page.getByText("Page 2 of 3", { exact: true }).waitFor();
+    assert.equal(new URL(page.url()).searchParams.get("page"), "2");
+    assert.equal(await rows.count(), 20);
+    await check(page, "transactions-page-2", width, height);
+    await page.reload();
+    await page.getByText("Page 2 of 3", { exact: true }).waitFor();
+    await rows.first().getByRole("button", { name: /Edit/ }).click();
+    await page.getByRole("textbox", { name: "Title", exact: true }).fill("Pagination edited transaction");
+    const saved = await saveEditor(page);
+    assert.equal(saved.entries.find((entry) => entry.title === "Pagination edited transaction").date, date, "Editing a title must preserve timestamp precision and pagination order");
+    await page.getByRole("button", { name: "Edit Pagination edited transaction", exact: true }).waitFor();
+    await page.getByRole("button", { name: "Next page", exact: true }).click();
+    await page.getByText("Page 3 of 3", { exact: true }).waitFor();
+    assert.equal(await rows.count(), before.data.entries.filter((entry) => entry.date.slice(0, 7) === date.slice(0, 7)).length + 41 - 40);
+    assert.equal(await page.getByRole("button", { name: "Next page", exact: true }).isDisabled(), true);
+    await check(page, "transactions-last-page", width, height);
+    await page.goBack();
+    await page.getByText("Page 2 of 3", { exact: true }).waitFor();
+    await chooseMonth(page, singleDate.toISOString().slice(0, 7));
+    await page.getByText("Page 1 of 1", { exact: true }).waitFor();
+    assert.equal(new URL(page.url()).searchParams.has("page"), false, "Changing the period resets pagination");
+  } finally {
+    await sql`update public.ledger set data = ${sql.json(before.data)}, version = ${before.version} where user_id = ${id}`;
+    await page.goto(`${origin}/transactions`);
+  }
 }
 
 async function checkBalances(page, width, height) {
@@ -1112,6 +1182,8 @@ try {
       .getByRole("button", { name: "Add transaction", exact: true })
       .waitFor();
     await checkNavigation(page, width, height);
+    if (width === 320) await checkRoutes(page, context, browser);
+    if (width === 320 || width === 1440) await checkPagination(page, width, height);
     await checkBalances(page, width, height);
     for (const tab of ["Transactions", "Wallet", "Report", "Settings"]) {
       await switchView(page, tab);

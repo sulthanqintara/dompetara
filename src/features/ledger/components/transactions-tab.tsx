@@ -20,6 +20,8 @@ import { walletName } from "../derive";
 import { format } from "../format";
 import { receivedAfterFee } from "../transfer";
 import type { Entry, Ledger } from "../ledger";
+import { transactionPage } from "../pagination";
+import { TransactionPagination } from "./transaction-pagination";
 
 export function TransactionsTab({
   data,
@@ -27,13 +29,18 @@ export function TransactionsTab({
   periodLabel,
   onEditEntry,
   onAddWallet,
+  page,
+  timeZone,
 }: {
   data: Ledger;
   entries: Entry[];
   periodLabel: string;
   onEditEntry: (entry: Entry) => void;
   onAddWallet: () => void;
+  page: unknown;
+  timeZone: string;
 }) {
+  const pagination = transactionPage(entries, page);
   return (
     <Card className="panel">
       <div className="panel-heading">
@@ -82,7 +89,7 @@ export function TransactionsTab({
               </TableRow>
             </TableHeader>
             <TableBody role="rowgroup">
-              {entries.map((e) => (
+              {pagination.rows.map((e) => (
                 <TableRow role="row" key={e.id}>
                   <TableCell role="cell" className="transaction-detail">
                     <div className="transaction-name">
@@ -115,9 +122,10 @@ export function TransactionsTab({
                     </div>
                   </TableCell>
                   <TableCell role="cell" className="transaction-date">
-                    {new Date(e.date).toLocaleDateString()}
+                    {new Date(e.date).toLocaleDateString("en", { timeZone })}
                     <small>
-                      {new Date(e.date).toLocaleTimeString([], {
+                      {new Date(e.date).toLocaleTimeString("en", {
+                        timeZone,
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
@@ -172,6 +180,7 @@ export function TransactionsTab({
           </Table>
         </div>
       )}
+      {entries.length > 0 && <TransactionPagination {...pagination} />}
     </Card>
   );
 }
