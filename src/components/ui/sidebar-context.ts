@@ -5,6 +5,7 @@ export const SidebarContext = createContext<{
   open: boolean;
   setOpen: (open: boolean) => void;
   isMobile: boolean;
+  isPhone: boolean;
   openMobile: boolean;
   setOpenMobile: (open: boolean) => void;
   toggleSidebar: () => void;

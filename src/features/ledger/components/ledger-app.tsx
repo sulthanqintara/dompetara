@@ -1,7 +1,7 @@
 "use client";
 import { SidebarProvider } from "@/components/ui/sidebar-provider";
 import { SidebarTrigger } from "@/components/ui/sidebar-trigger";
-import { Tabs } from "@/components/ui/tabs";
+import { WorkspaceTabs } from "./workspace-tabs";
 import { TabsContent } from "@/components/ui/tabs-content";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
@@ -61,9 +61,8 @@ export function LedgerApp({ name, email }: { name: string; email: string }) {
   }
   return (
     <SidebarProvider>
-      <Tabs
+      <WorkspaceTabs
         className="app-shell"
-        orientation="vertical"
         value={tab}
         onValueChange={(value) => setTab(String(value))}
       >
@@ -216,7 +215,7 @@ export function LedgerApp({ name, email }: { name: string; email: string }) {
             save={handleSave}
           />
         )}
-      </Tabs>
+      </WorkspaceTabs>
     </SidebarProvider>
   );
 }

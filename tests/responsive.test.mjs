@@ -22,6 +22,7 @@ let expectedExportFailure = false;
 const sizes = [
   [320, 568],
   [390, 844],
+  [568, 320],
   [768, 1024],
   [844, 390],
   [1024, 768],
@@ -107,7 +108,7 @@ async function switchView(page, name) {
     await page.getByRole("button", { name: "Toggle navigation", exact: true }).click();
   }
   await navigation.click();
-  if (page.viewportSize().width < 1200) {
+  if (page.viewportSize().width >= 768 && page.viewportSize().width < 1200) {
     await page.getByRole("dialog", { name: "Workspace navigation", exact: true }).waitFor({ state: "detached" });
     assert.equal(await page.getByRole("button", { name: "Toggle navigation", exact: true }).evaluate((el) => el === document.activeElement), true);
   }
@@ -117,7 +118,46 @@ async function switchView(page, name) {
 async function checkNavigation(page, width, height) {
   const toggle = page.locator('[data-sidebar="trigger"]');
   const sheet = page.getByRole("dialog", { name: "Workspace navigation", exact: true });
-  if (width < 1200) {
+  if (width < 768) {
+    const navigation = page.getByRole("tablist", { name: "Workspace", exact: true });
+    await navigation.waitFor();
+    assert.equal(await navigation.getAttribute("aria-orientation") ?? "horizontal", "horizontal");
+    assert.equal(await navigation.getByRole("tab").count(), 4);
+    await page.waitForFunction(() => [...document.querySelectorAll(".mobile-nav-icon")].every((el) => {
+      const active = el.closest('[aria-selected="true"]');
+      return Math.abs(el.getBoundingClientRect().width - (active ? 18 : 0)) < 0.5;
+    }));
+    assert.equal(await navigation.evaluate((el) => el.getBoundingClientRect().height), 56, "Phone navigation stays compact");
+    assert.equal(await toggle.isVisible(), false);
+    await navigation.getByRole("tab", { name: "Transactions", exact: true }).focus();
+    await page.keyboard.press("ArrowRight");
+    await page.waitForFunction(() => document.activeElement.getAttribute("aria-label") === "Wallet");
+    await page.keyboard.press("Enter");
+    await page.getByRole("heading", { name: "Wallet", exact: true, level: 1 }).waitFor();
+    assert.equal(await sheet.count(), 0, "Phone navigation switches sections directly");
+    await check(page, "navigation-floating", width, height);
+    await page.waitForFunction(() => {
+      const indicator = document.querySelector(".mobile-nav-indicator").getBoundingClientRect();
+      const active = document.querySelector('.mobile-navigation [aria-selected="true"]').getBoundingClientRect();
+      const icons = [...document.querySelectorAll(".mobile-nav-icon")];
+      return Math.abs(indicator.x - active.x) < 1 && Math.abs(indicator.width - active.width) < 1 && icons.every((el) => Math.abs(el.getBoundingClientRect().width - (el.closest('[aria-selected="true"]') ? 18 : 0)) < 0.5);
+    });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    assert.ok(await page.locator(".mobile-nav-indicator").evaluate((el) => parseFloat(getComputedStyle(el).transitionDuration) < 0.001), "Navigation respects reduced motion");
+    assert.ok(await page.locator(".mobile-nav-icon").first().evaluate((el) => parseFloat(getComputedStyle(el).transitionDuration) < 0.001), "Icon animation respects reduced motion");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    if (width === 320) {
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await toggle.waitFor({ state: "visible" });
+      await toggle.click();
+      await sheet.waitFor();
+      await page.setViewportSize({ width, height });
+      await sheet.waitFor({ state: "detached" });
+      await navigation.waitFor();
+      assert.equal(await navigation.getByRole("tab", { name: "Wallet", exact: true }).getAttribute("aria-selected"), "true");
+    }
+    await switchView(page, "Transactions");
+  } else if (width < 1200) {
     assert.equal(await page.getByRole("tab", { name: "Report", exact: true }).count(), 0, "Mobile navigation stays in the Sheet");
     await toggle.focus();
     await page.keyboard.press("Enter");
@@ -129,6 +169,7 @@ async function checkNavigation(page, width, height) {
     await check(page, "navigation-sheet", width, height);
     await sheet.getByRole("button", { name: "Close", exact: true }).focus();
     await page.keyboard.press("Tab");
+    await page.waitForFunction(() => document.querySelector('[role="dialog"][id="workspace-navigation"]')?.contains(document.activeElement));
     assert.equal(await sheet.evaluate((el) => el.contains(document.activeElement)), true, "Sheet traps keyboard focus");
     await sheet.getByRole("tab", { name: "Transactions", exact: true }).focus();
     await page.keyboard.press("ArrowDown");
@@ -154,7 +195,7 @@ async function checkNavigation(page, width, height) {
     await sheet.waitFor({ state: "detached" });
     assert.equal(await toggle.evaluate((el) => el === document.activeElement), true);
     assert.equal(await toggle.getAttribute("aria-expanded"), "false");
-    if (width === 320) {
+    if (width === 768) {
       await toggle.click();
       await sheet.waitFor();
       await page.setViewportSize({ width: 1440, height: 900 });
@@ -178,6 +219,24 @@ async function checkNavigation(page, width, height) {
     await check(page, "navigation-expanded", width, height);
     assert.equal(await page.getByRole("tab", { name: "Transactions", exact: true }).count(), 1);
   }
+}
+
+async function checkNavigationClearance(page, name, width, height) {
+  if (width >= 768) return;
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await check(page, `${name}-bottom`, width, height);
+  const layout = await page.evaluate(() => {
+    const nav = document.querySelector(".mobile-navigation").getBoundingClientRect();
+    const footer = document.querySelector(".workspace > footer").getBoundingClientRect();
+    const content = document.querySelector(".page-content").getBoundingClientRect();
+    return { navTop: nav.top, navBottom: nav.bottom, footerBottom: footer.bottom, contentBottom: content.bottom };
+  });
+  assert.ok(layout.navTop >= 0 && layout.navBottom <= height, "Floating navigation stays inside the viewport");
+  assert.ok(layout.footerBottom < layout.navTop, `${name}: footer clears the floating navigation`);
+  assert.ok(layout.contentBottom < layout.navTop, `${name}: final content clears the floating navigation`);
+  assert.equal(await page.getByRole("dialog", { name: "Workspace navigation", exact: true }).count(), 0);
+  await page.getByRole("tab", { name: name === "transactions" ? "Transactions" : name[0].toUpperCase() + name.slice(1), exact: true }).click();
+  assert.equal(await page.evaluate(() => window.scrollY), 0, "Phone navigation returns to the top of the section");
 }
 
 async function choose(page, label, option) {
@@ -354,6 +413,7 @@ async function check(page, name, width, height) {
     await page.screenshot({
       path: `${screenshots}/${width}x${height}-${name}.png`,
       fullPage: !(
+        name.endsWith("-bottom") || name === "navigation-floating" ||
         (await page.getByRole("dialog").count()) ||
         (await page.getByRole("alertdialog").count())
       ),
@@ -988,6 +1048,7 @@ try {
     for (const tab of ["Transactions", "Wallet", "Report", "Settings"]) {
       await switchView(page, tab);
       await check(page, tab.toLowerCase(), width, height);
+      await checkNavigationClearance(page, tab.toLowerCase(), width, height);
       if (tab === "Report") {
         await checkExpenseReport(page, width, height);
         await checkDateRange(page, width, height);
@@ -1126,8 +1187,8 @@ try {
   assert.deepEqual(errors, [], "JavaScript page errors");
   console.log(
     reportsOnly
-      ? "Report browser checks passed: seven sizes, all tabs, custom dates, daily/monthly charts, exact amounts, empty periods, currencies, and accessible controls."
-      : "Responsive checks passed: seven sizes, all tabs, date ranges, daily/monthly reports, JSON/CSV downloads and retry, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
+      ? "Report browser checks passed: eight sizes, floating navigation and scroll clearance, tablet Sheet, desktop sidebar, all tabs, custom dates, daily/monthly charts, exact amounts, empty periods, currencies, and accessible controls."
+      : "Responsive checks passed: eight sizes, floating navigation and scroll clearance, tablet Sheet, desktop sidebar, all tabs, date ranges, daily/monthly reports, JSON/CSV downloads and retry, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
   );
 } finally {
   await browser?.close();

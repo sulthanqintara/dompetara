@@ -3,29 +3,16 @@ import { SidebarHeader } from "@/components/ui/sidebar-header";
 import { SidebarContent } from "@/components/ui/sidebar-content";
 import { SidebarFooter } from "@/components/ui/sidebar-footer";
 import { useSidebar } from "@/components/ui/use-sidebar";
-import { TabsList } from "@/components/ui/tabs-list";
-import { TabsTrigger } from "@/components/ui/tabs-trigger";
+import { WorkspaceNavigation } from "./workspace-navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { AvatarFallback } from "@/components/ui/avatar-fallback";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-import {
-  ChartNoAxesCombined,
-  Layers3,
-  List,
-  Settings2,
-  Wallet as WalletIcon,
-} from "lucide-react";
-
-const tabs = [
-  { name: "Transactions", icon: List },
-  { name: "Wallet", icon: WalletIcon },
-  { name: "Report", icon: ChartNoAxesCombined },
-  { name: "Settings", icon: Settings2 },
-];
+import { Layers3 } from "lucide-react";
 
 export function Sidebar({ name, tab }: { name: string; tab: string }) {
-  const { setOpenMobile } = useSidebar();
+  const { isPhone } = useSidebar();
+  if (isPhone) return <WorkspaceNavigation tab={tab} />;
   return (
     <SidebarPanel>
       <SidebarHeader className="ledger-sidebar-header">
@@ -35,20 +22,7 @@ export function Sidebar({ name, tab }: { name: string; tab: string }) {
       </SidebarHeader>
       <SidebarContent className="ledger-sidebar-content">
         <span className="nav-label">YOUR WORKSPACE</span>
-        <TabsList className="workspace-tabs" aria-label="Workspace">
-          {tabs.map(({ name, icon: Icon }) => (
-            <TabsTrigger
-              key={name}
-              className={tab === name ? "nav-item active" : "nav-item"}
-              value={name}
-              onClick={() => setOpenMobile(false)}
-            >
-              <Icon size={19} />
-              {name}
-              {tab === name && <span className="active-dot" />}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <WorkspaceNavigation tab={tab} />
       </SidebarContent>
       <SidebarFooter className="sidebar-bottom">
         <div className="private-note">

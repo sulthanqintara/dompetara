@@ -210,6 +210,8 @@ a:focus-visible {
   min-height: 100dvh;
 }
 .ledger-sidebar-wrapper {
+  --mobile-nav-height: 56px;
+  --mobile-nav-gap: 12px;
   min-width: 0;
   min-height: 100dvh;
   width: 100%;
@@ -324,6 +326,87 @@ a:focus-visible {
 .workspace {
   min-width: 0;
   flex: 1;
+  padding-bottom: calc(var(--mobile-nav-height) + 2 * var(--mobile-nav-gap) + env(safe-area-inset-bottom, 0px));
+  scroll-padding-bottom: calc(var(--mobile-nav-height) + 2 * var(--mobile-nav-gap) + env(safe-area-inset-bottom, 0px));
+}
+.mobile-navigation {
+  position: fixed;
+  z-index: 40;
+  bottom: calc(var(--mobile-nav-gap) + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: row;
+  width: calc(100% - 32px);
+  max-width: 440px;
+  height: var(--mobile-nav-height);
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 40px;
+  background: color-mix(in srgb, var(--background) 88%, transparent);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 8px 32px #172d2426;
+}
+.mobile-nav-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex: 1;
+  gap: 0;
+  height: 44px;
+  min-width: 44px;
+  padding: 4px;
+  font-size: 11px;
+  border-radius: 28px;
+  color: var(--muted-foreground);
+}
+.mobile-nav-item[data-active] {
+  flex: 1.4;
+  background: transparent;
+  color: #247964;
+  box-shadow: none;
+}
+.mobile-nav-item svg {
+  width: 18px;
+  height: 18px;
+}
+.mobile-nav-icon {
+  display: inline-flex;
+  width: 0;
+  margin-right: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: width 200ms ease, margin-right 200ms ease, opacity 200ms ease;
+}
+.mobile-nav-item[data-active] .mobile-nav-icon {
+  width: 18px;
+  margin-right: 4px;
+  opacity: 1;
+}
+.mobile-nav-indicator {
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  top: 0;
+  width: var(--active-tab-width);
+  height: var(--active-tab-height);
+  transform: translate(var(--active-tab-left), var(--active-tab-top));
+  border-radius: 28px;
+  background: #e9f3ef;
+  transition: transform 200ms ease, width 200ms ease;
+}
+[data-slot="sidebar-trigger"] {
+  display: none;
+}
+@media (min-width: 768px) {
+  .workspace {
+    padding-bottom: 0;
+    scroll-padding-bottom: 0;
+  }
+  [data-slot="sidebar-trigger"] {
+    display: inline-flex;
+  }
 }
 .topbar {
   min-height: 52px;
