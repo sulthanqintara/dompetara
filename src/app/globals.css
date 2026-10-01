@@ -347,6 +347,25 @@ a:focus-visible {
   backdrop-filter: blur(18px);
   box-shadow: 0 8px 32px #172d2426;
 }
+.balance-breakdown {
+  margin-block: 16px;
+  display: grid;
+  gap: 12px;
+  font-size: 12px;
+}
+.balance-breakdown > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+.balance-breakdown dd {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
 .mobile-nav-item {
   display: flex;
   flex-direction: row;

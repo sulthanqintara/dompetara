@@ -1,21 +1,18 @@
 import { Card } from "@/components/ui/card";
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  Wallet as WalletIcon,
-} from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { CurrentBalanceCard } from "./current-balance-card";
 import { format } from "../format";
-import type { Currency } from "../ledger";
+import type { Currency, Ledger } from "../ledger";
 
 export function StatsBar({
   income,
   expense,
-  total,
+  data,
   currency,
 }: {
   income: number;
   expense: number;
-  total: number;
+  data: Ledger;
   currency: Currency;
 }) {
   return (
@@ -34,13 +31,7 @@ export function StatsBar({
         <h2>{format(expense, currency)}</h2>
         <small>Money going out</small>
       </Card>
-      <Card className="stat balance-stat">
-        <span>
-          Current balance <WalletIcon size={19} />
-        </span>
-        <h2>{format(total, currency)}</h2>
-        <small>All wallets · {currency} · all recorded transactions</small>
-      </Card>
+      <CurrentBalanceCard data={data} currency={currency} />
     </div>
   );
 }

@@ -24,7 +24,7 @@ import {
 } from "../derive";
 import { localDate } from "../format";
 import { useLedger } from "../hooks";
-import { balance, type Currency } from "../ledger";
+import { type Currency } from "../ledger";
 import { EditorForm, type Editor } from "./editor-form";
 import { FiltersBar } from "./filters-bar";
 import { ReportTab } from "./report-tab";
@@ -51,8 +51,6 @@ export function LedgerApp({ name, email }: { name: string; email: string }) {
   const [editor, setEditor] = useState<Editor>();
   const entries = data ? periodEntries(data, period) : [];
   const { income, expense } = periodTotals(entries, currency);
-  const total =
-    data?.wallets.reduce((n, w) => n + balance(data, w.id, currency), 0) ?? 0;
   const groups = spendByCategory(entries, currency);
   async function handleSave(payload: Record<string, unknown>) {
     const ok = await save(payload);
@@ -146,7 +144,7 @@ export function LedgerApp({ name, email }: { name: string; email: string }) {
                     <StatsBar
                       income={income}
                       expense={expense}
-                      total={total}
+                      data={data}
                       currency={currency}
                     />
                   </>

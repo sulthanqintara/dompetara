@@ -5,6 +5,8 @@ import { mkdir, readFile } from "node:fs/promises";
 import { chromium } from "playwright";
 import postgres from "postgres";
 import { balance } from "../src/features/ledger/ledger.ts";
+import { balanceBreakdown } from "../src/features/ledger/balances.ts";
+import { crossRate } from "../src/features/exchange-rates/exchange-rates.ts";
 
 const origin = process.env.LEDGER_TEST_URL ?? "http://localhost:3000";
 const screenshots = process.env.RESPONSIVE_SCREENSHOTS;
@@ -41,6 +43,7 @@ const data = {
     { id: "bills", name: "Bills", kind: "expense" },
   ],
   entries: [
+    { id: "cad-opening", kind: "correction", wallet: "bank", currency: "CAD", amount: 13800, date, title: "CAD opening balance", category: "", description: "" },
     {
       id: "opening",
       kind: "correction",
@@ -113,6 +116,60 @@ async function switchView(page, name) {
     assert.equal(await page.getByRole("button", { name: "Toggle navigation", exact: true }).evaluate((el) => el === document.activeElement), true);
   }
   await page.getByRole("heading", { name, exact: true, level: 1 }).waitFor();
+  if (name === "Transactions" || name === "Report") await page.locator('.balance-stat[aria-busy="false"]').waitFor();
+}
+
+async function checkBalances(page, width, height) {
+  const before = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const cacheBefore = await sql`select rate_date, rates, last_checked_at from public.exchange_rate_cache order by rate_date`;
+  const snapshot = { IDR: "17800", CAD: "1.38" };
+  let mode = "ok";
+  const handler = async (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    const suggestion = mode === "missing" ? null : { rate: crossRate(snapshot, params.get("from"), params.get("to")), rateDate: "2026-10-01", provider: "ecb", lastCheckedAt: "2026-10-01T00:00:00Z", stale: mode === "stale" };
+    await route.fulfill({ json: { suggestion } });
+  };
+  await page.route("**/api/exchange-rates?*", handler);
+  try {
+    await page.reload();
+    await page.locator('.balance-stat[aria-busy="false"]').waitFor();
+    assert.equal(await page.getByRole("combobox", { name: "Currency", exact: true }).innerText(), "IDR");
+    for (const target of ["IDR", "USD", "CAD"]) {
+      if (target !== "IDR") await choose(page, "Currency", target);
+      await page.locator('.balance-stat[aria-busy="false"]').waitFor();
+      const rates = Object.fromEntries(["IDR", "USD", "CAD"].map((source) => [source, { rate: crossRate(snapshot, source, target), rateDate: "2026-10-01", stale: false }]));
+      const expected = balanceBreakdown(before.data, target, rates);
+      const money = (amount, currency) => new Intl.NumberFormat("en", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount / 100);
+      assert.equal(await page.locator(".balance-stat h2").innerText(), money(expected.total, target));
+      for (const row of expected.rows) {
+        const item = page.locator(".balance-breakdown > div").filter({ has: page.getByText(`${row.currency} wallets`, { exact: true }) });
+        assert.ok((await item.innerText()).includes(money(row.amount, row.currency)));
+        if (row.currency !== target) assert.ok((await item.innerText()).includes(`≈ ${money(row.converted, target)}`));
+      }
+      await check(page, `balance-${target}`, width, height);
+    }
+    if (width === 320) {
+      mode = "missing";
+      await choose(page, "Currency", "IDR");
+      await page.getByRole("button", { name: "Retry conversion", exact: true }).waitFor();
+      assert.equal(await page.locator(".balance-stat h2").innerText(), "—", "Missing rates must not display a partial total");
+      await check(page, "balance-missing-rates", width, height);
+      mode = "ok";
+      await page.getByRole("button", { name: "Retry conversion", exact: true }).click();
+      await page.locator('.balance-stat[aria-busy="false"]').waitFor();
+      assert.notEqual(await page.locator(".balance-stat h2").innerText(), "—");
+      mode = "stale";
+      await choose(page, "Currency", "USD");
+      await page.getByText(/cached rates may be outdated/).waitFor();
+      await check(page, "balance-stale-rates", width, height);
+    }
+    assert.deepEqual(await (await page.request.get(`${origin}/api/ledger`)).json(), before, "Conversions must not change the ledger or its version");
+    assert.deepEqual(await sql`select rate_date, rates, last_checked_at from public.exchange_rate_cache order by rate_date`, cacheBefore, "Balance reads must not refresh shared rates");
+  } finally {
+    await page.unroute("**/api/exchange-rates?*", handler);
+  }
+  await page.reload();
+  await page.locator('.balance-stat[aria-busy="false"]').waitFor();
 }
 
 async function checkNavigation(page, width, height) {
@@ -1055,6 +1112,7 @@ try {
       .getByRole("button", { name: "Add transaction", exact: true })
       .waitFor();
     await checkNavigation(page, width, height);
+    await checkBalances(page, width, height);
     for (const tab of ["Transactions", "Wallet", "Report", "Settings"]) {
       await switchView(page, tab);
       await check(page, tab.toLowerCase(), width, height);
@@ -1197,8 +1255,8 @@ try {
   assert.deepEqual(errors, [], "JavaScript page errors");
   console.log(
     reportsOnly
-      ? "Report browser checks passed: eight sizes, floating navigation and scroll clearance, tablet Sheet, desktop sidebar, all tabs, custom dates, daily/monthly charts, exact amounts, empty periods, currencies, and accessible controls."
-      : "Responsive checks passed: eight sizes, floating navigation and scroll clearance, tablet Sheet, desktop sidebar, all tabs, date ranges, daily/monthly reports, JSON/CSV downloads and retry, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
+      ? "Report browser checks passed: eight sizes, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, custom dates, daily/monthly charts, exact amounts, empty periods, currencies, and accessible controls."
+      : "Responsive checks passed: eight sizes, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, date ranges, daily/monthly reports, JSON/CSV downloads and retry, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
   );
 } finally {
   await browser?.close();

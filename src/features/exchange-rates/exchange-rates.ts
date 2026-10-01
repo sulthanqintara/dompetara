@@ -66,6 +66,13 @@ export function convertMinor(amount: number, rate: string): number {
   return result;
 }
 
+export function convertBalanceMinor(amount: number, rate: string): number {
+  if (!Number.isSafeInteger(amount)) throw new Error("Balance exceeds the supported amount.");
+  const converted = Number(roundedDivide(BigInt(Math.abs(amount)) * rateUnits(rate), scale));
+  if (!Number.isSafeInteger(converted)) throw new Error("Converted balance exceeds the supported amount.");
+  return amount < 0 && converted !== 0 ? -converted : converted;
+}
+
 export function effectiveRate(sent: number, received: number): string {
   if (
     !Number.isSafeInteger(sent) ||

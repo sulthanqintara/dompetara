@@ -3,8 +3,8 @@ import type { Currency } from "../ledger/ledger";
 import type { RateSuggestion } from "./exchange-rates";
 import { fetchCachedRate } from "./api";
 
-export function useCachedRate(from: Currency, to: Currency, date: string) {
-  const key = `${from}:${to}:${date}`;
+export function useCachedRate(from: Currency, to: Currency, date: string, attempt = 0) {
+  const key = `${from}:${to}:${date}:${attempt}`;
   const [state, setState] = useState<{
     key: string;
     suggestion: RateSuggestion | null;
