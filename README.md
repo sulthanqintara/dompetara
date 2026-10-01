@@ -2,6 +2,8 @@
 
 A private Google-account ledger built with Next.js, Better Auth, Drizzle, and Supabase Postgres.
 
+See [the feature checklist](FEATURE_CHECKLIST.md) for completed features, remaining requirements, and open decisions.
+
 ## Setup
 
 1. Copy `.env.example` to `.env` if you do not already have one. In Supabase's Connect dialog, choose Direct, then Session pooler, and copy its Postgres connection string into `DATABASE_URL`. Replace the password placeholder, URL-encode special characters in the password, and add `?sslmode=require`. Copy the actual pooler host from the dialog. Set a random `BETTER_AUTH_SECRET` and your app origin as `BETTER_AUTH_URL`.
