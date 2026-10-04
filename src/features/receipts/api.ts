@@ -12,7 +12,7 @@ export async function readReceipt(
   const bitmap = await createImageBitmap(file);
   let blob: Blob;
   try {
-    const scale = Math.min(1, 2500 / Math.max(bitmap.width, bitmap.height));
+    const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(bitmap.width * scale);
     canvas.height = Math.round(bitmap.height * scale);

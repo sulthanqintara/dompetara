@@ -89,6 +89,17 @@ try {
       (calls[0].body.messages as { content: unknown }[])[1].content,
     ),
   );
+  calls.length = 0;
+  const largeImage = await sharp({
+    create: { width: 2400, height: 1200, channels: 3, background: "white" },
+  }).png().toBuffer();
+  await extractReceipt(new File([largeImage], "large.png"), "ai", "test-only-key");
+  const imageContent = (calls[0].body.messages as { content: { image_url?: { url: string } }[] }[])[1].content;
+  const uploadedImage = imageContent.find((part) => part.image_url)?.image_url?.url;
+  assert.ok(uploadedImage);
+  const resized = await sharp(Buffer.from(uploadedImage.split(",")[1], "base64")).metadata();
+  assert.equal(resized.width, 1600, "Provider images are capped at 1600px");
+  assert.equal(resized.height, 800, "Resizing preserves aspect ratio");
   const bca = { id: "bca", name: "BCA Main Account", currencies: ["IDR"] as const };
   const screenshot = {
     ...draft, merchant: "Shopee", total: "81200", paymentSource: "Bank BCA",

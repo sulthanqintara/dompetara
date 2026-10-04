@@ -16,7 +16,7 @@ const selected = samples.filter((sample) => !requested.length || requested.inclu
 assert.ok(selected.length, "No matching local samples.");
 for (const sample of selected) {
   const bytes = await sharp(`tests/receipt-images/${sample.file}`).rotate()
-    .resize({ width: 2500, height: 2500, fit: "inside", withoutEnlargement: true })
+    .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
     .jpeg({ quality: 90 }).toBuffer();
   for (const method of ["ocr", "ai"] as const) {
     try {

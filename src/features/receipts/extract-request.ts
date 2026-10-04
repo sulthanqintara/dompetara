@@ -17,15 +17,6 @@ export async function extractRequest(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session)
     return Response.json({ error: "Please sign in." }, { status: 401 });
-  const key = process.env.ZAI_API_KEY;
-  if (!key)
-    return Response.json(
-      {
-        error:
-          "Receipt import needs ZAI_API_KEY on the server. Add it and restart the app.",
-      },
-      { status: 503 },
-    );
   const now = Date.now();
   for (const [id, attempt] of attempts)
     if (!attempt.busy && now - attempt.since > 60000) attempts.delete(id);
@@ -53,13 +44,26 @@ export async function extractRequest(request: Request) {
       method = form.get("method");
     if (!(file instanceof File) || (method !== "ocr" && method !== "ai"))
       throw new Error("Choose an image and OCR or AI.");
+    const key = process.env.ZAI_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if ((method === "ocr" && !key) || (method === "ai" && !key && !openaiKey))
+      return Response.json(
+        {
+          error:
+            method === "ocr"
+              ? "Receipt OCR needs ZAI_API_KEY on the server. Add it and restart the app."
+              : "AI receipt reading needs ZAI_API_KEY or OPENAI_API_KEY on the server.",
+        },
+        { status: 503 },
+      );
     const { data } = await readLedger(session.user.id);
     const categories = data.categories
       .filter((category) => category.kind === "expense")
       .map((category) => category.name);
-    return Response.json(await extractReceipt(file, method, key, categories, data.wallets), {
-      headers: { "Cache-Control": "no-store" },
-    });
+    return Response.json(
+      await extractReceipt(file, method, key, categories, data.wallets, openaiKey),
+      { headers: { "Cache-Control": "no-store" } },
+    );
   } catch (error) {
     return Response.json(
       {
