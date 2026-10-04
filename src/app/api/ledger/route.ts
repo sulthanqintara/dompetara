@@ -6,16 +6,18 @@ import { ledger } from "@/lib/db/schema";
 import { mutateLedger } from "@/features/ledger/ledger";
 import { readLedger } from "@/features/ledger/read-ledger";
 import { and, eq } from "drizzle-orm";
+import { withApiErrorLogging } from "@/lib/with-api-error-logging";
+import { logServerError } from "@/lib/log-server-error";
 
-export async function GET(request: Request) {
+export const GET = withApiErrorLogging(async (request: Request) => {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session)
     return Response.json({ error: "Please sign in." }, { status: 401 });
   return Response.json(await readLedger(session.user.id), {
     headers: { "Cache-Control": "no-store" },
   });
-}
-export async function POST(request: Request) {
+});
+export const POST = withApiErrorLogging(async (request: Request) => {
   if (
     request.headers.get("origin") !==
     new URL(process.env.BETTER_AUTH_URL || request.url).origin
@@ -28,7 +30,8 @@ export async function POST(request: Request) {
   try {
     const body = await readLimitedBody(request.body, 300000);
     payload = JSON.parse(body.toString("utf8"));
-  } catch {
+  } catch (error) {
+    logServerError({ method: "POST", path: "/api/ledger", stage: "parse request" }, error);
     return Response.json({ error: "Invalid request." }, { status: 400 });
   }
   const [row] = await db
@@ -63,6 +66,7 @@ export async function POST(request: Request) {
   try {
     data = mutateLedger(row.data, payload);
   } catch (error) {
+    logServerError({ method: "POST", path: "/api/ledger", stage: "mutate ledger" }, error);
     return Response.json(
       {
         error:
@@ -89,4 +93,4 @@ export async function POST(request: Request) {
       { status: 409 },
     );
   return Response.json({ data, version: updated[0].version });
-}
+});

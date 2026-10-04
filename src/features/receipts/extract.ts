@@ -6,6 +6,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { draftSchema, providerDraftSchema, suggestReceiptWallet, type Extraction } from "./receipts.ts";
 import type { Wallet } from "../ledger/ledger.ts";
+import { logServerError } from "../../lib/log-server-error.ts";
 
 export async function extractReceipt(
   file: File,
@@ -40,6 +41,7 @@ export async function extractReceipt(
       "This image is too large after resizing. Try a closer crop.",
     );
   const call = async (endpoint: string, body: unknown, openai = false) => {
+    const context = { provider: openai ? "openai" : "z.ai", endpoint };
     const signal = AbortSignal.timeout(45_000);
     let response: Response;
     try {
@@ -55,19 +57,31 @@ export async function extractReceipt(
           signal,
         },
       );
-    } catch {
+    } catch (error) {
+      logServerError(context, error);
       throw new Error(
         signal.aborted
           ? "Receipt reading timed out. Try a closer crop."
           : "Could not reach the receipt service. Try again later.",
       );
     }
-    if (!response.ok)
+    if (!response.ok) {
+      let message = response.statusText || "Provider request failed";
+      try {
+        const details = JSON.parse((await readLimitedBody(response.body, 1_000_000)).toString("utf8"));
+        if (typeof details.error === "string") message = details.error;
+        else if (typeof details.error?.message === "string") message = details.error.message;
+        else if (typeof details.message === "string") message = details.message;
+      } catch (error) {
+        logServerError({ ...context, status: response.status, stage: "read provider error" }, error);
+      }
+      logServerError({ ...context, status: response.status }, message);
       throw new Error(
         response.status === 429
           ? "Receipt service is busy. Try again later."
           : "Receipt service could not read this image. Check the server API key or try another image.",
       );
+    }
     return JSON.parse(
       (await readLimitedBody(response.body, 1_000_000)).toString("utf8"),
     );
@@ -136,6 +150,7 @@ export async function extractReceipt(
       draft = await parseDraft(false);
     } catch (error) {
       if (!openaiKey) throw error;
+      logServerError({ provider: "z.ai", stage: "OpenAI fallback" }, error);
       draft = await parseDraft(true);
     }
   } else if (openaiKey) draft = await parseDraft(true);

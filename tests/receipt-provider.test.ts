@@ -24,8 +24,11 @@ const draft = {
   suggestedWallet: null,
 };
 const original = globalThis.fetch;
+const originalLog = console.error;
+const errors: { provider?: string; status?: number; stage?: string; message: string }[] = [];
 const calls: { url: string; body: Record<string, unknown> }[] = [];
 try {
+  console.error = (_label, entry) => errors.push(entry);
   globalThis.fetch = async (input, init) => {
     assert.equal(
       new Headers(init?.headers).get("Authorization"),
@@ -136,6 +139,13 @@ try {
   globalThis.fetch = async () =>
     Response.json({ error: "secret provider details" }, { status: 429 });
   await assert.rejects(extractReceipt(file, "ai", "test-only-key"), /busy/);
+  assert.ok(errors.some((entry) => entry.provider === "z.ai" && entry.status === 429 && entry.message === "secret provider details"));
+  globalThis.fetch = async (input) => String(input).includes("api.z.ai")
+    ? Response.json({ error: { message: "Provider quota exceeded" } }, { status: 429 })
+    : Response.json({ choices: [{ finish_reason: "stop", message: { content: JSON.stringify(draft) } }] });
+  assert.deepEqual((await extractReceipt(file, "ai", "test-only-key", [], [], "openai-test-key")).draft, draft);
+  assert.ok(errors.some((entry) => entry.status === 429 && entry.message === "Provider quota exceeded"));
+  assert.ok(errors.some((entry) => entry.stage === "OpenAI fallback"));
   await assert.rejects(
     extractReceipt(
       new File(["not an image"], "bad.png"),
@@ -159,6 +169,7 @@ try {
   );
 } finally {
   globalThis.fetch = original;
+  console.error = originalLog;
 }
 console.log(
   "Provider checks passed: OCR/text and direct-image requests, consistent fingerprints, timeout signal, invalid images, incomplete output and provider failures. No external requests sent.",

@@ -10,6 +10,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Code rules
 
+## API error logging
+
+- Always log failed API requests on the server with `console.error` through `logServerError` / `withApiErrorLogging` so their messages appear in Vercel runtime logs. Wrap new route handlers with `withApiErrorLogging` to cover error responses and uncaught exceptions.
+- Log the original exception before replacing it with a friendly response, and log upstream provider failures even when a fallback succeeds. Include the method, route or provider, HTTP status when available, and failure stage.
+- Never log API keys, tokens, cookies, authorization headers, request bodies, receipt images, or ledger contents. Keep detailed diagnostics server-side and preserve safe client-facing error messages.
+
 ## Design: mobile first
 
 - Design and implement the phone layout first, then adapt it for tablet and desktop with `min-width` media queries.

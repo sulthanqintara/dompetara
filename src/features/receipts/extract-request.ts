@@ -2,6 +2,7 @@ import { readLedger } from "@/features/ledger/read-ledger";
 import { readLimitedBody } from "@/lib/read-limited-body";
 import { auth } from "@/lib/auth";
 import { extractReceipt } from "./extract";
+import { logServerError } from "@/lib/log-server-error";
 
 // ponytail: process-local limits; use a shared limiter before running multiple instances.
 const attempts = new Map<
@@ -65,6 +66,7 @@ export async function extractRequest(request: Request) {
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
+    logServerError({ method: "POST", path: "/api/receipts/extract", stage: "extract receipt" }, error);
     return Response.json(
       {
         error:
