@@ -1,0 +1,4 @@
+.env*
+.claude/
+tests/receipt-images/
+*.tsbuildinfo

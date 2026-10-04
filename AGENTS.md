@@ -15,7 +15,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Design and implement the phone layout first, then adapt it for tablet and desktop with `min-width` media queries.
 - Keep navigation, amounts, forms, and actions readable and usable at 320px without page-wide horizontal scrolling.
 - Give interactive controls at least 44 × 44px touch targets and use at least 16px text in form inputs.
-- Render and check every affected view at phone, tablet, and desktop sizes, including short viewports and long content. Do not consider CSS breakpoints alone proof of responsiveness.
+- For UI changes, render and check every affected view at phone, tablet, and desktop sizes, including short viewports and long content. Do not consider CSS breakpoints alone proof of responsiveness. Backend-only changes do not require layout checks.
 
 ## Components: shadcn
 
@@ -42,3 +42,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - No god files: split multi-view, modal, and helper code into separate files.
 - Domain modules (`src/features/*/*.ts`) are the exception: they may group cohesive pure functions.
 - Extract API calls into `api.ts` instead of `fetch` inside components; extract business math into `derive.ts`/domain modules instead of computing inside components.
+
+## Libraries and validation
+
+- Recommend a library when it meaningfully simplifies implementation or improves correctness; do not hesitate to explain the benefit and tradeoffs. Prefer existing dependencies and native APIs for simple tasks.
+- Use Zod for structured external input validation and infer TypeScript types from schemas instead of duplicating validators and type definitions. Keep business rules and money calculations explicit.

@@ -1,3 +1,5 @@
+import { readLimitedBody } from "@/lib/read-limited-body";
+import { receiptSchema } from "@/features/receipts/receipts";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ledger } from "@/lib/db/schema";
@@ -9,10 +11,9 @@ export async function GET(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session)
     return Response.json({ error: "Please sign in." }, { status: 401 });
-  return Response.json(
-    await readLedger(session.user.id),
-    { headers: { "Cache-Control": "no-store" } },
-  );
+  return Response.json(await readLedger(session.user.id), {
+    headers: { "Cache-Control": "no-store" },
+  });
 }
 export async function POST(request: Request) {
   if (
@@ -25,9 +26,8 @@ export async function POST(request: Request) {
     return Response.json({ error: "Please sign in." }, { status: 401 });
   let payload;
   try {
-    const body = await request.text();
-    if (body.length > 16000) throw new Error();
-    payload = JSON.parse(body);
+    const body = await readLimitedBody(request.body, 300000);
+    payload = JSON.parse(body.toString("utf8"));
   } catch {
     return Response.json({ error: "Invalid request." }, { status: 400 });
   }
@@ -35,6 +35,22 @@ export async function POST(request: Request) {
     .select()
     .from(ledger)
     .where(eq(ledger.userId, session.user.id));
+  if (row && payload?.action === "receipt") {
+    const parsed = receiptSchema.safeParse(payload.receipt);
+    if (
+      parsed.success &&
+      row.data.receiptImports?.some(
+        (saved) =>
+          saved.importId === parsed.data.importId ||
+          saved.fingerprint === parsed.data.fingerprint,
+      )
+    )
+      return Response.json({
+        data: row.data,
+        version: row.version,
+        notice: "Receipt already imported. No additional expense was saved.",
+      });
+  }
   if (!row || payload?.version !== row.version)
     return Response.json(
       {
@@ -48,7 +64,12 @@ export async function POST(request: Request) {
     data = mutateLedger(row.data, payload);
   } catch (error) {
     return Response.json(
-      { error: error instanceof Error ? error.message : "Invalid request." },
+      {
+        error:
+          error instanceof Error && error.name !== "ZodError"
+            ? error.message
+            : "Check the receipt fields and amounts.",
+      },
       { status: 400 },
     );
   }

@@ -4,23 +4,27 @@ import { createHmac, randomUUID } from "node:crypto";
 import { mkdir, readFile } from "node:fs/promises";
 import { chromium } from "playwright";
 import postgres from "postgres";
+import sharp from "sharp";
 import { balance } from "../src/features/ledger/ledger.ts";
 import { balanceBreakdown } from "../src/features/ledger/balances.ts";
 import { crossRate } from "../src/features/exchange-rates/exchange-rates.ts";
 
 const origin = process.env.LEDGER_TEST_URL ?? "http://localhost:3000";
 const screenshots = process.env.RESPONSIVE_SCREENSHOTS;
+const categoriesOnly = process.env.RESPONSIVE_SCOPE === "categories";
+const receiptsOnly = process.env.RESPONSIVE_SCOPE === "receipts";
 const reportsOnly = process.env.RESPONSIVE_SCOPE === "reports";
 const sql = postgres(process.env.DATABASE_URL, { prepare: false, max: 1 });
 const id = randomUUID();
 const token = randomUUID();
-const date = new Date().toISOString();
+const date = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date()) + "T05:00:00.000Z";
 const singleDate = new Date(date);
 singleDate.setUTCDate(1);
 singleDate.setUTCHours(0, 0, 0, 0);
 singleDate.setUTCMonth(singleDate.getUTCMonth() - 1);
 const errors = [];
 let expectedExportFailure = false;
+let expectedLedgerFailure = false;
 const sizes = [
   [320, 568],
   [390, 844],
@@ -107,6 +111,7 @@ const data = {
 
 async function switchView(page, name) {
   const navigation = page.getByRole("tab", { name, exact: true });
+  if (page.viewportSize().width < 768) await navigation.waitFor({ state: "visible" });
   if (!(await navigation.isVisible())) {
     await page.getByRole("button", { name: "Toggle navigation", exact: true }).click();
   }
@@ -182,6 +187,7 @@ async function checkPagination(page, width, height) {
     await page.getByText("Page 2 of 3", { exact: true }).waitFor();
     await chooseMonth(page, singleDate.toISOString().slice(0, 7));
     await page.getByText("Page 1 of 1", { exact: true }).waitFor();
+    await page.waitForURL((url) => !url.searchParams.has("page"));
     assert.equal(new URL(page.url()).searchParams.has("page"), false, "Changing the period resets pagination");
   } finally {
     await sql`update public.ledger set data = ${sql.json(before.data)}, version = ${before.version} where user_id = ${id}`;
@@ -920,6 +926,305 @@ async function checkCategories(page, width, height) {
   await remove.waitFor({ state: "detached" });
 }
 
+async function checkConflicts(page, width, height) {
+  const initial = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const bump = async () => {
+    const latest = await (await page.request.get(`${origin}/api/ledger`)).json();
+    const response = await page.request.post(`${origin}/api/ledger`, {
+      headers: { origin },
+      data: { action: "category", kind: "expense", name: `Other tab ${latest.version}`, version: latest.version },
+    });
+    assert.ok(response.ok(), await response.text());
+    return response.json();
+  };
+  const submit = async (button, status) => {
+    const response = page.waitForResponse((r) => r.url().endsWith("/api/ledger") && r.request().method() === "POST");
+    await button.click();
+    assert.equal((await response).status(), status);
+  };
+  const snapshot = (form) => form.evaluate((el) => [...new FormData(el)]);
+  expectedLedgerFailure = true;
+  await switchView(page, "Transactions");
+  await page.getByRole("button", { name: "Edit Lunch and groceries", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Edit transaction", exact: true });
+  await dialog.getByRole("textbox", { name: "Title", exact: true }).fill("Unsaved groceries A B C");
+  await dialog.getByRole("spinbutton", { name: "Amount", exact: true }).fill("200000");
+  await dialog.getByRole("textbox", { name: /Note/ }).fill("Keep my draft after reload");
+  const draft = await snapshot(dialog.locator("form"));
+  let latest = await bump();
+  const save = dialog.getByRole("button", { name: "Save", exact: true });
+  await submit(save, 409);
+  assert.equal(await save.isDisabled(), true);
+  assert.deepEqual(await snapshot(dialog.locator("form")), draft);
+  await check(page, "conflict-transaction", width, height);
+  await page.route("**/api/ledger", (route) => route.request().method() === "GET"
+    ? route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "Could not load your ledger. Please try again." }) })
+    : route.continue());
+  await dialog.getByRole("button", { name: "Reload latest ledger", exact: true }).click();
+  await dialog.getByRole("alert").filter({ hasText: "Could not load your ledger" }).waitFor();
+  assert.equal(await save.isDisabled(), true);
+  assert.deepEqual(await snapshot(dialog.locator("form")), draft);
+  await check(page, "conflict-reload-failed", width, height);
+  await page.unroute("**/api/ledger");
+  await dialog.getByRole("button", { name: "Reload latest ledger", exact: true }).click();
+  await dialog.getByRole("status").filter({ hasText: "Latest ledger loaded" }).waitFor();
+  assert.equal(await save.isEnabled(), true);
+  assert.deepEqual(await snapshot(dialog.locator("form")), draft);
+  assert.deepEqual(await (await page.request.get(`${origin}/api/ledger`)).json(), latest, "Reload must not save the draft");
+  await check(page, "conflict-draft-kept", width, height);
+  latest = await bump();
+  await submit(save, 409);
+  await dialog.getByRole("button", { name: "Reload latest ledger", exact: true }).click();
+  await dialog.getByRole("status").filter({ hasText: "Latest ledger loaded" }).waitFor();
+  await submit(save, 200);
+  await dialog.waitFor({ state: "detached" });
+  const saved = await (await page.request.get(`${origin}/api/ledger`)).json();
+  assert.equal(saved.version, latest.version + 1);
+  assert.deepEqual(saved.data.categories, latest.data.categories, "Retry preserves the other tab's changes");
+  assert.equal(saved.data.entries.find((e) => e.id === "lunch").amount, 20000000);
+  assert.equal(saved.data.entries.find((e) => e.id === "lunch").description, "Keep my draft after reload");
+  await page.reload();
+  await page.getByRole("button", { name: "Edit Unsaved groceries A B C", exact: true }).waitFor();
+
+  await switchView(page, "Wallet");
+  await page.getByRole("button", { name: "Add wallet", exact: true }).click();
+  const wallet = page.getByRole("dialog", { name: "Add a wallet", exact: true });
+  await wallet.getByRole("textbox", { name: "Wallet name", exact: true }).fill("Unsaved wallet");
+  const walletDraft = await snapshot(wallet.locator("form"));
+  await bump();
+  await submit(wallet.getByRole("button", { name: "Save", exact: true }), 409);
+  await wallet.getByRole("button", { name: "Reload latest ledger", exact: true }).click();
+  await wallet.getByRole("status").filter({ hasText: "Latest ledger loaded" }).waitFor();
+  assert.deepEqual(await snapshot(wallet.locator("form")), walletDraft);
+  await check(page, "conflict-wallet-draft", width, height);
+  await page.keyboard.press("Escape");
+  await wallet.waitFor({ state: "detached" });
+
+  await switchView(page, "Transactions");
+  await page.getByRole("button", { name: "Add transaction", exact: true }).click();
+  const transfer = page.getByRole("dialog", { name: "Add transaction", exact: true });
+  await transfer.getByRole("tab", { name: "transfer", exact: true }).click();
+  await choose(page, "From wallet", "BCA Main Account");
+  await choose(page, "To wallet", "GoPay");
+  await transfer.getByRole("spinbutton", { name: "Amount sent", exact: true }).fill("45");
+  await transfer.getByRole("spinbutton", { name: "Service fee (IDR)", exact: true }).fill("0.5");
+  const transferDraft = await snapshot(transfer.locator("form"));
+  await bump();
+  await submit(transfer.getByRole("button", { name: "Save", exact: true }), 409);
+  await transfer.getByRole("button", { name: "Reload latest ledger", exact: true }).click();
+  await transfer.getByRole("status").filter({ hasText: "Latest ledger loaded" }).waitFor();
+  assert.deepEqual(await snapshot(transfer.locator("form")), transferDraft);
+  await check(page, "conflict-transfer-draft", width, height);
+  await page.keyboard.press("Escape");
+  await transfer.waitFor({ state: "detached" });
+
+  await switchView(page, "Settings");
+  await page.getByRole("textbox", { name: "Category name", exact: true }).fill("Unsaved category");
+  await bump();
+  await submit(page.getByRole("button", { name: "Add category", exact: true }), 409);
+  await page.getByRole("button", { name: "Reload latest ledger", exact: true }).click();
+  await page.getByRole("status").filter({ hasText: "Latest ledger loaded" }).waitFor();
+  assert.equal(await page.getByRole("textbox", { name: "Category name", exact: true }).inputValue(), "Unsaved category");
+  await check(page, "conflict-category-draft", width, height);
+  await page.getByRole("button", { name: "Remove Food & drink", exact: true }).click();
+  const confirmation = page.getByRole("alertdialog");
+  await bump();
+  await submit(confirmation.getByRole("button", { name: "Remove category", exact: true }), 409);
+  await check(page, "conflict-delete-confirmation", width, height);
+  await confirmation.getByRole("button", { name: "Reload latest ledger", exact: true }).click();
+  await confirmation.getByRole("status").filter({ hasText: "Latest ledger loaded" }).waitFor();
+  await confirmation.getByRole("button", { name: "Cancel", exact: true }).click();
+  assert.equal(await page.getByRole("button", { name: "Remove Food & drink", exact: true }).count(), 1);
+  await sql`update public.ledger set data = ${sql.json(initial.data)}, version = version + 1 where user_id = ${id}`;
+  await page.reload();
+  expectedLedgerFailure = false;
+}
+
+async function checkInlineCategories(page, width, height) {
+  await switchView(page, "Transactions");
+  const before = await (await page.request.get(`${origin}/api/ledger`)).json();
+  await page.getByRole("button", { name: "Add transaction", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Add transaction", exact: true });
+  await choose(page, "Category", "Food & drink");
+  await check(page, "inline-category-existing", width, height);
+  await dialog.getByRole("button", { name: "Add category", exact: true }).click();
+  await dialog.getByLabel("New category name", { exact: true }).fill("Long new category ".repeat(8));
+  await check(page, "inline-category-new", width, height);
+  await dialog.getByRole("button", { name: "Choose an existing category", exact: true }).click();
+  assert.equal(await dialog.getByRole("combobox", { name: "Category", exact: true }).innerText(), "Food & drink");
+  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  assert.deepEqual(await (await page.request.get(`${origin}/api/ledger`)).json(), before);
+  for (const kind of ["expense", "income"]) {
+    await page.getByRole("button", { name: "Add transaction", exact: true }).click();
+    await dialog.getByRole("tab", { name: kind, exact: true }).click();
+    await choose(page, "Wallet", "BCA Main Account");
+    await dialog.getByLabel("Amount", { exact: true }).fill("1");
+    await dialog.getByLabel("Title", { exact: true }).fill(`Inline ${kind} ${width}`);
+    await dialog.getByLabel("Note optional", { exact: true }).fill("A gift for a friend");
+    await dialog.getByRole("button", { name: "Add category", exact: true }).click();
+    await dialog.getByLabel("New category name", { exact: true }).fill(`Inline ${kind} category ${width}`);
+    await dialog.getByRole("button", { name: "Save", exact: true }).click();
+    await dialog.waitFor({ state: "hidden" });
+    await page.reload();
+    const saved = await (await page.request.get(`${origin}/api/ledger`)).json();
+    assert.ok(saved.data.categories.some((c) => c.name === `Inline ${kind} category ${width}` && c.kind === kind));
+    const entry = saved.data.entries.find((e) => e.title === `Inline ${kind} ${width}`);
+    assert.equal(entry.category, `Inline ${kind} category ${width}`);
+    assert.equal(entry.description, "A gift for a friend");
+  }
+}
+
+async function checkReceipts(page, width, height) {
+  await page.getByRole("heading", { name: "Transactions", exact: true, level: 1 }).waitFor();
+  const image = { name: "receipt.png", mimeType: "image/png", buffer: await sharp({ create: { width: 64, height: 64, channels: 3, background: "white" } }).png().toBuffer() };
+  await page.getByRole("button", { name: "Import receipt", exact: true }).click();
+  await check(page, "receipt-upload", width, height);
+  const dialog = page.getByRole("dialog");
+  if (width === 320) {
+    assert.equal((await page.request.post(`${origin}/api/receipts/extract`, { headers: { Origin: "https://example.invalid" } })).status(), 403);
+    expectedLedgerFailure = true;
+    await page.route("**/api/receipts/extract", (route) => route.fulfill({ status: 503, json: { error: "Receipt import needs ZAI_API_KEY on the server. Add it and restart the app." } }));
+    await dialog.getByLabel("Receipt image").setInputFiles(image);
+    await dialog.getByRole("button", { name: "Read receipt", exact: true }).click();
+    await dialog.getByRole("alert").filter({ hasText: "ZAI_API_KEY" }).waitFor();
+    await check(page, "receipt-missing-key", width, height);
+    await page.unroute("**/api/receipts/extract");
+    expectedLedgerFailure = false;
+  }
+  const fixture = {
+    importId: randomUUID(), fingerprint: String(width).padStart(64, "a"), method: "ai",
+    draft: { documentKind: "receipt", merchant: `Receipt check ${width}`, date: date.slice(0,10), time: "18:33", currency: "IDR", receiptNumber: "Receipt 123",
+      paymentSource: "Bank BCA", suggestedWallet: { walletId: "bank", reason: "Payment method lists Bank BCA." },
+      suggestedCategory: { name: "food & drink", reason: "This is a restaurant receipt." }, total: "191000", items: [45455,45455,18182,47273,9092,8183].map((value, index) => ({ name: index === 0 ? "Nasi + Ayam Goreng Mentega ".repeat(5) : `Item ${index}`, quantity: index === 2 ? 2 : 1, unitPrice: null, lineTotal: String(value) })),
+      adjustments: [{ label: "Tax 10%", amount: "17364" }, { label: "Rounding", amount: "-4" }], warnings: ["Verify the quantities and line totals before saving."] },
+  };
+  await page.route("**/api/receipts/extract", async (route) => {
+    assert.ok(route.request().postDataBuffer().length < 4_100_000, "Prepared uploads fit the server limit");
+    assert.match(route.request().postData() ?? "", /name="method"\r\n\r\nai/);
+    await route.fulfill({ json: fixture });
+  });
+  await choose(page, "Read with", "AI — image recognition");
+  await dialog.getByLabel("Receipt image").setInputFiles(image);
+  const before = await (await page.request.get(`${origin}/api/ledger`)).json();
+  await dialog.getByRole("button", { name: "Read receipt", exact: true }).click();
+  await page.getByRole("heading", { name: "Review receipt", exact: true }).waitFor();
+  assert.equal((await (await page.request.get(`${origin}/api/ledger`)).json()).version, before.version, "Extraction never writes the ledger");
+  assert.equal(await dialog.getByRole("combobox", { name: "Category", exact: true }).innerText(), "Food & drink");
+  assert.equal(await dialog.getByRole("combobox", { name: "Wallet", exact: true }).innerText(), "BCA Main Account");
+  await choose(page, "Wallet", "GoPay");
+  assert.equal(await dialog.getByRole("combobox", { name: "Wallet", exact: true }).innerText(), "GoPay", "User can override the suggestion");
+  await dialog.getByLabel("Note (optional)", { exact: true }).fill("Meal was a gift for a friend");
+  await check(page, "receipt-review-total", width, height);
+  await choose(page, "Wallet", "BCA Main Account");
+  await choose(page, "Category", "Food & drink");
+  await choose(page, "Save details", "Total and individual items");
+  await check(page, "receipt-review-items", width, height);
+  await dialog.getByLabel("Name", { exact: true }).first().evaluate((input) => input.scrollIntoView({ block: "center" }));
+  await check(page, "receipt-item-row", width, height);
+  await dialog.getByLabel("Final total", { exact: true }).fill("191004");
+  await dialog.getByRole("button", { name: "Save expense", exact: true }).click();
+  await dialog.getByRole("alert").filter({ hasText: "equal the final total" }).waitFor();
+  assert.equal((await (await page.request.get(`${origin}/api/ledger`)).json()).version, before.version);
+  await dialog.getByLabel("Final total", { exact: true }).fill("191000");
+  if (width === 320) {
+    await sql`update public.ledger set version = version + 1 where user_id = ${id}`;
+    expectedLedgerFailure = true;
+    await dialog.getByRole("button", { name: "Save expense", exact: true }).click();
+    await dialog.getByRole("button", { name: "Reload latest ledger", exact: true }).waitFor();
+    await dialog.getByRole("button", { name: "Reload latest ledger", exact: true }).click();
+    await dialog.getByText("Latest ledger loaded.", { exact: false }).waitFor();
+    assert.equal(await dialog.getByLabel("Line total", { exact: true }).nth(2).inputValue(), "18182");
+    await check(page, "receipt-conflict-kept", width, height);
+    expectedLedgerFailure = false;
+  }
+  const saved = page.waitForResponse((response) => response.url().endsWith("/api/ledger") && response.request().method() === "POST");
+  await dialog.getByRole("button", { name: "Save expense", exact: true }).click();
+  const response = await saved; assert.ok(response.ok(), await response.text());
+  const state = await response.json();
+  await dialog.waitFor({ state: "detached" });
+  const entry = state.data.entries.at(-1);
+  assert.equal(entry.description, "Meal was a gift for a friend");
+  assert.equal(entry.amount, 19100000); assert.equal(entry.receipt.items.length, 6);
+  assert.equal(balance(state.data, "bank", "IDR"), balance(before.data, "bank", "IDR") - 19100000);
+  const retry = await page.request.post(`${origin}/api/ledger`, { headers: { Origin: origin }, data: { action: "receipt", receipt: entry.receipt, version: before.version } });
+  assert.ok(retry.ok()); assert.equal((await retry.json()).version, state.version);
+  await page.reload();
+  await page.getByRole("button", { name: `Edit Receipt check ${width}`, exact: true }).click();
+  assert.equal(await dialog.getByLabel("Line total", { exact: true }).nth(2).inputValue(), "18182");
+  assert.equal(await dialog.getByLabel("Note (optional)", { exact: true }).inputValue(), "Meal was a gift for a friend");
+  await check(page, "receipt-saved-items", width, height);
+  const deleted = page.waitForResponse((response) => response.url().endsWith("/api/ledger") && response.request().method() === "POST");
+  await dialog.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Delete transaction", exact: true }).click();
+  assert.ok((await deleted).ok()); await dialog.waitFor({ state: "detached" });
+  fixture.draft.documentKind = "payment";
+  fixture.draft.total = "202177.34";
+  fixture.draft.paymentSource = null; fixture.draft.suggestedWallet = null;
+  fixture.draft.currency = "IDR";
+  fixture.draft.warnings = ["Pending OpenAI bank debit; verify before saving."];
+  fixture.draft.items = []; fixture.draft.adjustments = [];
+  fixture.importId = randomUUID(); fixture.fingerprint = String(width).padStart(64, "b");
+  fixture.draft.merchant = `Payment check ${width}`;
+  fixture.draft.suggestedCategory = { name: `Gifts ${width}`, reason: "Possible gift expense. Confirm against your own payment context." };
+  await page.getByRole("button", { name: "Import receipt", exact: true }).click();
+  await choose(page, "Read with", "AI — image recognition");
+  await dialog.getByLabel("Receipt image").setInputFiles(image);
+  await dialog.getByRole("button", { name: "Read receipt", exact: true }).click();
+  await page.getByRole("heading", { name: "Review receipt", exact: true }).waitFor();
+  await choose(page, "Wallet", "BCA Main Account");
+  await dialog.getByRole("button", { name: "Use new category", exact: true }).click();
+  await dialog.getByLabel("New category name", { exact: true }).fill(`Gifts ${width}`);
+  await dialog.getByLabel("Note (optional)", { exact: true }).fill("Birthday gift for a friend");
+  const unconfirmed = await (await page.request.get(`${origin}/api/ledger`)).json();
+  assert.equal(unconfirmed.data.categories.some((category) => category.name === `Gifts ${width}`), false, "A suggested category is never created automatically");
+  await check(page, "receipt-new-category-note", width, height);
+  await dialog.getByRole("button", { name: "Save expense", exact: true }).click();
+  await dialog.getByRole("alert").filter({ hasText: "Confirm this payment" }).waitFor();
+  await choose(page, "This payment represents", "My own wallets — use Add transaction → Transfer");
+  await check(page, "receipt-payment-transfer", width, height);
+  await choose(page, "This payment represents", "Spending — save as an expense");
+  await check(page, "receipt-payment-confirmed", width, height);
+  const paymentSaved = page.waitForResponse((response) => response.url().endsWith("/api/ledger") && response.request().method() === "POST");
+  await dialog.getByRole("button", { name: "Save expense", exact: true }).click();
+  const paymentResponse = await paymentSaved; assert.ok(paymentResponse.ok());
+  const paymentState = await paymentResponse.json();
+  assert.deepEqual(paymentState.data.entries.at(-1).receipt.items, []);
+  assert.equal(paymentState.data.entries.at(-1).amount, 20217734);
+  assert.equal(paymentState.data.entries.at(-1).currency, "IDR");
+  assert.equal(paymentState.data.entries.at(-1).wallet, "bank");
+  assert.equal(paymentState.data.entries.at(-1).category, `Gifts ${width}`);
+  assert.equal(paymentState.data.entries.at(-1).description, "Birthday gift for a friend");
+  assert.equal(paymentState.data.categories.filter((category) => category.name === `Gifts ${width}`).length, 1);
+  await dialog.waitFor({ state: "detached" });
+  await page.getByRole("button", { name: `Edit Payment check ${width}`, exact: true }).click();
+  assert.equal(await dialog.getByLabel("Note (optional)", { exact: true }).inputValue(), "Birthday gift for a friend");
+  const paymentDeleted = page.waitForResponse((response) => response.url().endsWith("/api/ledger") && response.request().method() === "POST");
+  await dialog.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Delete transaction", exact: true }).click();
+  assert.ok((await paymentDeleted).ok()); await dialog.waitFor({ state: "detached" });
+  const cleanupState = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const createdCategory = cleanupState.data.categories.find((category) => category.name === `Gifts ${width}`);
+  assert.ok((await page.request.post(`${origin}/api/ledger`, { headers: { Origin: origin }, data: { action: "deleteCategory", id: createdCategory.id, version: cleanupState.version } })).ok());
+  await page.reload();
+  await page.getByRole("button", { name: "Edit Lunch and groceries", exact: true }).click();
+  await dialog.getByRole("textbox", { name: /Note/ }).fill(`Remember this purchase ${width}`);
+  await check(page, "transaction-note-editor", width, height);
+  const noted = await saveEditor(page);
+  assert.equal(noted.entries.find((entry) => entry.id === "lunch").description, `Remember this purchase ${width}`);
+  if (width === 320 && process.env.RECEIPT_TEST_IMAGES) {
+    for (const path of JSON.parse(process.env.RECEIPT_TEST_IMAGES)) {
+      await page.getByRole("button", { name: "Import receipt", exact: true }).click();
+      await choose(page, "Read with", "AI — image recognition");
+      await dialog.getByLabel("Receipt image").setInputFiles(path);
+      await dialog.getByRole("button", { name: "Read receipt", exact: true }).click();
+      await page.getByRole("heading", { name: "Review receipt", exact: true }).waitFor();
+      await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+      await dialog.waitFor({ state: "detached" });
+    }
+  }
+  await page.unroute("**/api/receipts/extract");
+}
+
 async function checkExports(page, width, height) {
   const initial = await (await page.request.get(`${origin}/api/ledger`)).json();
   const beforeBalance = initial.data.wallets.reduce((total, wallet) => total + balance(initial.data, wallet.id, "IDR"), 0);
@@ -1143,13 +1448,14 @@ try {
     const page = await context.newPage();
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => {
-      if (message.type() === "error" && !(expectedExportFailure && message.text().includes("net::ERR_FAILED"))) errors.push(message.text());
+      if (message.type() === "error" && !(expectedLedgerFailure && /(?:409|503)/.test(message.text())) && !(expectedExportFailure && message.text().includes("net::ERR_FAILED"))) errors.push(message.text());
     });
     await page.goto(`${origin}/sign-in`);
     await page.getByRole("button", { name: /Google/ }).waitFor();
     await check(page, "sign-in", width, height);
     if (width === 320) {
       assert.equal((await page.request.get(`${origin}/api/ledger`)).status(), 401);
+      assert.equal((await page.request.post(`${origin}/api/receipts/extract`, { headers: { Origin: origin } })).status(), 401);
       assert.equal(
         (
           await page.request.get(
@@ -1181,6 +1487,11 @@ try {
     await page
       .getByRole("button", { name: "Add transaction", exact: true })
       .waitFor();
+    await checkReceipts(page, width, height);
+    if (categoriesOnly) { await checkInlineCategories(page, width, height); await context.close(); continue; }
+    if (receiptsOnly) { await context.close(); continue; }
+    await checkConflicts(page, width, height);
+    await switchView(page, "Transactions");
     await checkNavigation(page, width, height);
     if (width === 320) await checkRoutes(page, context, browser);
     if (width === 320 || width === 1440) await checkPagination(page, width, height);
@@ -1242,7 +1553,7 @@ try {
       .click();
     await page.getByRole("alertdialog").waitFor({ state: "detached" });
     await page
-      .getByRole("textbox", { name: /Description/ })
+      .getByRole("textbox", { name: /Note/ })
       .fill("Reviewed on mobile");
     const saved = page.waitForResponse(
       (response) =>
@@ -1326,9 +1637,9 @@ try {
   }
   assert.deepEqual(errors, [], "JavaScript page errors");
   console.log(
-    reportsOnly
-      ? "Report browser checks passed: eight sizes, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, custom dates, daily/monthly charts, exact amounts, empty periods, currencies, and accessible controls."
-      : "Responsive checks passed: eight sizes, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, date ranges, daily/monthly reports, JSON/CSV downloads and retry, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
+    categoriesOnly ? "Inline category and receipt checks passed at eight sizes; creation, cancel, income/expense, suggestions and reload persistence verified." : receiptsOnly ? "Receipt browser checks passed: eight sizes, OCR/AI choice, missing API key, editable review, item reconciliation, one wallet charge, conflict recovery, durable retries, reload persistence and deletion." : reportsOnly
+      ? "Report browser checks passed: eight sizes, conflict recovery and draft preservation, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, custom dates, daily/monthly charts, exact amounts, empty periods, currencies, and accessible controls."
+      : "Responsive checks passed: eight sizes, conflict recovery and draft preservation, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, date ranges, daily/monthly reports, JSON/CSV downloads and retry, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
   );
 } finally {
   await browser?.close();

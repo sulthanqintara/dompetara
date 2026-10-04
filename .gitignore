@@ -43,3 +43,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local receipt samples (contain personal information)
+/tests/receipt-images/
+
+# Local agent worktrees
+.claude/

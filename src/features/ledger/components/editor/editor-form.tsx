@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { DialogContent } from "@/components/ui/dialog-content";
 import { DialogTitle } from "@/components/ui/dialog-title";
-import { Alert } from "@/components/ui/alert";
+import { LedgerError } from "../shared/ledger-error";
 import { Spinner } from "@/components/ui/spinner";
 import type { Currency, Entry, Ledger, Wallet } from "../../ledger";
 import { EntryFields } from "./entry-fields";
@@ -14,19 +14,22 @@ import { ConfirmationDialog } from "../shared/confirmation-dialog";
 
 export type Editor =
   | { type: "entry"; entry?: Entry }
+  | { type: "receipt" }
   | { type: "wallet"; wallet?: Wallet; currency?: Currency };
 
 export function EditorForm({
   editor,
   data,
   pending,
+  conflict,
   error,
   close,
   save,
 }: {
-  editor: Editor;
+  editor: Exclude<Editor, { type: "receipt" }>;
   data: Ledger;
   pending: boolean;
+  conflict: boolean;
   error: string;
   close: () => void;
   save: (payload: Record<string, unknown>) => Promise<boolean>;
@@ -41,6 +44,7 @@ export function EditorForm({
     const values = Object.fromEntries(new FormData(e.currentTarget));
     await save({
       ...values,
+      newCategory: values.newCategory === "true",
       action: editor.type,
       id: entry?.id ?? wallet?.id,
       ...(editor.type === "entry"
@@ -94,11 +98,7 @@ export function EditorForm({
           ) : (
             <EntryFields entry={entry} data={data} />
           )}
-          {error && (
-            <Alert variant="destructive" className="error">
-              {error}
-            </Alert>
-          )}
+          <LedgerError />
           <div className="form-actions">
             {entry && (
               <ConfirmationDialog
@@ -133,7 +133,7 @@ export function EditorForm({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" disabled={pending || conflict}>
               {pending && <Spinner />}
               {pending ? "Saving…" : "Save"}
             </Button>

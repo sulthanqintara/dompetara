@@ -1,10 +1,10 @@
 import { ledgerExport, type ExportFormat } from "./export";
 import type { Ledger } from "./ledger";
 
-export type LedgerState = { data: Ledger; version: number };
+export type LedgerState = { data: Ledger; version: number; notice?: string };
 
 export async function fetchLedger(): Promise<LedgerState> {
-  const response = await fetch("/api/ledger");
+  const response = await fetch("/api/ledger", { cache: "no-store" });
   const result = await response.json();
   if (!response.ok)
     throw new Error(result.error || "Could not load your ledger.");
@@ -22,7 +22,7 @@ export async function saveLedger(
   });
   const result = await response.json();
   if (!response.ok)
-    throw new Error(result.error || "Could not save. Please try again.");
+    throw new Error(result.error || "Could not save. Please try again.", { cause: response.status });
   return result;
 }
 

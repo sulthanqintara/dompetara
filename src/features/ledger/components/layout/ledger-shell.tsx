@@ -5,7 +5,7 @@ import { SidebarProvider } from "@/components/ui/sidebar-provider";
 import { SidebarTrigger } from "@/components/ui/sidebar-trigger";
 import { TabsContent } from "@/components/ui/tabs-content";
 import { Button } from "@/components/ui/button";
-import { Alert } from "@/components/ui/alert";
+import { LedgerError } from "../shared/ledger-error";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { BreadcrumbList } from "@/components/ui/breadcrumb-list";
@@ -21,9 +21,10 @@ import { LedgerEditor } from "../editor/ledger-editor";
 
 export function LedgerShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const section = ledgerSections.find((item) => item.href === pathname) ?? ledgerSections[0];
+  const section =
+    ledgerSections.find((item) => item.href === pathname) ?? ledgerSections[0];
   const tab = section.name;
-  const { name, data, error, setEditor } = useLedgerContext();
+  const { name, data, editor, setEditor } = useLedgerContext();
   return (
     <SidebarProvider>
       <WorkspaceTabs className="app-shell" value={tab}>
@@ -51,28 +52,47 @@ export function LedgerShell({ children }: { children: ReactNode }) {
                 <h1>{tab}</h1>
                 <p>{section.description}</p>
               </div>
-              {data && tab !== "Settings" && (
-                <Button
-                  onClick={() =>
-                    setEditor({
-                      type:
-                        tab === "Wallet" || !data.wallets.length
-                          ? "wallet"
-                          : "entry",
-                    })
-                  }
-                >
-                  <Plus size={17} />
-                  {tab === "Wallet" || !data.wallets.length
-                    ? "Add wallet"
-                    : "Add transaction"}
-                </Button>
-              )}
+              <div className="flex flex-wrap gap-2">
+                {tab === "Transactions" && data.wallets.length > 0 && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => setEditor({ type: "receipt" })}
+                  >
+                    Import receipt
+                  </Button>
+                )}
+                {data && tab !== "Settings" && (
+                  <Button
+                    onClick={() =>
+                      setEditor({
+                        type:
+                          tab === "Wallet" || !data.wallets.length
+                            ? "wallet"
+                            : "entry",
+                      })
+                    }
+                  >
+                    <Plus size={17} />
+                    {tab === "Wallet" || !data.wallets.length
+                      ? "Add wallet"
+                      : "Add transaction"}
+                  </Button>
+                )}
+              </div>
             </div>
-            {error && <Alert variant="destructive" className="error">{error} <Button variant="outline" onClick={() => window.location.reload()}>Reload ledger</Button></Alert>}
-            <TabsContent key={pathname} value={tab} aria-label={tab} className="route-content">{children}</TabsContent>
+            {!editor && <LedgerError />}
+            <TabsContent
+              key={pathname}
+              value={tab}
+              aria-label={tab}
+              className="route-content"
+            >
+              {children}
+            </TabsContent>
           </div>
-          <footer>PERSONAL LEDGER <span>A little clarity goes a long way.</span></footer>
+          <footer>
+            PERSONAL LEDGER <span>A little clarity goes a long way.</span>
+          </footer>
         </main>
         <LedgerEditor />
       </WorkspaceTabs>

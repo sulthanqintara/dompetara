@@ -25,7 +25,7 @@ export function ledgerExport(state: LedgerState, format: ExportFormat, now = new
     const headers = [
       "id", "kind", "date_utc", "wallet_id", "wallet", "currency", "amount", "amount_minor",
       "title", "category", "description", "to_wallet_id", "to_wallet", "to_currency",
-      "received", "received_minor", "transfer_id", "exchange_rate", "rate_source", "rate_date",
+      "received", "received_minor", "transfer_id", "exchange_rate", "rate_source", "rate_date", "receipt_details",
     ];
     const rows = state.data.entries.map((entry) => [
       entry.id, entry.kind, entry.date, entry.wallet, walletName(state.data, entry.wallet),
@@ -33,7 +33,7 @@ export function ledgerExport(state: LedgerState, format: ExportFormat, now = new
       entry.description, entry.toWallet, entry.toWallet ? walletName(state.data, entry.toWallet) : "",
       entry.toCurrency, entry.received === undefined ? "" : entry.received / 100,
       entry.received, entry.transferId, entry.exchangeRate?.value, entry.exchangeRate?.source,
-      entry.exchangeRate?.referenceDate,
+      entry.exchangeRate?.referenceDate, entry.receipt ? JSON.stringify(entry.receipt) : "",
     ]);
     content = "\uFEFF" + [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
   }

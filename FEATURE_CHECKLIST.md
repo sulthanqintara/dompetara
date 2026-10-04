@@ -1,6 +1,6 @@
 # Personal Ledger feature checklist
 
-Reviewed: 2026-10-01. Checked items are implemented; unchecked items remain. Verification notes state what has been tested.
+Reviewed: 2026-10-02. Checked items are implemented; unchecked items remain. Verification notes state what has been tested.
 
 Design requirement: mobile first, then tablet, then desktop. Every feature must remain usable at each size, verified by rendering the affected views. This rule is recorded in `AGENTS.md`.
 
@@ -36,7 +36,7 @@ Design requirement: mobile first, then tablet, then desktop. Every feature must 
 - [x] Verify short viewports and landscape, including scrolling to dialog actions, saving edits, Escape dismissal, outside-click dismissal, and restored focus.
 - [ ] Verify text enlargement, Safari, and the on-screen keyboard on real devices.
 - [x] Verify every tab, sign-in, and all editors at 320px and 390px phone widths, 768px tablet width, and 1024px/1440px desktop widths.
-- [ ] Apply the same mobile-first checks to future receipt review and saved insights. Charts and date filters have passed the seven-size rendered checks.
+- [x] Apply mobile-first checks to receipt upload and review at eight viewport sizes, including short landscape and long item names. Saved insights still require their own checks.
 
 Before the layout fix, a rendered audit on 2026-10-01 used local Chromium with a temporary account and persisted sample ledger, removed afterward:
 
@@ -71,17 +71,37 @@ Pie chart verification: `pnpm test:responsive` passed against both development a
 
 ### 2. Screenshot and receipt import
 
-- [ ] Confirm which GLM 5.4 or ChatGPT credit/account route can be used by this app, including image support, authentication, and usage costs.
-- [ ] Connect the chosen provider through the server; keep credentials out of browser responses and logs.
-- [ ] Accept screenshot/image uploads with server-side file type and size validation.
-- [ ] Extract text, merchant, date, currency, items, quantities, prices, discounts, tax/fees, and total when present.
-- [ ] Suggest transaction category and let the user choose the wallet being charged.
-- [ ] Show an editable review before saving; flag missing or uncertain values instead of silently guessing.
-- [ ] Preserve structured receipt items linked to the saved expense. The current entry model has no item list.
-- [ ] Reconcile item totals and adjustments with the final charge; normalize receipt number formats before existing money validation.
-- [ ] Save a confirmed receipt without counting both its items and its total as separate wallet charges.
-- [ ] Prevent accidental duplicate imports and duplicate saves after retries.
-- [ ] Show useful processing errors and preserve the review draft when processing or saving fails.
+- [x] Implement upfront OCR (`glm-ocr` plus text-only `glm-4.6v-flash` structuring) or direct AI (`glm-4.6v-flash`) selection using server API calls.
+- [x] Keep credentials out of browser responses and logs; document `ZAI_API_KEY` setup and show a useful error when it is missing.
+- [x] Accept JPEG/PNG uploads with browser resizing and server-side decoded file type, pixel count and size validation.
+- [x] Validate extracted merchant, date/time, currency, items, quantities, prices, discounts, tax/fees and total using Zod; missing values stay null.
+- [x] Suggest an existing expense category with a reason, or a new category that the user can rename and confirm. Save new categories atomically with the reviewed expense, reusing equivalent existing names. Category suggestions remain editable.
+- [x] Detect the visible payment source and preselect a unique matching wallet in the charged currency; keep selection editable and require manual choice for unknown or ambiguous accounts.
+- [x] Use the displayed bank debit in its charged currency, including IDR fractions; do not reconstruct foreign prices or debit a USD wallet for a converted IDR payment.
+- [x] Allow notes on receipt and ordinary transactions using the existing description field; preserve notes in edits and exports for future AI summaries.
+- [x] Add categories directly inside manual income/expense and receipt-review modals. Create the category with the saved transaction, reuse existing names case-insensitively, and preserve the existing selection when switching back. Receipt extraction can suggest a new category for the user to confirm or rename.
+- [x] Show an editable review with the original image; flag missing or uncertain values before saving.
+- [x] Offer total-only saving or structured receipt items linked to one saved expense.
+- [x] Reconcile exact item totals and signed adjustments with the final charge; require normalized decimal amounts before existing money validation.
+- [x] Save one confirmed expense without counting its items as additional wallet charges.
+- [x] Require explicit spending confirmation for payment screenshots; direct users to a transfer for their own wallet movements.
+- [x] Prevent duplicate saves using durable import IDs and image fingerprints, including retries after deletion. Different photos of the same receipt are not guaranteed duplicates.
+- [x] Preserve review drafts after failed saves or version conflicts; use the existing explicit reload/review/retry flow.
+- [x] Preserve receipt details when editing, deleting and exporting transactions.
+- [x] Verify live account access to GLM-OCR and GLM-4.6V-Flash with the supplied receipt samples.
+- [ ] Improve extraction accuracy on wrapped/blurry item rows and category suggestions; live checks expose errors that still require review.
+
+Receipt import verification (2026-10-02): lint, TypeScript, domain/provider tests, production build, live database checks, and the complete production responsive suite passed at all eight viewport sizes. Browser checks cover upfront OCR/AI selection, missing-key errors, editable review, exact item/adjustment reconciliation, one wallet charge, payment confirmation, conflict recovery with drafts retained, duplicate retry protection, reload persistence, and deletion. Phone, short-landscape, tablet, and desktop screenshots were inspected. Provider calls were mocked; live extraction accuracy remains pending the API key. Temporary test accounts were removed, including the stale synthetic account left by the interrupted run.
+
+Category and note verification (2026-10-02): lint, TypeScript, domain/provider checks and production build passed. Targeted production browser checks passed at all eight sizes for existing-category suggestions, confirmed new-category creation, receipt notes, note persistence after reload, and ordinary transaction notes. Domain checks cover case-insensitive category reuse, atomic creation/retry behavior, failed-save isolation and exported notes. Model output was mocked; live suggestion quality still awaits the API key.
+
+Inline category verification (2026-10-03): category and note spacing corrected; manual income/expense and receipt review share one category control with an Add category action. Lint, TypeScript, domain/provider tests and production build passed. Targeted browser checks passed at eight viewport sizes, covering long names, short screens, cancellation without writes, preservation of the existing selection, income/expense category creation, notes and reload persistence, plus receipt suggestions and confirmation. Phone, tablet and desktop screenshots were inspected; temporary test data was removed. Extraction was mocked for UI verification. Deployed to production and verified the new modal controls with the signed-in account, cancelling without saving.
+
+Live provider verification (2026-10-02): both services accepted the configured key. Tested all five supplied images through OCR and direct AI, then repeated selected calls after fixes. Correct final amounts were observed for Solaria (IDR 191,000), Dapur Solo (137,445), Bosscha (187,000), Bebek (103,500), and GoPay (102,000). Fixed the OCR data-URI upload contract, normalized unambiguous grouped amount strings and printed seconds through Zod, and excluded subtotal/pre-rounding summary rows from provider adjustments. OCR Dapur Solo and Bosscha item details reconciled; direct AI Bosscha reconciled after normalization. Solaria and blurry Bebek item details were inaccurate and blocked by reconciliation. GoPay OCR was classified as payment with no items. Direct AI GoPay also returned an invalid schema response that validation rejected. Some calls returned provider 429 overload errors, and category suggestions sometimes forced restaurant meals into Shopping when dining was absent. Accurate totals do not establish accurate receipt numbers, items, dates or categories. These were direct calls through the server extraction function, without ledger writes or layout checks.
+
+Additional screenshot cases (2026-10-03): all seven original PNGs and local expected amounts are preserved in gitignored `tests/receipt-images/`. Added a reusable optional live-check command plus mocked provider checks for BCA matching, invented IDs, currency mismatch, and the fractional IDR OpenAI debit. Repeated live OCR and AI checks both returned Shopee IDR 81,200 and BCA, and OpenAI IDR 202,177.34 with manual wallet choice and pending warnings. Shopee extraction still inferred unsupported date/time and was inconsistent on hidden discounts; review remains essential. No live calls saved ledger entries. Lint, TypeScript, domain/provider checks and production build passed. Targeted receipt browser checks passed at all eight sizes, including BCA preselection, manual override, and saving exactly 20217734 minor units in IDR from the selected bank wallet; screenshots were inspected at phone, tablet and desktop sizes. Temporary test accounts were removed.
+
+Shopee timeline verification (2026-10-03): replaced the ignored Shopee original with the expanded screenshot. Extraction now prefers the payment phase (Waktu Pembayaran) and leaves an order timeline date/time unknown if the payment timestamp cannot be read. Live OCR and direct AI both returned 2026-09-28 at 13:26, IDR 81,200 and BCA. The live check now asserts the expected payment date/time; lint, TypeScript and mocked provider checks passed. Direct AI item details still needed correction. No UI changes or layout tests were needed.
 
 ### 3. Saved daily AI spending insights
 
@@ -139,6 +159,8 @@ Routing and pagination verification (2026-10-01): lint, TypeScript, domain check
 
 Component organization verification (2026-10-01): lint, TypeScript, domain tests, and production build passed after the moves. Production navigation/report browser checks passed again at all eight sizes, including server-rendered HTML, refresh/history navigation, pagination edits, currency conversion, all sections, and responsive controls.
 
+Conflict recovery verification (2026-10-02): lint, TypeScript, domain tests, production build, live database checks, and the complete production responsive suite passed at all eight sizes. Browser checks cover real stale-version rejection, failed reload/retry, repeated conflicts, preserved transaction/wallet/transfer/category drafts, recovery inside delete confirmations, explicit save after review, other-tab changes retained after retry, and reload persistence. Reloading does not write data or increment the ledger version. Phone, short landscape, tablet, and desktop recovery screenshots were inspected; temporary test accounts and ledgers were removed. The browser test receipt/report fixture now anchors its date to Asia/Jakarta to avoid a UTC-midnight mismatch.
+
 Component organization: ledger UI lives in `components/layout`, `navigation`, `transactions`, `wallets`, `reports`, `settings`, `filters`, `editor`, and `shared`. Sign-in UI lives in `auth/components`. shadcn primitives remain in `src/components/ui/`; routing stays in `src/app/`, and domain/API/hooks stay in their feature roots.
 
 ## Decisions needed before the relevant feature
@@ -160,8 +182,8 @@ These extend the original request and are optional.
 - [x] Export CSV/JSON for backups. JSON preserves the complete ledger; CSV includes all transactions, exact minor-unit amounts, transfer destinations/rates, and linked fees.
 - [ ] Validate any future restore/import before changing balances.
 - [ ] Add budget targets or recurring transaction reminders if the basic reports and AI advice are not enough.
-- [ ] Let users reload the latest ledger after a version conflict while preserving their unsaved form values.
-- [ ] Before production deployment, configure its Google callback, app URL, server secrets, and database connection; verify login and persistence there.
+- [x] Let users reload the latest ledger after a version conflict while preserving their unsaved form values. Reloading fetches current data without refreshing the page; saves remain blocked until reload succeeds, and the user reviews and retries explicitly. Recovery is available in transaction/wallet editors, category settings, and delete confirmations.
+- [x] Configure the production Google callback, app URL, server secrets, and database connection; verify Google login and persistence there.
 - [x] Paginate transaction history at 20 rows per page, with the page in the URL.
 - [x] Give each section its own server-rendered route: `/transactions` (default), `/wallet`, `/report`, and `/settings`. Refresh and browser history retain the route; shared navigation and mobile animations persist.
 - [ ] Normalize entries and paginate database reads when the JSON ledger becomes slow; current pagination limits rendered rows while retaining the existing ledger storage.
@@ -177,8 +199,17 @@ These extend the original request and are optional.
 ## Acceptance checks for the new work
 
 - [x] Complete reports/date ranges/exports on a narrow phone first, then verify tablet and desktop layouts without page overflow or inaccessible controls. Apply these checks again to future AI features.
-- [ ] A representative receipt saves the correct total, wallet, currency, date, and items; a retry does not charge the wallet twice.
+- [x] A representative receipt with mocked extraction saves the correct total, wallet, currency, date, and items; a retry does not charge the wallet twice. Live access is verified; item accuracy and category quality limitations are recorded below.
 - [x] Charts and totals agree across month boundaries and custom ranges, including currencies, transfers, and corrections.
 - [x] JSON/CSV exports include all dates and currencies, fetch the latest saved ledger, handle failures/retries, and leave balances and ledger versions unchanged.
 - [ ] Saved daily insights survive reloads and cannot be accessed by another signed-in user.
 - [ ] Existing manual transactions, Google login, and database persistence still work after each feature.
+
+## Production deployment (2026-10-03)
+
+- [x] Create and link `personal-ledger`; transferred from the work account to personal account `sulthanqintara@gmail.com` (scope `msulthanqs-projects`) on 2026-10-03, preserving production URL: https://personal-ledger-inky-alpha.vercel.app.
+- [x] Configure production credentials and authentication origin; enable the pinned pnpm version with Corepack.
+- [x] Verify deployment uploads exclude environment files, personal receipt images and local worktrees.
+- [x] Complete cloud build and production endpoint, authentication, database read/write, persistence and live OCR checks using temporary accounts; remove test data afterward.
+- [x] Register the production Google OAuth callback on `NextJS-personal-ledger` in Google Cloud project `personal-ledger-510306` under `sulthanqintara@gmail.com`, preserving localhost. Verified real Google sign-in returns to `/transactions` with the correct account and authenticated ledger access (HTTP 200).
+- [x] Connect `sulthanqintara/personal-ledger` through the personal account's existing GitHub integration, with production branch `main`. Update local CLI authentication and project linking to the personal scope. Current deployed workspace changes remain uncommitted; future Git deployments use pushed commits.

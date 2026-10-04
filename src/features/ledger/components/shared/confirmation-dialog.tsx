@@ -1,4 +1,5 @@
-import { Alert } from "@/components/ui/alert";
+import { LedgerError } from "./ledger-error";
+import { useLedgerContext } from "../../use-ledger-context";
 import { useState, type ReactElement } from "react";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { AlertDialogTrigger } from "@/components/ui/alert-dialog-trigger";
@@ -15,7 +16,6 @@ export function ConfirmationDialog({
   description,
   action,
   pending,
-  error,
   onConfirm,
 }: {
   trigger: ReactElement;
@@ -27,6 +27,7 @@ export function ConfirmationDialog({
   onConfirm: () => Promise<boolean>;
 }) {
   const [open, setOpen] = useState(false);
+  const { conflict } = useLedgerContext();
   return (
     <AlertDialog
       open={open}
@@ -38,12 +39,12 @@ export function ConfirmationDialog({
       <AlertDialogContent aria-modal="true">
         <AlertDialogTitle>{title}</AlertDialogTitle>
         <AlertDialogDescription>{description}</AlertDialogDescription>
-        {error && <Alert variant="destructive">{error}</Alert>}
+        <LedgerError />
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
-            disabled={pending}
+            disabled={pending || conflict}
             onClick={async () => {
               if (await onConfirm()) setOpen(false);
             }}

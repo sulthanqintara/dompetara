@@ -1,3 +1,10 @@
+import { money } from "./money.ts";
+export { money } from "./money.ts";
+import {
+  receiptSchema,
+  validateReceipt,
+  type Receipt,
+} from "../receipts/receipts.ts";
 import {
   effectiveRate,
   normalizeRate,
@@ -24,11 +31,13 @@ export type Entry = {
   received?: number;
   exchangeRate?: AppliedRate;
   transferId?: string;
+  receipt?: Receipt;
 };
 export type Ledger = {
   wallets: Wallet[];
   categories: Category[];
   entries: Entry[];
+  receiptImports?: { importId: string; fingerprint: string; entryId: string }[];
 };
 export function emptyLedger(): Ledger {
   return {
@@ -42,17 +51,6 @@ export function emptyLedger(): Ledger {
         ),
       ),
   };
-}
-export function money(value: unknown, positive = false): number {
-  if (typeof value !== "string" || !/^-?\d{1,12}(\.\d{1,2})?$/.test(value))
-    throw new Error("Enter a valid amount with at most two decimal places.");
-  const [whole, fraction = ""] = value.replace("-", "").split(".");
-  const result =
-    (Number(whole) * 100 + Number(fraction.padEnd(2, "0"))) *
-    (value.startsWith("-") ? -1 : 1);
-  if (positive && result <= 0)
-    throw new Error("Amount must be greater than zero.");
-  return result;
 }
 export function balance(
   data: Ledger,
@@ -88,6 +86,32 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
   if (!raw || typeof raw !== "object" || Array.isArray(raw))
     throw new Error("Invalid request.");
   const p = raw as Record<string, unknown>;
+  if (p.action === "receipt") {
+    const receipt = receiptSchema.parse(p.receipt);
+    if (
+      previous.receiptImports?.some(
+        (saved) =>
+          saved.importId === receipt.importId ||
+          saved.fingerprint === receipt.fingerprint,
+      )
+    )
+      return structuredClone(previous);
+    const result = mutateLedger(previous, {
+      ...p,
+      action: "entry",
+      id: undefined,
+      receipt,
+    });
+    result.receiptImports = [
+      ...(previous.receiptImports ?? []),
+      {
+        importId: receipt.importId,
+        fingerprint: receipt.fingerprint,
+        entryId: result.entries.at(-1)!.id,
+      },
+    ];
+    return result;
+  }
   const data = structuredClone(previous);
   const currency = (v: unknown): Currency => {
     if (!currencies.includes(v as Currency))
@@ -177,6 +201,19 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
         category: "",
         description: text(p.description ?? "", "Description", true),
       };
+      if (p.receipt || existing?.receipt) {
+        if (e.kind !== "expense")
+          throw new Error("A receipt must be saved as an expense.");
+        e.receipt = receiptSchema.parse(p.receipt ?? existing?.receipt);
+        validateReceipt(e.receipt, e.amount);
+        if (
+          !existing &&
+          data.entries.some(
+            (entry) => entry.receipt?.fingerprint === e.receipt?.fingerprint,
+          )
+        )
+          throw new Error("This image has already been imported.");
+      }
       let fee: Entry | undefined;
       if (p.kind === "transfer") {
         e.toCurrency = currency(p.toCurrency);
@@ -244,6 +281,22 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
       } else {
         e.title = text(p.title, "Title");
         e.category = text(p.category, "Category");
+        if (p.newCategory === true) {
+          if (e.kind !== "income" && e.kind !== "expense")
+            throw new Error("Categories must belong to income or expense.");
+          const match = data.categories.find(
+            (category) =>
+              category.kind === e.kind &&
+              category.name.toLowerCase() === e.category.toLowerCase(),
+          );
+          if (match) e.category = match.name;
+          else
+            data.categories.push({
+              id: crypto.randomUUID(),
+              name: e.category,
+              kind: e.kind,
+            });
+        }
         if (
           !data.categories.some(
             (c) => c.name === e.category && c.kind === e.kind,

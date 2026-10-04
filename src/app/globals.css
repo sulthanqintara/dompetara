@@ -910,6 +910,7 @@ footer span {
   max-width: calc(100% - 24px);
   max-height: calc(100dvh - 24px);
   overflow: auto;
+  scroll-padding-block: 80px;
   color: #27382f;
   box-shadow: 0 20px 80px #183b242b;
 }
@@ -1580,4 +1581,17 @@ footer span {
   min-width: 44px;
   min-height: 44px;
   padding: 10px;
+}
+
+.category-field {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+  min-width: 0;
+}
+.editor .category-field .form-field {
+  margin-bottom: 0;
+}
+.category-field > [data-slot="button"] {
+  justify-self: start;
 }

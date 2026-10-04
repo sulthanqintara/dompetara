@@ -297,6 +297,20 @@ assert.equal(
   data.entries.find((e) => e.id === actualTransfer.id)!.exchangeRate!.value,
   "12500",
 );
+// Inline creation is atomic, applies to both kinds, and reuses names case-insensitively.
+for (const kind of ["expense", "income"] as const) {
+  const previous = data;
+  const payload = { ...base, kind, amount: "1", title: "Inline category", category: "Gift purchases", newCategory: true };
+  apply(payload);
+  assert.equal(previous.categories.some((c) => c.name === "Gift purchases" && c.kind === kind), false);
+  assert.equal(data.entries.at(-1)!.category, "Gift purchases");
+  apply({ ...payload, category: "gift purchases" });
+  assert.equal(data.categories.filter((c) => c.name.toLowerCase() === "gift purchases" && c.kind === kind).length, 1);
+  assert.equal(data.entries.at(-1)!.category, "Gift purchases");
+  const beforeFailure = structuredClone(data);
+  assert.throws(() => mutateLedger(data, { ...payload, category: "Failed category", wallet: "missing" }), /wallet/i);
+  assert.deepEqual(data, beforeFailure);
+}
 console.log(
   "Ledger checks passed: exact money, corrections, transfers, rate snapshots, linked source/destination fees, atomic fee edits/removal, categories, and ownership references.",
 );

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Ledger } from "../../ledger";
 import { LedgerSelect } from "../shared/ledger-select";
 import { ConfirmationDialog } from "../shared/confirmation-dialog";
+import { useLedgerContext } from "../../use-ledger-context";
 
 export function CategoriesSettings({
   data,
@@ -19,6 +20,7 @@ export function CategoriesSettings({
   error: string;
   save: (payload: Record<string, unknown>) => Promise<boolean>;
 }) {
+  const { conflict } = useLedgerContext();
   return (
     <Card className="settings-panel">
       <h3>Categories</h3>
@@ -55,7 +57,7 @@ export function CategoriesSettings({
             { value: "income", label: "Income" },
           ]}
         />
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" disabled={pending || conflict}>
           Add category
         </Button>
       </form>

@@ -115,6 +115,7 @@ export function TransactionsTab({
                               : "Transfer")}
                           {e.description && ` · ${e.description}`}
                           {e.transferId && " · Linked to transfer"}
+                          {e.receipt && ` · Receipt${e.receipt.keepItems ? ` · ${e.receipt.items.length} items` : ""}`}
                           {e.exchangeRate &&
                             ` · 1 ${e.currency} = ${e.exchangeRate.value} ${e.toCurrency}`}
                         </small>

@@ -9,6 +9,7 @@ import { TabsContent } from "@/components/ui/tabs-content";
 import { currencies, type Currency, type Entry, type Ledger } from "../../ledger";
 import { localDate } from "../../format";
 import { LedgerSelect } from "../shared/ledger-select";
+import { CategoryField } from "../shared/category-field";
 import { DateTimeField } from "./date-time-field";
 import { TransferFields } from "./transfer-fields";
 import { minorText } from "../../transfer";
@@ -159,25 +160,20 @@ export function EntryFields({ entry, data }: { entry?: Entry; data: Ledger }) {
                   placeholder="e.g. Karaokean"
                 />
               </Label>
-              <LedgerSelect
+              <CategoryField
                 key={kind}
-                label="Category"
-                name="category"
-                required
-                defaultValue={entry?.kind === kind ? entry.category : undefined}
-                placeholder="Choose category"
-                options={categories}
+                category={entry?.kind === kind ? entry.category : undefined}
+                categories={categories}
               />
-              <p className="hint">Manage categories in Settings.</p>
             </>
           )}
           <Label className="form-field">
-            Description <span className="optional">optional</span>
+            <span>Note <span className="optional">optional</span></span>
             <Textarea
               name="description"
               maxLength={1000}
               defaultValue={entry?.description}
-              placeholder="Anything you’d like to remember"
+              placeholder="For example: a birthday gift for a friend"
             />
           </Label>
         </TabsContent>
