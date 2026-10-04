@@ -513,7 +513,7 @@ p {
 }
 .stats {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 30px;
 }
@@ -545,6 +545,7 @@ p {
   color: var(--muted-foreground);
 }
 .balance-stat {
+  grid-column: 1 / -1;
   background: #edf5f1;
   border-color: #dceae3;
 }
@@ -1650,5 +1651,21 @@ footer span {
   .editor-with-body .editor-body > :last-child,
   .editor-with-body .editor-body [role="tabpanel"] > :last-child {
     margin-bottom: 0;
+  }
+}
+
+@media (max-width: 639px) {
+  .stats > .stat:not(.balance-stat) {
+    padding: 14px;
+  }
+  .stats > .stat:not(.balance-stat) > span {
+    gap: 4px;
+    font-size: 11px;
+  }
+  .stats > .stat:not(.balance-stat) > span svg {
+    flex-shrink: 0;
+  }
+  .stats > .stat:not(.balance-stat) h2 {
+    font-size: clamp(18px, 5vw, 22px);
   }
 }
