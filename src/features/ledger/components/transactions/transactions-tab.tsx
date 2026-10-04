@@ -54,7 +54,6 @@ export function TransactionsTab({
         <Empty className="empty">
           <WalletIcon />
           <h3>Start with your first wallet</h3>
-          <p>Add an account and its opening balance to start your ledger.</p>
           <Button onClick={onAddWallet}>
             <Plus size={16} />
             Create a wallet
@@ -64,7 +63,6 @@ export function TransactionsTab({
         <Empty className="empty">
           <List />
           <h3>No transactions in this period</h3>
-          <p>Add your first income, expense, or transfer.</p>
         </Empty>
       ) : (
         <div className="table-wrap">

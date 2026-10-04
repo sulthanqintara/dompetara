@@ -33,32 +33,16 @@ export function SignInForm() {
           <Layers3 /> personal ledger<span className="brand-dot">.</span>
         </div>
         <div>
-          <span className="eyebrow">A LITTLE CLARITY, EVERY DAY</span>
           <h1>
             Your money.
             <br />
             All accounted for.
           </h1>
-          <p>
-            A calm place for your everyday spending, your savings, and
-            everything in between.
-          </p>
-          <div className="login-note">
-            <ArrowUpRight size={30} />
-            <span>
-              Many wallets. Multiple currencies.
-              <br />
-              One clear picture.
-            </span>
-          </div>
         </div>
-        <small>Made for the way you manage money.</small>
       </section>
       <section className="login-form">
         <div>
-          <span className="eyebrow">WELCOME TO YOUR LEDGER</span>
-          <h2>Make room for clarity.</h2>
-          <p>Sign in to start keeping track of your money.</p>
+          <h2>Sign in</h2>
           <Button
             variant="outline"
             className="google-button"

@@ -24,10 +24,6 @@ export function AccountSettings({
       <p>
         {name} · {email}
       </p>
-      <p>
-        Amounts are tracked in IDR, USD, and CAD. Dates use your device’s local
-        timezone.
-      </p>
       <Button
         variant="secondary"
         disabled={pending}

@@ -917,9 +917,9 @@ footer span {
 }
 .editor .panel-heading {
   flex-wrap: nowrap;
-  align-items: flex-start;
-  position: sticky;
-  top: 0;
+  align-items: center;
+  padding-block: 12px;
+  position: relative;
   z-index: 1;
   background: white;
 }
@@ -933,7 +933,7 @@ footer span {
 }
 .editor h2 {
   font-size: 22px;
-  margin-top: 5px;
+  margin-top: 0;
   font-weight: 600;
 }
 .editor form {
@@ -1018,8 +1018,11 @@ footer span {
   gap: 36px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   color: #2b604c;
+}
+.login-story > div:last-child {
+  margin-block: auto;
 }
 .login-story h1 {
   font-size: 40px;
@@ -1614,9 +1617,11 @@ footer span {
 }
 
 .editor-with-body {
+  gap: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  /* Keep focus scrolling inside .editor-body. */
+  overflow: clip;
 }
 .editor-with-body .panel-heading {
   flex-shrink: 0;
@@ -1668,4 +1673,8 @@ footer span {
   .stats > .stat:not(.balance-stat) h2 {
     font-size: clamp(18px, 5vw, 22px);
   }
+}
+
+.receipt-import-option {
+  margin-bottom: 16px;
 }

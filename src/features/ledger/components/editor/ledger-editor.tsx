@@ -7,15 +7,8 @@ export function LedgerEditor() {
   const { editor, data, pending, conflict, error, setEditor, setError, save } =
     useLedgerContext();
   if (!editor) return null;
-  if (
-    editor.type === "receipt" ||
-    (editor.type === "entry" && editor.entry?.receipt)
-  )
-    return (
-      <ReceiptEditor
-        entry={editor.type === "entry" ? editor.entry : undefined}
-      />
-    );
+  if (editor.type === "entry" && editor.entry?.receipt)
+    return <ReceiptEditor entry={editor.entry} />;
   return (
     <EditorForm
       key={

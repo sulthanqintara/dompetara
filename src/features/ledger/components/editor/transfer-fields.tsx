@@ -168,7 +168,7 @@ export function TransferFields({
           required
           value={received}
           readOnly={!crossCurrency}
-          aria-describedby={`${id}-received-help`}
+          aria-describedby={crossCurrency ? `${id}-received-help` : undefined}
           onValueChange={(value) =>
             setOverride({
               mode: "received",
@@ -178,11 +178,9 @@ export function TransferFields({
             })
           }
         />
-        <small id={`${id}-received-help`}>
-          {crossCurrency
-            ? "Enter the actual converted amount before a separately recorded service fee; the exchange rate adjusts automatically."
-            : "Same-currency transfers use the amount sent before the service fee."}
-        </small>
+        {crossCurrency && (
+          <small id={`${id}-received-help`}>Changing this amount updates the exchange rate.</small>
+        )}
       </div>
       {conversion.error && override?.mode !== "received" && !unchangedSaved && (
         <Alert variant="destructive">{conversion.error}</Alert>
@@ -229,7 +227,7 @@ export function TransferFields({
             </p>
           </>
         )}
-        <small>Any service fee is saved as a linked Admin fees expense.</small>
+        {Number(feeAmount) > 0 && <small>Fee category: Admin fees.</small>}
       </div>
     </>
   );

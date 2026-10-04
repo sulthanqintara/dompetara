@@ -23,7 +23,6 @@ export function FiltersBar({
         value={currency}
         onValueChange={(value) => onCurrencyChange(value as Currency)}
       />
-      <span>Income and expenses use this currency; current balance includes converted wallets.</span>
     </div>
   );
 }

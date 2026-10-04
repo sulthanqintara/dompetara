@@ -1,5 +1,4 @@
 import type { Draft } from "@/features/receipts/receipts";
-import { Alert } from "@/components/ui/alert";
 import { TransactionDetails } from "./transaction-details";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -80,18 +79,6 @@ export function EntryFields({
         </TabsList>
         <TabsContent value={kind}>
           <input type="hidden" name="kind" value={kind} />
-          {draft?.warnings
-            .filter(
-              (warning) =>
-                !/schema|not included in adjustments|breakdown provided/i.test(
-                  warning,
-                ),
-            )
-            .map((warning, index) => (
-              <Alert key={index} role="status">
-                {warning}
-              </Alert>
-            ))}
           {draft?.documentKind !== undefined &&
             draft.documentKind !== "receipt" && (
               <LedgerSelect
@@ -236,7 +223,7 @@ export function EntryFields({
                   : draft
                     ? {
                         receiptNumber: draft.receiptNumber,
-                        keepItems: draft.items.length > 0,
+                        keepItems: false,
                         items: draft.items,
                         adjustments: draft.adjustments,
                       }

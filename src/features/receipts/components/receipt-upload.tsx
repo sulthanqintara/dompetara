@@ -9,8 +9,12 @@ import type { Extraction } from "../receipts";
 
 export function ReceiptUpload({
   onRead,
+  onBack,
+  hidden = false,
 }: {
   onRead: (result: Extraction, file: File) => void;
+  onBack?: () => void;
+  hidden?: boolean;
 }) {
   const [method, setMethod] = useState("ocr"),
     [busy, setBusy] = useState(false),
@@ -46,12 +50,14 @@ export function ReceiptUpload({
     }
   }
   return (
-    <form onSubmit={submit} aria-busy={busy}>
+    <form
+      onSubmit={submit}
+      aria-busy={busy}
+      style={hidden ? { display: "none" } : undefined}
+    >
       <div className="editor-body">
         <p>
-          Choose how to read your receipt. Review and correct the result before
-          saving. Images are sent to Z.ai for reading and are not saved in your
-          ledger.
+          Images are processed by AI providers and are not saved in your ledger.
         </p>
         <LedgerSelect
           label="Read with"
@@ -82,6 +88,16 @@ export function ReceiptUpload({
         )}
       </div>
       <div className="form-actions">
+        {onBack && (
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={busy}
+            onClick={onBack}
+          >
+            Enter manually
+          </Button>
+        )}
         <Button disabled={busy} type="submit">
           {busy ? "Reading receipt…" : "Read receipt"}
         </Button>

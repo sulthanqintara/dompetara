@@ -28,11 +28,6 @@ export function ExportSettings({ pending }: { pending: boolean }) {
   return (
     <Card className="settings-panel" aria-busy={loading !== null}>
       <h3>Export your ledger</h3>
-      <p>
-        Download the latest saved data across all dates and currencies.
-        JSON includes your complete ledger, wallets, and categories.
-        CSV includes transaction history with wallet names and exact amounts.
-      </p>
       <div className="export-actions">
         <Button disabled={pending || loading !== null} onClick={() => download("json")}>
           {loading === "json" ? <Spinner /> : <Download size={16} />}

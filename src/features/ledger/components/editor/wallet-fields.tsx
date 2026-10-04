@@ -60,11 +60,7 @@ export function WalletFields({
           onValueChange={(value) => setAmounts((previous) => ({ ...previous, [cur]: value }))}
         />
       </Label>
-      <p className="hint">
-        {wallet
-          ? "A balance change adds a correction to your history. Select a new currency to add another balance to this wallet."
-          : "You can add more currencies to this wallet later."}
-      </p>
+      {wallet && <p className="hint">Balance changes are recorded as corrections.</p>}
     </>
   );
 }

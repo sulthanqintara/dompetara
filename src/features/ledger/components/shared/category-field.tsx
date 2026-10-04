@@ -1,5 +1,4 @@
 import { useId, useState } from "react";
-import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,37 +23,18 @@ export function CategoryField({
   const [name, setName] = useState(suggestion?.name ?? "");
   return (
     <div className="category-field">
-      {suggestion && (
-        <Alert role="status" className="mb-3 break-words">
-          <p>
-            Suggested category:{" "}
-            <strong>{match?.label ?? suggestion.name}</strong>
-          </p>
-          <p>{suggestion.reason}</p>
-          {match ? (
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setCreating(false);
-                setSelected(match.value);
-              }}
-            >
-              Use suggested category
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setName(suggestion.name);
-                setCreating(true);
-              }}
-            >
-              Use new category
-            </Button>
-          )}
-        </Alert>
+      {suggestion && !match && !creating && (
+        <Button
+          type="button"
+          variant="secondary"
+          className="mb-3 h-auto min-h-11 whitespace-normal break-words text-left"
+          onClick={() => {
+            setName(suggestion.name);
+            setCreating(true);
+          }}
+        >
+          Add category: {suggestion.name}
+        </Button>
       )}
       <input type="hidden" name="newCategory" value={String(creating)} />
       {creating ? (
@@ -69,7 +49,6 @@ export function CategoryField({
             maxLength={1000}
             required
           />
-          <p className="hint">The category will be created when you save this transaction.</p>
           <Button
             type="button"
             variant="secondary"

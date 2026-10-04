@@ -55,9 +55,6 @@ export function WalletsTab({
               </div>
             );
           })()}
-          <p className="wallet-footnote">
-            Balance edits are recorded as corrections.
-          </p>
         </Card>
       ))}
       <Button
@@ -67,7 +64,6 @@ export function WalletsTab({
       >
         <Plus />
         <strong>Add a wallet</strong>
-        <span>Bank account, cash, or e-wallet</span>
       </Button>
     </div>
   );

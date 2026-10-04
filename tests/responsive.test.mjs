@@ -4,7 +4,6 @@ import { createHmac, randomUUID } from "node:crypto";
 import { mkdir, readFile } from "node:fs/promises";
 import { chromium } from "playwright";
 import postgres from "postgres";
-import sharp from "sharp";
 import { balance } from "../src/features/ledger/ledger.ts";
 import { balanceBreakdown } from "../src/features/ledger/balances.ts";
 import { crossRate } from "../src/features/exchange-rates/exchange-rates.ts";
@@ -25,6 +24,7 @@ singleDate.setUTCMonth(singleDate.getUTCMonth() - 1);
 const errors = [];
 let expectedExportFailure = false;
 let expectedLedgerFailure = false;
+let expectedPaymentValidationFailure = false;
 const sizes = [
   [320, 568],
   [390, 844],
@@ -298,7 +298,7 @@ async function checkNavigation(page, width, height) {
     assert.equal(await sheet.getAttribute("aria-modal"), "true");
     assert.equal(await toggle.getAttribute("aria-expanded"), "true");
     assert.equal(await sheet.getByRole("tab").count(), 4);
-    assert.equal(await sheet.getByText("Personal account", { exact: true }).count(), 1);
+    assert.equal(await sheet.locator(".profile strong").count(), 1);
     await check(page, "navigation-sheet", width, height);
     await sheet.getByRole("button", { name: "Close", exact: true }).focus();
     await page.keyboard.press("Tab");
@@ -369,12 +369,13 @@ async function checkNavigationClearance(page, name, width, height) {
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await check(page, `${name}-bottom`, width, height);
   const footerClearance = await page.evaluate(() => [...document.querySelectorAll(".editor-with-body")].map((modal) => {
-    const button = modal.querySelector('.form-actions button[type="submit"]');
+    const button = [...modal.querySelectorAll('.form-actions button[type="submit"]')].find(el => el.getClientRects().length);
     if (!button) return null;
     const dialog = modal.getBoundingClientRect();
     const action = button.getBoundingClientRect();
     return {inside: action.top >= dialog.top && action.bottom <= dialog.bottom - 9, clearance: dialog.bottom - action.bottom};
   }).filter(Boolean));
+  assert.ok(footerClearance.every((footer) => footer.clearance < 33), `${name}: unused space below modal actions: ${JSON.stringify(footerClearance)}`);
   assert.ok(footerClearance.every((footer) => footer.inside), `${name}: modal footer must stay visible with bottom padding: ${JSON.stringify(footerClearance)}`);
   const layout = await page.evaluate(() => {
     const nav = document.querySelector(".mobile-navigation").getBoundingClientRect();
@@ -440,13 +441,26 @@ async function check(page, name, width, height) {
         .map((animation) => animation.finished.catch(() => {})),
     ),
   );
+  const clippedTitles = await page.evaluate(() => [...document.querySelectorAll(".editor-with-body")].filter((modal) => {
+    const title = modal.querySelector('[data-slot="dialog-title"]').getBoundingClientRect();
+    const bounds = modal.getBoundingClientRect();
+    return title.top < bounds.top + 8 || title.bottom > bounds.bottom;
+  }).length);
+  assert.equal(clippedTitles, 0, `${name}: modal title must stay inside its header`);
+  const modalGaps = await page.evaluate(() => [...document.querySelectorAll(".editor-with-body")].map((modal) => {
+    const heading = modal.querySelector(".panel-heading");
+    const body = [...modal.children].find((child) => child.tagName === "FORM" && child.getClientRects().length);
+    return heading && body ? body.getBoundingClientRect().top - heading.getBoundingClientRect().bottom : 0;
+  }));
+  assert.ok(modalGaps.every((gap) => Math.abs(gap) < 1), `${name}: unexpected modal header gap: ${modalGaps}`);
   const footerClearance = await page.evaluate(() => [...document.querySelectorAll(".editor-with-body")].map((modal) => {
-    const button = modal.querySelector('.form-actions button[type="submit"]');
+    const button = [...modal.querySelectorAll('.form-actions button[type="submit"]')].find(el => el.getClientRects().length);
     if (!button) return null;
     const dialog = modal.getBoundingClientRect();
     const action = button.getBoundingClientRect();
     return {inside: action.top >= dialog.top && action.bottom <= dialog.bottom - 9, clearance: dialog.bottom - action.bottom};
   }).filter(Boolean));
+  assert.ok(footerClearance.every((footer) => footer.clearance < 33), `${name}: unused space below modal actions: ${JSON.stringify(footerClearance)}`);
   assert.ok(footerClearance.every((footer) => footer.inside), `${name}: modal footer must stay visible with bottom padding: ${JSON.stringify(footerClearance)}`);
   const layout = await page.evaluate(() => {
     const scope = document;
@@ -958,20 +972,23 @@ async function checkConflicts(page, width, height) {
     await button.click();
     assert.equal((await response).status(), status);
   };
-  const snapshot = (form) => form.evaluate((el) => [...new FormData(el)]);
+  const snapshot = async (form) => {
+    await form.evaluate(() => document.activeElement?.blur());
+    return form.evaluate((el) => [...new FormData(el)]);
+  };
   expectedLedgerFailure = true;
   await switchView(page, "Transactions");
   await page.getByRole("button", { name: "Edit Lunch and groceries", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Edit transaction", exact: true });
   await dialog.getByRole("textbox", { name: "Title", exact: true }).fill("Unsaved groceries A B C");
-  await dialog.getByRole("spinbutton", { name: "Amount", exact: true }).fill("200000");
+  await dialog.getByRole("textbox", { name: "Amount", exact: true }).fill("200000");
   await dialog.getByRole("textbox", { name: /Note/ }).fill("Keep my draft after reload");
-  const draft = await snapshot(dialog.locator("form"));
+  const draft = await snapshot(dialog.locator("form:visible"));
   let latest = await bump();
   const save = dialog.getByRole("button", { name: "Save", exact: true });
   await submit(save, 409);
   assert.equal(await save.isDisabled(), true);
-  assert.deepEqual(await snapshot(dialog.locator("form")), draft);
+  assert.deepEqual(await snapshot(dialog.locator("form:visible")), draft);
   await check(page, "conflict-transaction", width, height);
   await page.route("**/api/ledger", (route) => route.request().method() === "GET"
     ? route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "Could not load your ledger. Please try again." }) })
@@ -979,13 +996,13 @@ async function checkConflicts(page, width, height) {
   await dialog.getByRole("button", { name: "Reload latest ledger", exact: true }).click();
   await dialog.getByRole("alert").filter({ hasText: "Could not load your ledger" }).waitFor();
   assert.equal(await save.isDisabled(), true);
-  assert.deepEqual(await snapshot(dialog.locator("form")), draft);
+  assert.deepEqual(await snapshot(dialog.locator("form:visible")), draft);
   await check(page, "conflict-reload-failed", width, height);
   await page.unroute("**/api/ledger");
   await dialog.getByRole("button", { name: "Reload latest ledger", exact: true }).click();
   await dialog.getByRole("status").filter({ hasText: "Latest ledger loaded" }).waitFor();
   assert.equal(await save.isEnabled(), true);
-  assert.deepEqual(await snapshot(dialog.locator("form")), draft);
+  assert.deepEqual(await snapshot(dialog.locator("form:visible")), draft);
   assert.deepEqual(await (await page.request.get(`${origin}/api/ledger`)).json(), latest, "Reload must not save the draft");
   await check(page, "conflict-draft-kept", width, height);
   latest = await bump();
@@ -1006,12 +1023,12 @@ async function checkConflicts(page, width, height) {
   await page.getByRole("button", { name: "Add wallet", exact: true }).click();
   const wallet = page.getByRole("dialog", { name: "Add a wallet", exact: true });
   await wallet.getByRole("textbox", { name: "Wallet name", exact: true }).fill("Unsaved wallet");
-  const walletDraft = await snapshot(wallet.locator("form"));
+  const walletDraft = await snapshot(wallet.locator("form:visible"));
   await bump();
   await submit(wallet.getByRole("button", { name: "Save", exact: true }), 409);
   await wallet.getByRole("button", { name: "Reload latest ledger", exact: true }).click();
   await wallet.getByRole("status").filter({ hasText: "Latest ledger loaded" }).waitFor();
-  assert.deepEqual(await snapshot(wallet.locator("form")), walletDraft);
+  assert.deepEqual(await snapshot(wallet.locator("form:visible")), walletDraft);
   await check(page, "conflict-wallet-draft", width, height);
   await page.keyboard.press("Escape");
   await wallet.waitFor({ state: "detached" });
@@ -1022,14 +1039,14 @@ async function checkConflicts(page, width, height) {
   await transfer.getByRole("tab", { name: "transfer", exact: true }).click();
   await choose(page, "From wallet", "BCA Main Account");
   await choose(page, "To wallet", "GoPay");
-  await transfer.getByRole("spinbutton", { name: "Amount sent", exact: true }).fill("45");
-  await transfer.getByRole("spinbutton", { name: "Service fee (IDR)", exact: true }).fill("0.5");
-  const transferDraft = await snapshot(transfer.locator("form"));
+  await transfer.getByRole("textbox", { name: "Amount sent", exact: true }).fill("45");
+  await transfer.getByRole("textbox", { name: "Service fee (IDR)", exact: true }).fill("0,5");
+  const transferDraft = await snapshot(transfer.locator("form:visible"));
   await bump();
   await submit(transfer.getByRole("button", { name: "Save", exact: true }), 409);
   await transfer.getByRole("button", { name: "Reload latest ledger", exact: true }).click();
   await transfer.getByRole("status").filter({ hasText: "Latest ledger loaded" }).waitFor();
-  assert.deepEqual(await snapshot(transfer.locator("form")), transferDraft);
+  assert.deepEqual(await snapshot(transfer.locator("form:visible")), transferDraft);
   await check(page, "conflict-transfer-draft", width, height);
   await page.keyboard.press("Escape");
   await transfer.waitFor({ state: "detached" });
@@ -1092,8 +1109,23 @@ async function checkInlineCategories(page, width, height) {
 
 async function checkReceipts(page, width, height) {
   await page.getByRole("heading", { name: "Transactions", exact: true, level: 1 }).waitFor();
-  const image = { name: "receipt.png", mimeType: "image/png", buffer: await sharp({ create: { width: 64, height: 64, channels: 3, background: "white" } }).png().toBuffer() };
-  await page.getByRole("button", { name: "Import receipt", exact: true }).click();
+  await check(page, "transactions-receipt-entry", width, height);
+  assert.equal(await page.getByRole("button", { name: "Import receipt", exact: true }).count(), 0, "Receipt import belongs inside Add transaction");
+  await page.getByRole("button", { name: "Add transaction", exact: true }).click();
+  const manual = page.getByRole("dialog");
+  await check(page, "add-transaction", width, height);
+  await manual.getByRole("textbox", { name: "Title", exact: true }).fill("Keep my draft");
+  await manual.getByRole("button", { name: "Import receipt", exact: true }).click();
+  assert.equal(await page.getByRole("dialog").count(), 1, "Receipt upload uses the same modal");
+  await manual.getByRole("button", { name: "Enter manually", exact: true }).click();
+  assert.equal(await manual.getByRole("textbox", { name: "Title", exact: true }).inputValue(), "Keep my draft");
+  await page.waitForFunction(() => document.activeElement?.textContent.trim() === "Import receipt");
+  await page.keyboard.press("Escape");
+  await manual.waitFor({ state: "detached" });
+  assert.equal(await page.getByRole("button", { name: "Add transaction", exact: true }).evaluate(el => el === document.activeElement), true);
+  const image = { name: "receipt.png", mimeType: "image/png", buffer: await readFile("tests/receipt-images/bebek.png") };
+  await page.getByRole("button", { name: "Add transaction", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Import receipt", exact: true }).click();
   await check(page, "receipt-upload", width, height);
   const dialog = page.getByRole("dialog");
   if (width === 320) {
@@ -1124,6 +1156,12 @@ async function checkReceipts(page, width, height) {
   const before = await (await page.request.get(`${origin}/api/ledger`)).json();
   await dialog.getByRole("button", { name: "Read receipt", exact: true }).click();
   await page.getByRole("heading", { name: "Review receipt", exact: true }).waitFor();
+  await dialog.locator(".editor-body:visible").evaluate((body) => body.scrollTop = 0);
+  await check(page, "receipt-review-top", width, height);
+  assert.equal(await dialog.getByRole("combobox", { name: "Save details", exact: true }).innerText(), "Total only", "Imported receipts default to the printed total");
+  assert.equal(await dialog.getByLabel("Line total", { exact: true }).count(), 0, "Item correction is optional");
+  assert.equal(await dialog.getByText(fixture.draft.warnings[0], { exact: true }).count(), 0, "Scan warnings do not clutter the review");
+  assert.equal(await dialog.getByText(fixture.draft.suggestedCategory.reason, { exact: true }).count(), 0, "Category explanations do not clutter the review");
   assert.equal((await (await page.request.get(`${origin}/api/ledger`)).json()).version, before.version, "Extraction never writes the ledger");
   assert.equal(await dialog.getByRole("combobox", { name: "Category", exact: true }).innerText(), "Food & drink");
   assert.equal(await dialog.getByRole("combobox", { name: "Wallet", exact: true }).innerText(), "BCA Main Account");
@@ -1174,6 +1212,7 @@ async function checkReceipts(page, width, height) {
   await page.getByRole("alertdialog").getByRole("button", { name: "Delete transaction", exact: true }).click();
   assert.ok((await deleted).ok()); await dialog.waitFor({ state: "detached" });
   fixture.draft.documentKind = "payment";
+  fixture.draft.date = null; fixture.draft.time = null;
   fixture.draft.total = "202177.34";
   fixture.draft.paymentSource = null; fixture.draft.suggestedWallet = null;
   fixture.draft.currency = "IDR";
@@ -1182,20 +1221,32 @@ async function checkReceipts(page, width, height) {
   fixture.importId = randomUUID(); fixture.fingerprint = String(width).padStart(64, "b");
   fixture.draft.merchant = `Payment check ${width}`;
   fixture.draft.suggestedCategory = { name: `Gifts ${width}`, reason: "Possible gift expense. Confirm against your own payment context." };
-  await page.getByRole("button", { name: "Import receipt", exact: true }).click();
+  await page.getByRole("button", { name: "Add transaction", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Import receipt", exact: true }).click();
   await choose(page, "Read with", "AI — image recognition");
   await dialog.getByLabel("Receipt image").setInputFiles(image);
   await dialog.getByRole("button", { name: "Read receipt", exact: true }).click();
   await page.getByRole("heading", { name: "Review receipt", exact: true }).waitFor();
+  await dialog.locator(".editor-body:visible").evaluate((body) => body.scrollTop = 0);
+  assert.equal(await dialog.getByLabel("Date", { exact: true }).innerText(), "Choose date");
+  await dialog.getByLabel("Date", { exact: true }).evaluate((field) => field.scrollIntoView({ block: "center" }));
+  await check(page, "receipt-missing-date", width, height);
+  await dialog.getByLabel("Date", { exact: true }).click();
+  await page.locator('.calendar-popover button[data-day]').filter({ hasText: /^4$/ }).first().click();
+  await dialog.getByLabel("Time", { exact: true }).fill("18:33");
   await choose(page, "Wallet", "BCA Main Account");
-  await dialog.getByRole("button", { name: "Use new category", exact: true }).click();
+  await dialog.getByRole("button", { name: `Add category: Gifts ${width}`, exact: true }).click();
   await dialog.getByLabel("New category name", { exact: true }).fill(`Gifts ${width}`);
   await dialog.getByRole("textbox", { name: /Note/ }).fill("Birthday gift for a friend");
   const unconfirmed = await (await page.request.get(`${origin}/api/ledger`)).json();
   assert.equal(unconfirmed.data.categories.some((category) => category.name === `Gifts ${width}`), false, "A suggested category is never created automatically");
   await check(page, "receipt-new-category-note", width, height);
+  expectedPaymentValidationFailure = true;
+  const rejectedPayment = page.waitForResponse(response => response.url().endsWith("/api/ledger") && response.request().method() === "POST");
   await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  assert.equal((await rejectedPayment).status(), 400, "Unconfirmed payments must be rejected");
   await dialog.getByRole("alert").filter({ hasText: "Confirm this payment" }).waitFor();
+  expectedPaymentValidationFailure = false;
   await choose(page, "This payment represents", "My own wallets — use Add transaction → Transfer");
   await check(page, "receipt-payment-transfer", width, height);
   await choose(page, "This payment represents", "Spending — save as an expense");
@@ -1229,7 +1280,8 @@ async function checkReceipts(page, width, height) {
   assert.equal(noted.entries.find((entry) => entry.id === "lunch").description, `Remember this purchase ${width}`);
   if (width === 320 && process.env.RECEIPT_TEST_IMAGES) {
     for (const path of JSON.parse(process.env.RECEIPT_TEST_IMAGES)) {
-      await page.getByRole("button", { name: "Import receipt", exact: true }).click();
+      await page.getByRole("button", { name: "Add transaction", exact: true }).click();
+      await page.getByRole("dialog").getByRole("button", { name: "Import receipt", exact: true }).click();
       await choose(page, "Read with", "AI — image recognition");
       await dialog.getByLabel("Receipt image").setInputFiles(path);
       await dialog.getByRole("button", { name: "Read receipt", exact: true }).click();
@@ -1306,7 +1358,7 @@ async function checkExports(page, width, height) {
 
 async function checkDateRange(page, width, height) {
   const currentBalance = await page.locator(".balance-stat h2").innerText();
-  assert.match(await page.locator(".balance-stat").innerText(), /Current balance.*all recorded transactions/s);
+  assert.match(await page.locator(".balance-stat").innerText(), /Current balance.*All time/s);
   await choose(page, "Period type", "Custom dates");
   await page.getByLabel("Start date", { exact: true }).fill(singleDate.toISOString().slice(0, 10));
   await page.getByLabel("End date", { exact: true }).fill(date.slice(0, 10));
@@ -1464,7 +1516,7 @@ try {
     const page = await context.newPage();
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => {
-      if (message.type() === "error" && !(expectedLedgerFailure && /(?:409|503)/.test(message.text())) && !(expectedExportFailure && message.text().includes("net::ERR_FAILED"))) errors.push(message.text());
+      if (message.type() === "error" && !(expectedLedgerFailure && /(?:409|503)/.test(message.text())) && !(expectedPaymentValidationFailure && message.text().includes("400 (Bad Request)")) && !(expectedExportFailure && message.text().includes("net::ERR_FAILED"))) errors.push(message.text());
     });
     await page.goto(`${origin}/sign-in`);
     await page.getByRole("button", { name: /Google/ }).waitFor();
@@ -1600,13 +1652,13 @@ try {
         })
         .fill("0.01");
       assert.equal(
-        await dialog.locator("form").evaluate((form) => form.checkValidity()),
+        await dialog.locator("form:visible").evaluate((form) => form.checkValidity()),
         false,
         "Destination wallet is required",
       );
       await choose(page, "To wallet", "BCA Main Account");
       assert.equal(
-        await dialog.locator("form").evaluate((form) => form.checkValidity()),
+        await dialog.locator("form:visible").evaluate((form) => form.checkValidity()),
         true,
       );
       const transferSaved = page.waitForResponse(

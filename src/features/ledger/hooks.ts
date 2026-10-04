@@ -17,7 +17,7 @@ export function useLedger(initialState: LedgerState) {
       setState(await fetchLedger());
       setConflict(false);
       setError("");
-      setNotice("Latest ledger loaded. Your unsaved form values are kept. Review them before saving; edits will apply your form values to the latest record.");
+      setNotice("Latest ledger loaded. Your unsaved changes are kept.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load your ledger. Please try again.");
     } finally {

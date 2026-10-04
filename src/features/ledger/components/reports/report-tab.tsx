@@ -34,7 +34,6 @@ export function ReportTab({
           <Empty className="empty">
             <ChartNoAxesCombined />
             <h3>No spending to report yet</h3>
-            <p>Your expenses will appear here, grouped by category.</p>
           </Empty>
         )}
         <p className="wallet-footnote">

@@ -40,7 +40,7 @@ export function SpendingHistoryChart({ points, currency, interval, periodLabel }
                 <Bar dataKey="amount" fill="var(--color-amount)" maxBarSize={48} isAnimationActive={false} />
               </BarChart>
             </ChartContainer>
-            <figcaption id={captionId}>
+            <figcaption id={captionId} className="sr-only">
               Expenses in {currency}. Only {interval === "daily" ? "days" : "months"} with spending are shown; others total zero.
               Transfers and balance corrections are excluded; service fees count as expenses.
             </figcaption>
@@ -57,7 +57,6 @@ export function SpendingHistoryChart({ points, currency, interval, periodLabel }
       ) : (
         <Empty className="empty">
           <h3>{interval === "daily" ? "No daily spending in this period" : "No monthly spending recorded"}</h3>
-          <p>Expenses in {currency} will appear here.</p>
         </Empty>
       )}
     </Card>

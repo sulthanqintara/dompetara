@@ -22,7 +22,7 @@ export function CurrentBalanceCard({ data, currency }: { data: Ledger; currency:
     <Card className="stat balance-stat" aria-busy={loading}>
       <span>Current balance <Wallet size={19} /></span>
       <h2>{loading ? <Skeleton className="h-8 w-40" /> : result.total === null ? "—" : format(result.total, currency)}</h2>
-      <small>All wallets · {currency} equivalent · all recorded transactions</small>
+      <small>All time · all wallets · {currency} equivalent</small>
       <dl className="balance-breakdown">
         {result.rows.map((row) => (
           <div key={row.currency}>

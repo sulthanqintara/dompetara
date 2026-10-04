@@ -24,7 +24,6 @@ export function CategoriesSettings({
   return (
     <Card className="settings-panel">
       <h3>Categories</h3>
-      <p>Removing a category keeps it on past transactions.</p>
       <form
         className="category-form"
         onSubmit={async (e) => {

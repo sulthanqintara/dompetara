@@ -48,19 +48,9 @@ export function LedgerShell({ children }: { children: ReactNode }) {
           <div className="page-content">
             <div className="page-heading">
               <div>
-                <span className="eyebrow">YOUR MONEY, AT A GLANCE</span>
                 <h1>{tab}</h1>
-                <p>{section.description}</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                {tab === "Transactions" && data.wallets.length > 0 && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => setEditor({ type: "receipt" })}
-                  >
-                    Import receipt
-                  </Button>
-                )}
                 {data && tab !== "Settings" && (
                   <Button
                     onClick={() =>
@@ -91,7 +81,7 @@ export function LedgerShell({ children }: { children: ReactNode }) {
             </TabsContent>
           </div>
           <footer>
-            PERSONAL LEDGER <span>A little clarity goes a long way.</span>
+            PERSONAL LEDGER
           </footer>
         </main>
         <LedgerEditor />
