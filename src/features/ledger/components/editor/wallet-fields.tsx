@@ -8,6 +8,8 @@ import {
   type Ledger,
   type Wallet,
 } from "../../ledger";
+import { CurrencyInput } from "./currency-input";
+import { minorText } from "../../transfer";
 import { LedgerSelect } from "../shared/ledger-select";
 
 export function WalletFields({
@@ -22,6 +24,8 @@ export function WalletFields({
   const [cur, setCur] = useState<Currency>(
     currency ?? wallet?.currencies[0] ?? "IDR",
   );
+  const [amounts, setAmounts] = useState<Partial<Record<Currency, string>>>({});
+  const amount = amounts[cur] ?? (wallet ? minorText(balance(data, wallet.id, cur)) : "0.00");
   return (
     <>
       <Label className="form-field">
@@ -46,13 +50,14 @@ export function WalletFields({
         {wallet?.currencies.includes(cur)
           ? "Current balance"
           : "Opening balance"}
-        <Input
-          key={cur}
-          type="number"
-          step="0.01"
+        <CurrencyInput
+          currency={cur}
           name="amount"
           required
-          defaultValue={wallet ? balance(data, wallet.id, cur) / 100 : 0}
+          allowNegative
+          allowZero
+          value={amount}
+          onValueChange={(value) => setAmounts((previous) => ({ ...previous, [cur]: value }))}
         />
       </Label>
       <p className="hint">

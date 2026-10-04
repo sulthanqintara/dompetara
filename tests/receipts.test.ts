@@ -244,3 +244,24 @@ assert.match(
 console.log(
   "Category/note checks passed: atomic creation, case-insensitive reuse, rejected-save isolation, retry safety and exported notes.",
 );
+
+// Manual and imported item details share validation and exact money arithmetic.
+const detailedLedger = emptyLedger();
+detailedLedger.wallets = [{id:"cash",name:"Cash",currencies:["IDR"]}];
+const itemDetails = {
+  receiptNumber: null, keepItems: true,
+  items: [7500,5000,12500,500].map((price,index)=>({name:`Item ${index}`,quantity:1,unitPrice:String(price),lineTotal:String(price)})),
+  adjustments: [{label:"Voucher",amount:"-600"},{label:"Discount",amount:"-500"}],
+};
+const manualPayload = {action:"entry",kind:"expense",date:"2026-10-03T12:59:00Z",wallet:"cash",currency:"IDR",amount:"24400",title:"Indomaret",category:"Food & drink",description:"",details:itemDetails};
+const manual = mutateLedger(detailedLedger,manualPayload);
+assert.equal(manual.entries[0].amount,2440000);
+assert.deepEqual(manual.entries[0].details,itemDetails);
+assert.equal(manual.entries[0].receipt,undefined,"Manual details do not invent receipt import provenance");
+assert.throws(()=>mutateLedger(detailedLedger,{...manualPayload,amount:"25000"}),/equal/);
+const taxedDetails = {...itemDetails,adjustments:[...itemDetails.adjustments,{label:"Tax",amount:"1000"}]};
+assert.equal(mutateLedger(detailedLedger,{...manualPayload,amount:"25400",details:taxedDetails}).entries[0].amount,2540000);
+const manualEdited = mutateLedger(manual,{...manualPayload,id:manual.entries[0].id,title:"Groceries"});
+assert.deepEqual(manualEdited.entries[0].details,itemDetails);
+assert.equal(manualEdited.entries[0].title,"Groceries");
+assert.match(ledgerExport({data:manual,version:1},"csv").content,/transaction_details/);

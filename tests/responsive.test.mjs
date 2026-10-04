@@ -368,6 +368,14 @@ async function checkNavigationClearance(page, name, width, height) {
   if (width >= 768) return;
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await check(page, `${name}-bottom`, width, height);
+  const footerClearance = await page.evaluate(() => [...document.querySelectorAll(".editor-with-body")].map((modal) => {
+    const button = modal.querySelector('.form-actions button[type="submit"]');
+    if (!button) return null;
+    const dialog = modal.getBoundingClientRect();
+    const action = button.getBoundingClientRect();
+    return {inside: action.top >= dialog.top && action.bottom <= dialog.bottom - 9, clearance: dialog.bottom - action.bottom};
+  }).filter(Boolean));
+  assert.ok(footerClearance.every((footer) => footer.inside), `${name}: modal footer must stay visible with bottom padding: ${JSON.stringify(footerClearance)}`);
   const layout = await page.evaluate(() => {
     const nav = document.querySelector(".mobile-navigation").getBoundingClientRect();
     const footer = document.querySelector(".workspace > footer").getBoundingClientRect();
@@ -432,6 +440,14 @@ async function check(page, name, width, height) {
         .map((animation) => animation.finished.catch(() => {})),
     ),
   );
+  const footerClearance = await page.evaluate(() => [...document.querySelectorAll(".editor-with-body")].map((modal) => {
+    const button = modal.querySelector('.form-actions button[type="submit"]');
+    if (!button) return null;
+    const dialog = modal.getBoundingClientRect();
+    const action = button.getBoundingClientRect();
+    return {inside: action.top >= dialog.top && action.bottom <= dialog.bottom - 9, clearance: dialog.bottom - action.bottom};
+  }).filter(Boolean));
+  assert.ok(footerClearance.every((footer) => footer.inside), `${name}: modal footer must stay visible with bottom padding: ${JSON.stringify(footerClearance)}`);
   const layout = await page.evaluate(() => {
     const scope = document;
     const controls = [
@@ -610,10 +626,10 @@ async function checkTransferFees(page, width, height) {
   await page.getByRole("tab", { name: "transfer", exact: true }).click();
   await choose(page, "To wallet", "GoPay");
   await page
-    .getByRole("spinbutton", { name: "Amount sent", exact: true })
+    .getByRole("textbox", { name: "Amount sent", exact: true })
     .fill("200000");
   await page
-    .getByRole("spinbutton", { name: "Service fee (IDR)", exact: true })
+    .getByRole("textbox", { name: "Service fee (IDR)", exact: true })
     .fill("1000");
   assert.match(
     await page.locator(".transfer-summary").textContent(),
@@ -650,9 +666,9 @@ async function checkTransferFees(page, width, height) {
     .click();
   assert.equal(
     await page
-      .getByRole("spinbutton", { name: "Service fee (IDR)", exact: true })
+      .getByRole("textbox", { name: "Service fee (IDR)", exact: true })
       .inputValue(),
-    "1000.00",
+    "1.000,00",
   );
   await choose(page, "Fee charged to", "Source · BCA Main Account (IDR)");
   await check(page, "same-currency-source-fee", width, height);
@@ -703,19 +719,19 @@ async function checkTransferFees(page, width, height) {
     /ECB via Frankfurter/,
   );
   await page
-    .getByRole("spinbutton", { name: "Amount sent", exact: true })
+    .getByRole("textbox", { name: "Amount sent", exact: true })
     .fill("100");
-  const received = page.getByRole("spinbutton", {
+  const received = page.getByRole("textbox", {
     name: "Amount received before fee (IDR)",
     exact: true,
   });
   assert.equal(
-    Number(await received.inputValue()),
+    Number(await page.locator('input[type="hidden"][name="received"]').inputValue()),
     Number(await rate.inputValue()) * 100,
   );
   const referenceRate = await rate.inputValue();
   await page
-    .getByRole("spinbutton", { name: "Service fee (IDR)", exact: true })
+    .getByRole("textbox", { name: "Service fee (IDR)", exact: true })
     .fill("1000");
   await check(page, "cross-currency-reference-rate", width, height);
   saved = await saveEditor(page);
@@ -729,12 +745,12 @@ async function checkTransferFees(page, width, height) {
     .click();
   assert.equal(await rate.inputValue(), referenceRate);
   await rate.fill("17800");
-  assert.equal(await received.inputValue(), "1780000.00");
+  assert.equal(await received.inputValue(), "1.780.000,00");
   await received.fill("1770000");
   assert.equal(await rate.inputValue(), "17700");
   await rate.fill("17800");
   await page
-    .getByRole("spinbutton", { name: "Service fee (IDR)", exact: true })
+    .getByRole("textbox", { name: "Service fee (IDR)", exact: true })
     .fill("1000");
   assert.match(
     await page.locator(".transfer-summary").textContent(),
@@ -763,7 +779,7 @@ async function checkTransferFees(page, width, height) {
     "17800",
     "Saved manual rate must survive reload and reference-rate suggestions.",
   );
-  assert.equal(await received.inputValue(), "1780000.00");
+  assert.equal(await received.inputValue(), "1.780.000,00");
   await check(page, "saved-transfer-rate", width, height);
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await removeFeeTransfer(page);
@@ -787,13 +803,13 @@ async function checkTransferFees(page, width, height) {
     )
     .waitFor();
   await page
-    .getByRole("spinbutton", { name: "Amount sent", exact: true })
+    .getByRole("textbox", { name: "Amount sent", exact: true })
     .fill("100");
   await received.fill("1780000");
   assert.equal(await rate.inputValue(), "17800");
   await choose(page, "Fee charged to", "Source · BCA Main Account (USD)");
   await page
-    .getByRole("spinbutton", { name: "Service fee (USD)", exact: true })
+    .getByRole("textbox", { name: "Service fee (USD)", exact: true })
     .fill("1");
   await check(page, "manual-rate-without-cache", width, height);
   saved = await saveEditor(page);
@@ -815,7 +831,7 @@ async function checkTransferFees(page, width, height) {
   await page.getByRole("tab", { name: "transfer", exact: true }).click();
   await choose(page, "Source currency", "CAD");
   await choose(page, "To wallet", "GoPay");
-  const sent = page.getByRole("spinbutton", {
+  const sent = page.getByRole("textbox", {
     name: "Amount sent",
     exact: true,
   });
@@ -827,12 +843,12 @@ async function checkTransferFees(page, width, height) {
   await received.fill("2000000");
   assert.equal(await cadRate.inputValue(), "12552.563861168644");
   await sent.fill("160");
-  assert.equal(await received.inputValue(), "2000000");
+  assert.equal(await received.inputValue(), "2.000.000,00");
   assert.equal(await cadRate.inputValue(), "12500");
   await sent.fill("159.33");
   await choose(page, "Fee charged to", "Source · BCA Main Account (CAD)");
   await page
-    .getByRole("spinbutton", { name: "Service fee (CAD)", exact: true })
+    .getByRole("textbox", { name: "Service fee (CAD)", exact: true })
     .fill("1");
   await check(page, "manual-cad-to-idr-amounts", width, height);
   saved = await saveEditor(page);
@@ -854,12 +870,12 @@ async function checkTransferFees(page, width, height) {
   await page
     .getByRole("button", { name: "Edit Transfer service fee", exact: true })
     .click();
-  assert.equal(await received.inputValue(), "2000000.00");
+  assert.equal(await received.inputValue(), "2.000.000,00");
   assert.equal(await cadRate.inputValue(), "12552.563861168644");
   await sent.fill("160");
   assert.equal(
     await received.inputValue(),
-    "2000000.00",
+    "2.000.000,00",
     "Editing sent amount must preserve the actual destination amount.",
   );
   assert.equal(await cadRate.inputValue(), "12500");
@@ -1113,7 +1129,7 @@ async function checkReceipts(page, width, height) {
   assert.equal(await dialog.getByRole("combobox", { name: "Wallet", exact: true }).innerText(), "BCA Main Account");
   await choose(page, "Wallet", "GoPay");
   assert.equal(await dialog.getByRole("combobox", { name: "Wallet", exact: true }).innerText(), "GoPay", "User can override the suggestion");
-  await dialog.getByLabel("Note (optional)", { exact: true }).fill("Meal was a gift for a friend");
+  await dialog.getByRole("textbox", { name: /Note/ }).fill("Meal was a gift for a friend");
   await check(page, "receipt-review-total", width, height);
   await choose(page, "Wallet", "BCA Main Account");
   await choose(page, "Category", "Food & drink");
@@ -1121,24 +1137,24 @@ async function checkReceipts(page, width, height) {
   await check(page, "receipt-review-items", width, height);
   await dialog.getByLabel("Name", { exact: true }).first().evaluate((input) => input.scrollIntoView({ block: "center" }));
   await check(page, "receipt-item-row", width, height);
-  await dialog.getByLabel("Final total", { exact: true }).fill("191004");
-  await dialog.getByRole("button", { name: "Save expense", exact: true }).click();
+  await dialog.getByRole("textbox", { name: "Amount", exact: true }).fill("191004");
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
   await dialog.getByRole("alert").filter({ hasText: "equal the final total" }).waitFor();
   assert.equal((await (await page.request.get(`${origin}/api/ledger`)).json()).version, before.version);
-  await dialog.getByLabel("Final total", { exact: true }).fill("191000");
+  await dialog.getByRole("textbox", { name: "Amount", exact: true }).fill("191000");
   if (width === 320) {
     await sql`update public.ledger set version = version + 1 where user_id = ${id}`;
     expectedLedgerFailure = true;
-    await dialog.getByRole("button", { name: "Save expense", exact: true }).click();
+    await dialog.getByRole("button", { name: "Save", exact: true }).click();
     await dialog.getByRole("button", { name: "Reload latest ledger", exact: true }).waitFor();
     await dialog.getByRole("button", { name: "Reload latest ledger", exact: true }).click();
     await dialog.getByText("Latest ledger loaded.", { exact: false }).waitFor();
-    assert.equal(await dialog.getByLabel("Line total", { exact: true }).nth(2).inputValue(), "18182");
+    assert.equal(await dialog.getByLabel("Line total", { exact: true }).nth(2).inputValue(), "18.182,00");
     await check(page, "receipt-conflict-kept", width, height);
     expectedLedgerFailure = false;
   }
   const saved = page.waitForResponse((response) => response.url().endsWith("/api/ledger") && response.request().method() === "POST");
-  await dialog.getByRole("button", { name: "Save expense", exact: true }).click();
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
   const response = await saved; assert.ok(response.ok(), await response.text());
   const state = await response.json();
   await dialog.waitFor({ state: "detached" });
@@ -1150,8 +1166,8 @@ async function checkReceipts(page, width, height) {
   assert.ok(retry.ok()); assert.equal((await retry.json()).version, state.version);
   await page.reload();
   await page.getByRole("button", { name: `Edit Receipt check ${width}`, exact: true }).click();
-  assert.equal(await dialog.getByLabel("Line total", { exact: true }).nth(2).inputValue(), "18182");
-  assert.equal(await dialog.getByLabel("Note (optional)", { exact: true }).inputValue(), "Meal was a gift for a friend");
+  assert.equal(await dialog.getByLabel("Line total", { exact: true }).nth(2).inputValue(), "18.182,00");
+  assert.equal(await dialog.getByRole("textbox", { name: /Note/ }).inputValue(), "Meal was a gift for a friend");
   await check(page, "receipt-saved-items", width, height);
   const deleted = page.waitForResponse((response) => response.url().endsWith("/api/ledger") && response.request().method() === "POST");
   await dialog.getByRole("button", { name: "Delete", exact: true }).click();
@@ -1174,18 +1190,18 @@ async function checkReceipts(page, width, height) {
   await choose(page, "Wallet", "BCA Main Account");
   await dialog.getByRole("button", { name: "Use new category", exact: true }).click();
   await dialog.getByLabel("New category name", { exact: true }).fill(`Gifts ${width}`);
-  await dialog.getByLabel("Note (optional)", { exact: true }).fill("Birthday gift for a friend");
+  await dialog.getByRole("textbox", { name: /Note/ }).fill("Birthday gift for a friend");
   const unconfirmed = await (await page.request.get(`${origin}/api/ledger`)).json();
   assert.equal(unconfirmed.data.categories.some((category) => category.name === `Gifts ${width}`), false, "A suggested category is never created automatically");
   await check(page, "receipt-new-category-note", width, height);
-  await dialog.getByRole("button", { name: "Save expense", exact: true }).click();
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
   await dialog.getByRole("alert").filter({ hasText: "Confirm this payment" }).waitFor();
   await choose(page, "This payment represents", "My own wallets — use Add transaction → Transfer");
   await check(page, "receipt-payment-transfer", width, height);
   await choose(page, "This payment represents", "Spending — save as an expense");
   await check(page, "receipt-payment-confirmed", width, height);
   const paymentSaved = page.waitForResponse((response) => response.url().endsWith("/api/ledger") && response.request().method() === "POST");
-  await dialog.getByRole("button", { name: "Save expense", exact: true }).click();
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
   const paymentResponse = await paymentSaved; assert.ok(paymentResponse.ok());
   const paymentState = await paymentResponse.json();
   assert.deepEqual(paymentState.data.entries.at(-1).receipt.items, []);
@@ -1197,7 +1213,7 @@ async function checkReceipts(page, width, height) {
   assert.equal(paymentState.data.categories.filter((category) => category.name === `Gifts ${width}`).length, 1);
   await dialog.waitFor({ state: "detached" });
   await page.getByRole("button", { name: `Edit Payment check ${width}`, exact: true }).click();
-  assert.equal(await dialog.getByLabel("Note (optional)", { exact: true }).inputValue(), "Birthday gift for a friend");
+  assert.equal(await dialog.getByRole("textbox", { name: /Note/ }).inputValue(), "Birthday gift for a friend");
   const paymentDeleted = page.waitForResponse((response) => response.url().endsWith("/api/ledger") && response.request().method() === "POST");
   await dialog.getByRole("button", { name: "Delete", exact: true }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Delete transaction", exact: true }).click();
@@ -1575,10 +1591,10 @@ try {
     if (width === 320 || width === 1440) {
       const dialog = page.getByRole("dialog");
       await dialog
-        .getByRole("spinbutton", { name: "Amount sent", exact: true })
+        .getByRole("textbox", { name: "Amount sent", exact: true })
         .fill("10");
       await dialog
-        .getByRole("spinbutton", {
+        .getByRole("textbox", {
           name: "Amount received before fee (USD)",
           exact: true,
         })

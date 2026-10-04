@@ -65,6 +65,13 @@ export const providerDraftSchema = draftSchema.extend({
       !/^(?:sub\s*total|grand\s*total|total|before\s*rounding|total\s*before\s*rounding)$/i.test(row.label),
     )),
 });
+export const transactionDetailsSchema = z.object({
+  receiptNumber: text.nullable(),
+  keepItems: z.boolean(),
+  items: z.array(itemSchema).max(200),
+  adjustments: z.array(adjustmentSchema).max(30),
+});
+export type TransactionDetails = z.infer<typeof transactionDetailsSchema>;
 export const receiptSchema = z.object({
   importId: z.uuid(),
   fingerprint: z.string().regex(/^[a-f0-9]{64}$/),
@@ -110,6 +117,10 @@ export function validateReceipt(receipt: Receipt, total: number) {
     throw new Error(
       "Confirm this payment is spending. Use a transfer for money moved between your own wallets.",
     );
+  validateTransactionDetails(receipt, total);
+}
+
+export function validateTransactionDetails(receipt: TransactionDetails, total: number) {
   if (!receipt.keepItems) {
     if (receipt.items.length || receipt.adjustments.length)
       throw new Error("Total-only receipts cannot contain item details.");

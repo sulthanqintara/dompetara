@@ -936,7 +936,7 @@ footer span {
   font-weight: 600;
 }
 .editor form {
-  padding: 0 16px 16px;
+  padding: 0 16px;
 }
 .editor label,
 .category-form label {
@@ -998,7 +998,8 @@ footer span {
   bottom: 0;
   flex-wrap: wrap;
   background: white;
-  padding-top: 12px;
+  padding: 12px 0 max(16px, env(safe-area-inset-bottom));
+  z-index: 2;
 }
 .category-form label {
   margin: 0;
@@ -1594,4 +1595,60 @@ footer span {
 }
 .category-field > [data-slot="button"] {
   justify-self: start;
+}
+.currency-input {
+  position: relative;
+  display: block;
+}
+.currency-input > span {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 16px;
+}
+.editor .currency-input input {
+  padding-left: 58px;
+}
+
+.editor-with-body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.editor-with-body .panel-heading {
+  flex-shrink: 0;
+}
+.editor-with-body form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+}
+.editor-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 16px;
+}
+.editor-with-body .form-actions {
+  position: relative;
+  flex-shrink: 0;
+  margin-top: 0;
+  padding: 12px 16px max(16px, env(safe-area-inset-bottom));
+}
+
+.transaction-details [data-slot="label"] {
+  align-items: stretch;
+}
+
+@media (max-width: 767px) {
+  .editor-with-body .form-actions {
+    padding-block: 12px;
+  }
+  .editor-with-body .editor-body > :last-child,
+  .editor-with-body .editor-body [role="tabpanel"] > :last-child {
+    margin-bottom: 0;
+  }
 }

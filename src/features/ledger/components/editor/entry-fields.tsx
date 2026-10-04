@@ -1,3 +1,6 @@
+import type { Draft } from "@/features/receipts/receipts";
+import { Alert } from "@/components/ui/alert";
+import { TransactionDetails } from "./transaction-details";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,27 +9,51 @@ import { Tabs } from "@/components/ui/tabs";
 import { TabsList } from "@/components/ui/tabs-list";
 import { TabsTrigger } from "@/components/ui/tabs-trigger";
 import { TabsContent } from "@/components/ui/tabs-content";
-import { currencies, type Currency, type Entry, type Ledger } from "../../ledger";
+import {
+  currencies,
+  type Currency,
+  type Entry,
+  type Ledger,
+} from "../../ledger";
 import { localDate } from "../../format";
 import { LedgerSelect } from "../shared/ledger-select";
 import { CategoryField } from "../shared/category-field";
 import { DateTimeField } from "./date-time-field";
 import { TransferFields } from "./transfer-fields";
+import { CurrencyInput } from "./currency-input";
 import { minorText } from "../../transfer";
 
-export function EntryFields({ entry, data }: { entry?: Entry; data: Ledger }) {
-  const [amount, setAmount] = useState(entry ? minorText(entry.amount) : "");
-  const defaultDate = localDate(entry ? new Date(entry.date) : new Date());
-  const [rateDate, setRateDate] = useState(defaultDate.slice(0, 10));
+export function EntryFields({
+  entry,
+  data,
+  draft,
+}: {
+  entry?: Entry;
+  data: Ledger;
+  draft?: Draft;
+}) {
+  const [amount, setAmount] = useState(
+    entry ? minorText(entry.amount) : (draft?.total ?? ""),
+  );
+  const defaultDate = entry
+    ? localDate(new Date(entry.date))
+    : draft
+      ? `${draft.date ?? ""}T${draft.time ?? ""}`
+      : localDate(new Date());
+  const [rateDate, setRateDate] = useState(defaultDate.split("T")[0]);
   const [kind, setKind] = useState(entry?.kind ?? "expense");
   const [cur, setCur] = useState<Currency>(
-    entry?.currency ?? data.wallets[0]?.currencies[0] ?? "IDR",
+    entry?.currency ??
+      (draft
+        ? (draft.currency ?? ("" as Currency))
+        : (data.wallets[0]?.currencies[0] ?? "IDR")),
   );
   const [toCur, setToCur] = useState<Currency>(entry?.toCurrency ?? cur);
   const [walletId, setWalletId] = useState(
     entry?.wallet ??
-      data.wallets.find((w) => w.currencies.includes(cur))?.id ??
-      "",
+      (draft
+        ? (draft.suggestedWallet?.walletId ?? "")
+        : (data.wallets.find((w) => w.currencies.includes(cur))?.id ?? "")),
   );
   const [toWalletId, setToWalletId] = useState(entry?.toWallet ?? "");
   const options = currencies.map((c) => ({ value: c, label: c }));
@@ -53,6 +80,39 @@ export function EntryFields({ entry, data }: { entry?: Entry; data: Ledger }) {
         </TabsList>
         <TabsContent value={kind}>
           <input type="hidden" name="kind" value={kind} />
+          {draft?.warnings
+            .filter(
+              (warning) =>
+                !/schema|not included in adjustments|breakdown provided/i.test(
+                  warning,
+                ),
+            )
+            .map((warning, index) => (
+              <Alert key={index} role="status">
+                {warning}
+              </Alert>
+            ))}
+          {draft?.documentKind !== undefined &&
+            draft.documentKind !== "receipt" && (
+              <LedgerSelect
+                label="This payment represents"
+                name="paymentConfirmed"
+                defaultValue={
+                  entry?.receipt?.paymentConfirmed ? "true" : "false"
+                }
+                options={[
+                  {
+                    value: "false",
+                    label: "Choose after checking the payment",
+                  },
+                  { value: "true", label: "Spending — save as an expense" },
+                  {
+                    value: "transfer",
+                    label: "My own wallets — use Add transaction → Transfer",
+                  },
+                ]}
+              />
+            )}
           <DateTimeField
             defaultValue={defaultDate}
             onDateChange={(date) => setRateDate(date.slice(0, 10))}
@@ -61,6 +121,8 @@ export function EntryFields({ entry, data }: { entry?: Entry; data: Ledger }) {
             <LedgerSelect
               label={kind === "transfer" ? "Source currency" : "Currency"}
               name="currency"
+              required
+              placeholder="Choose currency"
               value={cur}
               options={options}
               onValueChange={(value) => {
@@ -91,16 +153,12 @@ export function EntryFields({ entry, data }: { entry?: Entry; data: Ledger }) {
           </div>
           <Label className="form-field">
             {kind === "transfer" ? "Amount sent" : "Amount"}
-            <Input
+            <CurrencyInput
               name="amount"
-              type="number"
-              step="0.01"
-              min="0.01"
-              max="999999999999.99"
+              currency={cur}
               required
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
+              onValueChange={setAmount}
             />
           </Label>
           {kind === "transfer" ? (
@@ -156,19 +214,40 @@ export function EntryFields({ entry, data }: { entry?: Entry; data: Ledger }) {
                   name="title"
                   required
                   maxLength={1000}
-                  defaultValue={entry?.title}
+                  defaultValue={entry?.title ?? draft?.merchant ?? ""}
                   placeholder="e.g. Karaokean"
                 />
               </Label>
               <CategoryField
                 key={kind}
                 category={entry?.kind === kind ? entry.category : undefined}
+                suggestion={draft?.suggestedCategory}
                 categories={categories}
               />
             </>
           )}
+          {kind !== "transfer" && (
+            <TransactionDetails
+              currency={cur}
+              initial={
+                entry?.details ??
+                (entry?.receipt
+                  ? entry.receipt
+                  : draft
+                    ? {
+                        receiptNumber: draft.receiptNumber,
+                        keepItems: draft.items.length > 0,
+                        items: draft.items,
+                        adjustments: draft.adjustments,
+                      }
+                    : undefined)
+              }
+            />
+          )}
           <Label className="form-field">
-            <span>Note <span className="optional">optional</span></span>
+            <span>
+              Note <span className="optional">optional</span>
+            </span>
             <Textarea
               name="description"
               maxLength={1000}

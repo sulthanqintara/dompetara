@@ -19,7 +19,9 @@ export function DateTimeField({
   const id = useId();
   const [value, setValue] = useState(defaultValue);
   const [open, setOpen] = useState(false);
-  const date = new Date(`${value.slice(0, 10)}T12:00`);
+  const [datePart, timePart = ""] = value.split("T");
+  const date = new Date(`${datePart}T12:00`);
+  const validDate = Number.isFinite(date.getTime());
   return (
     <div className="form-row">
       <div className="form-field">
@@ -34,21 +36,23 @@ export function DateTimeField({
               />
             }
           >
-            {date.toLocaleDateString(undefined, {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })}
+            {validDate
+              ? date.toLocaleDateString(undefined, {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })
+              : "Choose date"}
             <CalendarIcon />
           </PopoverTrigger>
           <PopoverContent className="calendar-popover" align="start">
             <Calendar
               mode="single"
               required
-              selected={date}
-              defaultMonth={date}
+              selected={validDate ? date : undefined}
+              defaultMonth={validDate ? date : undefined}
               onSelect={(next) => {
-                const dateTime = `${localDate(next).slice(0, 10)}T${value.slice(11)}`;
+                const dateTime = `${localDate(next).slice(0, 10)}T${timePart}`;
                 setValue(dateTime);
                 onDateChange?.(dateTime);
                 setOpen(false);
@@ -63,9 +67,9 @@ export function DateTimeField({
           id={`${id}-time`}
           type="time"
           required
-          value={value.slice(11)}
+          value={timePart}
           onChange={(e) => {
-            const dateTime = `${value.slice(0, 10)}T${e.target.value}`;
+            const dateTime = `${datePart}T${e.target.value}`;
             setValue(dateTime);
             onDateChange?.(dateTime);
           }}

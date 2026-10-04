@@ -13,6 +13,7 @@ import {
   rateFromAmounts,
   transferTotals,
 } from "../../transfer";
+import { CurrencyInput } from "./currency-input";
 import { LedgerSelect } from "../shared/ledger-select";
 
 export function TransferFields({
@@ -160,22 +161,18 @@ export function TransferFields({
         <Label htmlFor={`${id}-received`}>
           Amount received before fee ({toCurrency})
         </Label>
-        <Input
+        <CurrencyInput
+          currency={toCurrency}
           id={`${id}-received`}
           name="received"
-          type="number"
-          inputMode="decimal"
-          step="0.01"
-          min="0.01"
-          max="999999999999.99"
           required
           value={received}
           readOnly={!crossCurrency}
           aria-describedby={`${id}-received-help`}
-          onChange={(e) =>
+          onValueChange={(value) =>
             setOverride({
               mode: "received",
-              received: e.target.value,
+              received: value,
               rate: "",
               source: "received",
             })
@@ -193,17 +190,13 @@ export function TransferFields({
       <div className="form-row">
         <div className="form-field">
           <Label htmlFor={`${id}-fee`}>Service fee ({feeCurrency})</Label>
-          <Input
+          <CurrencyInput
             id={`${id}-fee`}
             name="feeAmount"
-            type="number"
-            inputMode="decimal"
-            min="0"
-            max="999999999999.99"
-            step="0.01"
+            currency={feeCurrency}
+            allowZero
             value={feeAmount}
-            placeholder="0.00"
-            onChange={(e) => setFeeAmount(e.target.value)}
+            onValueChange={setFeeAmount}
           />
         </div>
         <LedgerSelect

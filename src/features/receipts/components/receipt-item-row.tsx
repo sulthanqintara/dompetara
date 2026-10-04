@@ -1,13 +1,17 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "@/features/ledger/components/editor/currency-input";
+import type { Currency } from "@/features/ledger/ledger";
 import type { Draft } from "../receipts";
 export function ReceiptItemRow({
   item,
+  currency,
   index,
   change,
   remove,
 }: {
+  currency: Currency;
   item: Draft["items"][number];
   index: number;
   change: (item: Draft["items"][number]) => void;
@@ -44,23 +48,27 @@ export function ReceiptItemRow({
         </div>
         <div>
           <Label htmlFor={`${prefix}-unit`}>Unit price (optional)</Label>
-          <Input
+          <CurrencyInput
+            currency={currency}
+            allowZero
             id={`${prefix}-unit`}
             inputMode="decimal"
             value={item.unitPrice ?? ""}
-            onChange={(e) =>
-              change({ ...item, unitPrice: e.target.value || null })
+            onValueChange={(value) =>
+              change({ ...item, unitPrice: value || null })
             }
           />
         </div>
       </div>
       <Label htmlFor={`${prefix}-total`}>Line total</Label>
-      <Input
+      <CurrencyInput
+        currency={currency}
+        allowZero
         id={`${prefix}-total`}
         inputMode="decimal"
         required
         value={item.lineTotal ?? ""}
-        onChange={(e) => change({ ...item, lineTotal: e.target.value || null })}
+        onValueChange={(value) => change({ ...item, lineTotal: value || null })}
       />
       <Button type="button" variant="secondary" onClick={remove}>
         Remove item {index + 1}

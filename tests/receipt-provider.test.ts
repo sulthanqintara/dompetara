@@ -69,6 +69,17 @@ try {
     "string",
     "OCR structuring call uses text, not another image",
   );
+  globalThis.fetch = async (input) => Response.json(String(input).endsWith("layout_parsing")
+    ? {md_results:"INDOMARET\n03.10.26-19:59/4.5.0/TZXN-3517/RAFFA/01"}
+    : {choices:[{finish_reason:"stop",message:{content:JSON.stringify({...draft,date:"2026-03-10",time:"19:59",warnings:["PPN breakdown provided but not included in adjustments as per schema","Total is unclear."]})}}]});
+  const indomaret = await extractReceipt(file,"ocr","test-only-key");
+  assert.equal(indomaret.draft.date,"2026-10-03");
+  assert.equal(indomaret.draft.time,"19:59");
+  assert.deepEqual(indomaret.draft.warnings,["Total is unclear."]);
+  globalThis.fetch = async (input,init) => {
+    calls.push({url:String(input),body:JSON.parse(String(init?.body))});
+    return Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify(draft)}}]});
+  };
   calls.length = 0;
   const ai = await extractReceipt(file, "ai", "test-only-key");
   assert.equal(calls.length, 1);

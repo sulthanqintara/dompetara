@@ -2,6 +2,9 @@ import { money } from "./money.ts";
 export { money } from "./money.ts";
 import {
   receiptSchema,
+  transactionDetailsSchema,
+  validateTransactionDetails,
+  type TransactionDetails,
   validateReceipt,
   type Receipt,
 } from "../receipts/receipts.ts";
@@ -32,6 +35,7 @@ export type Entry = {
   exchangeRate?: AppliedRate;
   transferId?: string;
   receipt?: Receipt;
+  details?: TransactionDetails;
 };
 export type Ledger = {
   wallets: Wallet[];
@@ -201,10 +205,14 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
         category: "",
         description: text(p.description ?? "", "Description", true),
       };
+      if (e.kind !== "transfer" && (p.details || existing?.details)) {
+        e.details = transactionDetailsSchema.parse(p.details ?? existing?.details);
+        validateTransactionDetails(e.details, e.amount);
+      }
       if (p.receipt || existing?.receipt) {
         if (e.kind !== "expense")
           throw new Error("A receipt must be saved as an expense.");
-        e.receipt = receiptSchema.parse(p.receipt ?? existing?.receipt);
+        e.receipt = receiptSchema.parse({ ...(p.receipt ?? existing?.receipt) as Receipt, ...(e.details ?? {}) });
         validateReceipt(e.receipt, e.amount);
         if (
           !existing &&

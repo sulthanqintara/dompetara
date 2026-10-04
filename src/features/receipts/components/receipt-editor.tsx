@@ -8,7 +8,6 @@ import { useLedgerContext } from "@/features/ledger/use-ledger-context";
 import type { Entry } from "@/features/ledger/ledger";
 import { localDate } from "@/features/ledger/format";
 import type { Extraction } from "../receipts";
-import { ReceiptPreview } from "./receipt-preview";
 import { ReceiptUpload } from "./receipt-upload";
 import { ReceiptReview } from "./receipt-review";
 export function ReceiptEditor({ entry }: { entry?: Entry }) {
@@ -45,6 +44,16 @@ export function ReceiptEditor({ entry }: { entry?: Entry }) {
     setEditor(undefined);
     setError("");
   };
+  if (extraction)
+    return (
+      <ReceiptReview
+        extraction={extraction}
+        entry={entry}
+        image={image}
+        restoreFocus={returnFocus}
+        close={close}
+      />
+    );
   return (
     <Dialog
       open
@@ -53,7 +62,7 @@ export function ReceiptEditor({ entry }: { entry?: Entry }) {
       }}
     >
       <DialogContent
-        className="editor"
+        className="editor editor-with-body"
         aria-modal="true"
         showCloseButton={false}
         finalFocus={() => returnFocus}
@@ -72,17 +81,12 @@ export function ReceiptEditor({ entry }: { entry?: Entry }) {
             ×
           </Button>
         </div>
-        {image && <ReceiptPreview file={image} />}
-        {extraction ? (
-          <ReceiptReview extraction={extraction} entry={entry} close={close} />
-        ) : (
-          <ReceiptUpload
-            onRead={(result, file) => {
-              setImage(file);
-              setExtraction(result);
-            }}
-          />
-        )}
+        <ReceiptUpload
+          onRead={(result, file) => {
+            setImage(file);
+            setExtraction(result);
+          }}
+        />
       </DialogContent>
     </Dialog>
   );

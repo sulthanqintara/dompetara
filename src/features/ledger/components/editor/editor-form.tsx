@@ -1,3 +1,10 @@
+import type { Extraction } from "@/features/receipts/receipts";
+import {
+  transactionDetailsSchema,
+  validateTransactionDetails,
+} from "@/features/receipts/receipts";
+import { ReceiptPreview } from "@/features/receipts/components/receipt-preview";
+import { Alert } from "@/components/ui/alert";
 import { useState, type FormEvent } from "react";
 import { localDate } from "../../format";
 import { Trash2, X } from "lucide-react";
@@ -7,7 +14,13 @@ import { DialogContent } from "@/components/ui/dialog-content";
 import { DialogTitle } from "@/components/ui/dialog-title";
 import { LedgerError } from "../shared/ledger-error";
 import { Spinner } from "@/components/ui/spinner";
-import type { Currency, Entry, Ledger, Wallet } from "../../ledger";
+import {
+  money,
+  type Currency,
+  type Entry,
+  type Ledger,
+  type Wallet,
+} from "../../ledger";
 import { EntryFields } from "./entry-fields";
 import { WalletFields } from "./wallet-fields";
 import { ConfirmationDialog } from "../shared/confirmation-dialog";
@@ -19,6 +32,9 @@ export type Editor =
 
 export function EditorForm({
   editor,
+  extraction,
+  image,
+  restoreFocus,
   data,
   pending,
   conflict,
@@ -27,6 +43,9 @@ export function EditorForm({
   save,
 }: {
   editor: Exclude<Editor, { type: "receipt" }>;
+  extraction?: Extraction;
+  image?: File;
+  restoreFocus?: HTMLElement | null;
   data: Ledger;
   pending: boolean;
   conflict: boolean;
@@ -35,22 +54,64 @@ export function EditorForm({
   save: (payload: Record<string, unknown>) => Promise<boolean>;
 }) {
   const [returnFocus] = useState(
-    () => document.activeElement as HTMLElement | null,
+    () => restoreFocus ?? (document.activeElement as HTMLElement | null),
   );
+  const [formError, setFormError] = useState("");
   const entry = editor.type === "entry" ? editor.entry : undefined;
   const wallet = editor.type === "wallet" ? editor.wallet : undefined;
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const values = Object.fromEntries(new FormData(e.currentTarget));
-    await save({
-      ...values,
-      newCategory: values.newCategory === "true",
-      action: editor.type,
-      id: entry?.id ?? wallet?.id,
-      ...(editor.type === "entry"
-        ? { date: entry && String(values.date) === localDate(new Date(entry.date)) ? entry.date : new Date(String(values.date)).toISOString() }
-        : {}),
-    });
+    setFormError("");
+    try {
+      const details =
+        editor.type === "entry" && values.kind !== "transfer"
+          ? transactionDetailsSchema.parse(JSON.parse(String(values.details)))
+          : undefined;
+      if (details)
+        validateTransactionDetails(details, money(String(values.amount), true));
+      const receipt = extraction
+        ? {
+            importId: extraction.importId,
+            fingerprint: extraction.fingerprint,
+            method: extraction.method,
+            documentKind: extraction.draft.documentKind,
+            merchant: String(values.title),
+            paymentConfirmed:
+              values.paymentConfirmed === "true" ||
+              entry?.receipt?.paymentConfirmed === true,
+            ...details,
+          }
+        : entry?.receipt
+          ? { ...entry.receipt, ...details }
+          : undefined;
+      const date =
+        editor.type === "entry" ? new Date(String(values.date)) : undefined;
+      if (date && !Number.isFinite(date.getTime()))
+        throw new Error("Enter a valid date and time.");
+      await save({
+        ...values,
+        newCategory: values.newCategory === "true",
+        action: extraction && !entry ? "receipt" : editor.type,
+        ...(details ? { details: receipt ? undefined : details } : {}),
+        ...(receipt ? { receipt } : {}),
+        id: entry?.id ?? wallet?.id,
+        ...(editor.type === "entry"
+          ? {
+              date:
+                entry && String(values.date) === localDate(new Date(entry.date))
+                  ? entry.date
+                  : new Date(String(values.date)).toISOString(),
+            }
+          : {}),
+      });
+    } catch (error) {
+      setFormError(
+        error instanceof Error && error.name !== "ZodError"
+          ? error.message
+          : "Check the item names, amounts and quantities.",
+      );
+    }
   }
   return (
     <Dialog
@@ -61,7 +122,7 @@ export function EditorForm({
     >
       <DialogContent
         aria-modal="true"
-        className="editor"
+        className="editor editor-with-body"
         showCloseButton={false}
         finalFocus={() => returnFocus}
       >
@@ -73,9 +134,11 @@ export function EditorForm({
                 ? wallet
                   ? "Edit wallet"
                   : "Add a wallet"
-                : entry
-                  ? "Edit transaction"
-                  : "Add transaction"}
+                : extraction && !entry
+                  ? "Review receipt"
+                  : entry
+                    ? "Edit transaction"
+                    : "Add transaction"}
             </DialogTitle>
           </div>
           <Button
@@ -89,16 +152,28 @@ export function EditorForm({
           </Button>
         </div>
         <form onSubmit={submit}>
-          {editor.type === "wallet" ? (
-            <WalletFields
-              wallet={wallet}
-              currency={editor.currency}
-              data={data}
-            />
-          ) : (
-            <EntryFields entry={entry} data={data} />
-          )}
-          <LedgerError />
+          <div className="editor-body">
+            {image && <ReceiptPreview file={image} />}
+            {editor.type === "wallet" ? (
+              <WalletFields
+                wallet={wallet}
+                currency={editor.currency}
+                data={data}
+              />
+            ) : (
+              <EntryFields
+                entry={entry}
+                data={data}
+                draft={extraction?.draft}
+              />
+            )}
+            {formError && (
+              <Alert variant="destructive" className="error">
+                {formError}
+              </Alert>
+            )}
+            <LedgerError />
+          </div>
           <div className="form-actions">
             {entry && (
               <ConfirmationDialog

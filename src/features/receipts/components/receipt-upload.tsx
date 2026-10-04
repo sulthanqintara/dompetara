@@ -47,38 +47,40 @@ export function ReceiptUpload({
   }
   return (
     <form onSubmit={submit} aria-busy={busy}>
-      <p>
-        Choose how to read your receipt. Review and correct the result before
-        saving. Images are sent to Z.ai for reading and are not saved in your
-        ledger.
-      </p>
-      <LedgerSelect
-        label="Read with"
-        value={method}
-        onValueChange={setMethod}
-        disabled={busy}
-        options={[
-          { value: "ocr", label: "OCR — text recognition" },
-          { value: "ai", label: "AI — image recognition" },
-        ]}
-      />
-      <div className="form-field">
-        <Label htmlFor="receipt-image">Receipt image</Label>
-        <Input
-          id="receipt-image"
-          name="image"
-          type="file"
-          accept="image/jpeg,image/png"
-          required
+      <div className="editor-body">
+        <p>
+          Choose how to read your receipt. Review and correct the result before
+          saving. Images are sent to Z.ai for reading and are not saved in your
+          ledger.
+        </p>
+        <LedgerSelect
+          label="Read with"
+          value={method}
+          onValueChange={setMethod}
           disabled={busy}
+          options={[
+            { value: "ocr", label: "OCR — text recognition" },
+            { value: "ai", label: "AI — image recognition" },
+          ]}
         />
-        <p>JPEG or PNG, up to 16 MB.</p>
+        <div className="form-field">
+          <Label htmlFor="receipt-image">Receipt image</Label>
+          <Input
+            id="receipt-image"
+            name="image"
+            type="file"
+            accept="image/jpeg,image/png"
+            required
+            disabled={busy}
+          />
+          <p>JPEG or PNG, up to 16 MB.</p>
+        </div>
+        {error && (
+          <Alert variant="destructive" className="error">
+            {error}
+          </Alert>
+        )}
       </div>
-      {error && (
-        <Alert variant="destructive" className="error">
-          {error}
-        </Alert>
-      )}
       <div className="form-actions">
         <Button disabled={busy} type="submit">
           {busy ? "Reading receipt…" : "Read receipt"}
