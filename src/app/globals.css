@@ -632,9 +632,9 @@ p {
 }
 .table-wrap table tbody tr {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 8px 12px;
-  padding: 16px;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  gap: 0 8px;
+  padding: 12px 16px;
   border-top: 1px solid #f0f2f2;
 }
 .table-wrap th {
@@ -645,25 +645,23 @@ p {
   font-weight: 500;
 }
 .table-wrap td {
+  padding: 0;
   min-width: 0;
   overflow-wrap: anywhere;
   font-size: 13px;
 }
 .transaction-detail {
-  grid-column: 1 / -1;
+  display: contents;
 }
 .transaction-date {
-  grid-column: 1;
-  grid-row: 2;
+  display: none;
 }
 .transaction-wallet {
-  grid-column: 1;
-  grid-row: 3;
-  align-self: center;
+  display: none;
   color: #52615e;
 }
 .transaction-actions {
-  grid-column: 2;
+  grid-column: 3;
   grid-row: 3;
   text-align: right;
 }
@@ -676,16 +674,55 @@ p {
   overflow-wrap: anywhere;
 }
 .transaction-name {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+  display: contents;
 }
 .transaction-name > span:last-child {
+  display: contents;
   min-width: 0;
 }
 .transaction-name strong {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  grid-column: 2;
+  grid-row: 1;
   font-weight: 500;
   overflow-wrap: anywhere;
+}
+.transaction-name .entry-icon {
+  grid-column: 1;
+  grid-row: 1 / 4;
+  align-self: start;
+  padding: 7px;
+}
+.table-wrap .transaction-name small {
+  margin-top: 4px;
+  max-width: none;
+  line-height: 1.4;
+}
+.transaction-name .transaction-metadata {
+  grid-column: 2;
+  grid-row: 3;
+  align-self: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.transaction-name .transaction-mobile-date {
+  grid-column: 2 / -1;
+  grid-row: 2;
+}
+.transaction-name .transaction-mobile-transfer {
+  grid-column: 2 / -1;
+  grid-row: 4;
+}
+.transaction-desktop-notes {
+  display: none;
+}
+.transaction-actions .text-button {
+  min-width: 44px;
+  min-height: 44px;
 }
 .entry-icon {
   flex-shrink: 0;
@@ -704,8 +741,10 @@ p {
   background: #f0f3f6;
 }
 .amount {
-  grid-column: 2;
-  grid-row: 2;
+  grid-column: 3;
+  grid-row: 1;
+  align-self: start;
+  max-width: 45vw;
   text-align: right;
   font-weight: 600;
 }
@@ -1192,6 +1231,39 @@ footer span {
   .table-wrap th,
   .table-wrap td {
     padding: 16px;
+  }
+  .transaction-date,
+  .transaction-wallet,
+  .transaction-detail {
+    display: table-cell;
+  }
+  .table-wrap .transaction-mobile-date,
+  .transaction-mobile-wallet,
+  .table-wrap .transaction-mobile-transfer {
+    display: none;
+  }
+  .transaction-desktop-notes {
+    display: inline;
+  }
+  .transaction-name {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .transaction-name > span:last-child,
+  .transaction-name strong {
+    display: block;
+  }
+  .transaction-name .entry-icon {
+    padding: 10px;
+  }
+  .transaction-name .transaction-metadata {
+    white-space: normal;
+    overflow: visible;
+  }
+  .table-wrap .transaction-name small {
+    margin-top: 5px;
+    max-width: 280px;
   }
   .table-wrap td {
     border-top: 1px solid #f0f2f2;

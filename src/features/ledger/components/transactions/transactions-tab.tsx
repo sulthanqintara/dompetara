@@ -106,17 +106,45 @@ export function TransactionsTab({
                       </Badge>
                       <span>
                         <strong>{e.title}</strong>
-                        <small>
+                        <small className="transaction-mobile-date">
+                          {new Date(e.date).toLocaleDateString("en", {
+                            timeZone,
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                          {" · "}
+                          {new Date(e.date).toLocaleTimeString("en", {
+                            timeZone,
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </small>
+                        <small className="transaction-metadata">
                           {e.category ||
                             (e.kind === "correction"
                               ? "Balance correction"
                               : "Transfer")}
-                          {e.description && ` · ${e.description}`}
-                          {e.transferId && " · Linked to transfer"}
-                          {e.receipt && ` · Receipt${e.receipt.keepItems ? ` · ${e.receipt.items.length} items` : ""}`}
-                          {e.exchangeRate &&
-                            ` · 1 ${e.currency} = ${e.exchangeRate.value} ${e.toCurrency}`}
+                          <span className="transaction-mobile-wallet">
+                            {" · "}
+                            {walletName(data, e.wallet)}
+                          </span>
+                          <span className="transaction-desktop-notes">
+                            {e.description && ` · ${e.description}`}
+                            {e.transferId && " · Linked to transfer"}
+                            {e.receipt &&
+                              ` · Receipt${e.receipt.keepItems ? ` · ${e.receipt.items.length} items` : ""}`}
+                            {e.exchangeRate &&
+                              ` · 1 ${e.currency} = ${e.exchangeRate.value} ${e.toCurrency}`}
+                          </span>
                         </small>
+                        {e.kind === "transfer" && (
+                          <small className="transaction-mobile-transfer">
+                            → {walletName(data, e.toWallet)} ·{" "}
+                            {format(receivedAfterFee(data, e), e.toCurrency!)}{" "}
+                            received
+                          </small>
+                        )}
                       </span>
                     </div>
                   </TableCell>
