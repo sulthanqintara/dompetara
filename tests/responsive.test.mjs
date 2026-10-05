@@ -245,10 +245,43 @@ async function checkTransactionFilters(page, width, height) {
   await menu.waitFor();
   assert.equal(await menu.evaluate((element) => getComputedStyle(element).animationName), "enter");
   assert.equal(await menu.evaluate((element) => getComputedStyle(element).animationDuration), "0.2s");
-  await check(page, "transaction-add-menu", width, height);
+  const backdrop = page.locator('[data-slot="dropdown-menu-backdrop"]');
+  const addButton = page.getByRole("button", { name: "Add transaction", exact: true });
+  if (width < 768) {
+    await backdrop.waitFor();
+    await check(page, "transaction-add-menu", width, height);
+    assert.equal(await addButton.locator("svg").evaluate((element) => getComputedStyle(element).transform), "matrix(0.707107, 0.707107, -0.707107, 0.707107, 0, 0)");
+    assert.match(await backdrop.evaluate((element) => getComputedStyle(element).backgroundColor), /(?:\/ |, )0\.25\)$/);
+    assert.equal(await addButton.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('[aria-label="Add transaction"]') === element;
+    }), true, "The plus button stays above the backdrop");
+    await addButton.click();
+    await menu.waitFor({ state: "detached" });
+    await backdrop.waitFor({ state: "detached" });
+    await check(page, "transaction-add-menu-closed", width, height);
+    assert.equal(await addButton.locator("svg").evaluate((element) => getComputedStyle(element).transform), "none");
+    await addButton.click();
+    await menu.waitFor();
+    await page.keyboard.press("Escape");
+    await menu.waitFor({ state: "detached" });
+    await backdrop.waitFor({ state: "detached" });
+    await addButton.click();
+    await menu.waitFor();
+    await backdrop.click({ position: { x: 4, y: 4 } });
+    await menu.waitFor({ state: "detached" });
+    await backdrop.waitFor({ state: "detached" });
+    await addButton.click();
+    await menu.waitFor();
+  } else {
+    assert.equal(await backdrop.isVisible(), false, "Tablet and desktop have no dimmed backdrop");
+    assert.equal(await addButton.locator("svg").evaluate((element) => getComputedStyle(element).transform), "none");
+    await check(page, "transaction-add-menu", width, height);
+  }
   await page.getByRole("menuitem", { name: "Expense", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Add expense", exact: true });
   await dialog.waitFor();
+  await backdrop.waitFor({ state: "detached" });
   const animation = await dialog.evaluate((element) => ({ name: getComputedStyle(element).animationName, duration: getComputedStyle(element).animationDuration }));
   console.log("Editor animation", animation);
   assert.notEqual(animation.name, "none");
@@ -261,6 +294,7 @@ async function checkTransactionFilters(page, width, height) {
   await menu.waitFor();
   assert.equal(await menu.evaluate((element) => getComputedStyle(element).animationName), "enter");
   assert.equal(await menu.evaluate((element) => getComputedStyle(element).animationDuration), "0.2s");
+  assert.equal(await backdrop.count(), 0, "The account menu has no dimmed backdrop");
   await check(page, "account-menu-animation", width, height);
   await page.keyboard.press("Escape");
   await menu.waitFor({ state: "detached" });
@@ -667,6 +701,7 @@ async function check(page, name, width, height) {
   );
   if (screenshots)
     await page.screenshot({
+      caret: "initial",
       path: `${screenshots}/${width}x${height}-${name}.png`,
       fullPage: !(
         name.endsWith("-bottom") || name === "navigation-floating" ||

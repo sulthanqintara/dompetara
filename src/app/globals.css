@@ -1747,7 +1747,7 @@ button.ledger-add-button {
   position: fixed;
   right: 16px;
   bottom: calc(var(--mobile-nav-height) + 2 * var(--mobile-nav-gap) + env(safe-area-inset-bottom, 0px));
-  z-index: 41;
+  z-index: 46;
   width: 56px;
   height: 56px;
   min-height: 56px;
@@ -1756,7 +1756,8 @@ button.ledger-add-button {
   box-shadow: 0 5px 20px #183b2433;
 }
 .ledger-add-button > span { display: none; }
-.ledger-add-button svg { width: 24px; height: 24px; }
+.ledger-add-button svg { width: 24px; height: 24px; transition: transform 200ms ease; }
+.ledger-add-button[data-popup-open] svg { transform: rotate(45deg); }
 .transaction-action-menu { width: 220px; }
 .transaction-action.income { color: #18704a; }
 .transaction-action.expense { color: #b43c35; }
@@ -1778,6 +1779,7 @@ button.account-trigger { margin-left: auto; min-width: 0; max-width: 100%; paddi
   .workspace-with-action { padding-bottom: 0; }
   button.ledger-add-button { position: static; width: auto; height: auto; min-height: 44px; padding: 10px 16px; border-radius: 6px; box-shadow: none; }
   .ledger-add-button > span { display: inline; }
+  .ledger-add-button[data-popup-open] svg { transform: none; }
   .ledger-add-button svg { width: 17px; height: 17px; }
   .account-name { max-width: 260px; }
 }

@@ -47,6 +47,7 @@ export function LedgerActions({ tab }: { tab: string }) {
         <span>Add transaction</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent
+        mobileBackdrop
         className="transaction-action-menu"
         finalFocus={() => (editor ? false : trigger.current)}
       >

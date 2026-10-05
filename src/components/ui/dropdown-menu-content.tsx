@@ -1,16 +1,19 @@
 "use client";
 import { Menu } from "@base-ui/react/menu";
 import { cn } from "cn";
+import { DropdownMenuBackdrop } from "./dropdown-menu-backdrop";
 export function DropdownMenuContent({
   className,
+  mobileBackdrop = false,
   side = "bottom",
   align = "end",
   sideOffset = 8,
   ...props
-}: Menu.Popup.Props &
+}: Menu.Popup.Props & { mobileBackdrop?: boolean } &
   Pick<Menu.Positioner.Props, "side" | "align" | "sideOffset">) {
   return (
     <Menu.Portal>
+      {mobileBackdrop && <DropdownMenuBackdrop className="md:hidden" />}
       <Menu.Positioner
         side={side}
         align={align}
