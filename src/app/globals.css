@@ -1388,7 +1388,6 @@ footer span {
   padding: 10px 16px;
 }
 [data-slot="button"][aria-label="Close"],
-.category-pill [data-slot="button"],
 .month-heading [data-slot="button"] {
   width: 44px;
   height: 44px;
@@ -1493,17 +1492,6 @@ footer span {
   min-width: 0;
   white-space: normal;
   text-transform: capitalize;
-}
-.category-pill {
-  height: auto;
-  max-width: 100%;
-  padding: 2px 4px 2px 14px;
-  gap: 4px;
-  white-space: normal;
-}
-.category-pill > span {
-  min-width: 0;
-  overflow-wrap: anywhere;
 }
 .entry-icon {
   height: auto;
@@ -1749,4 +1737,47 @@ footer span {
 
 .receipt-import-option {
   margin-bottom: 16px;
+}
+
+/* Creation actions sit above the phone navigation, with room to scroll content clear. */
+.workspace-with-action {
+  padding-bottom: calc(var(--mobile-nav-height) + 2 * var(--mobile-nav-gap) + 72px + env(safe-area-inset-bottom, 0px));
+}
+button.ledger-add-button {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--mobile-nav-height) + 2 * var(--mobile-nav-gap) + env(safe-area-inset-bottom, 0px));
+  z-index: 41;
+  width: 56px;
+  height: 56px;
+  min-height: 56px;
+  padding: 12px;
+  border-radius: 50%;
+  box-shadow: 0 5px 20px #183b2433;
+}
+.ledger-add-button > span { display: none; }
+.ledger-add-button svg { width: 24px; height: 24px; }
+.transaction-action-menu { width: 220px; }
+.transaction-action.income { color: #18704a; }
+.transaction-action.expense { color: #b43c35; }
+.transaction-action.transfer { color: #2459b0; }
+.transaction-action.income[data-highlighted] { background: #e9f5ed; }
+.transaction-action.expense[data-highlighted] { background: #fff0ee; }
+.transaction-action.transfer[data-highlighted] { background: #edf3fc; }
+.topbar { flex-wrap: nowrap; }
+button.account-trigger { margin-left: auto; min-width: 0; max-width: 100%; padding: 4px 8px; gap: 8px; }
+.account-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px; }
+.account-menu { width: 260px; }
+.account-menu-details { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.account-menu-details span { font-size: 12px; color: var(--muted-foreground); }
+.compact-pill { height: auto; min-height: 28px; max-width: 100%; padding: 2px 10px; gap: 2px; white-space: normal; overflow: visible; }
+.compact-pill.removable-pill { min-height: 44px; padding: 8px 10px; gap: 6px; }
+.compact-pill > span { min-width: 0; overflow-wrap: anywhere; }
+.compact-pill > svg { flex-shrink: 0; width: 14px; height: 14px; }
+@media (min-width: 768px) {
+  .workspace-with-action { padding-bottom: 0; }
+  button.ledger-add-button { position: static; width: auto; height: auto; min-height: 44px; padding: 10px 16px; border-radius: 6px; box-shadow: none; }
+  .ledger-add-button > span { display: inline; }
+  .ledger-add-button svg { width: 17px; height: 17px; }
+  .account-name { max-width: 260px; }
 }

@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import sharp from "sharp";
 import { readLimitedBody } from "../src/lib/read-limited-body.ts";
 import { extractReceipt } from "../src/features/receipts/extract.ts";
+import { draftSchema, validateReceipt } from "../src/features/receipts/receipts.ts";
 const source = await sharp({
   create: { width: 100, height: 100, channels: 3, background: "white" },
 })
@@ -79,6 +81,51 @@ try {
   assert.equal(indomaret.draft.date,"2026-10-03");
   assert.equal(indomaret.draft.time,"19:59");
   assert.deepEqual(indomaret.draft.warnings,["Total is unclear."]);
+  const food = draftSchema.parse(JSON.parse(readFileSync("tests/fixtures/shopee-food.json", "utf8")));
+  const misread = {...food,
+    items: food.items.map((item, i) => i === 2 ? {...item, lineTotal: "41000"} : item),
+    adjustments: food.adjustments.map(row => row.label === "Biaya Pengiriman" ? {...row, amount: "6500"} : row),
+  };
+  let repairCalls = 0;
+  let repairDraft = food;
+  globalThis.fetch = async (input, init) => {
+    if (String(input).endsWith("layout_parsing")) return Response.json({md_results: "Subtotal Rp72.000 Voucher -Rp32.400 Delivery Rp6.500 Rp500 Service Rp3.500 Total Rp43.600"});
+    repairCalls++;
+    const request = JSON.parse(String(init?.body));
+    assert.match(request.messages[0].content, /never crossed-out original prices/);
+    if (repairCalls === 2) {
+      assert.ok(Array.isArray(request.messages[1].content), "Inconsistent OCR is rechecked with the image");
+      assert.match(request.messages[1].content[1].image_url.url, /^data:image\/jpeg;base64,/);
+    }
+    return Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify(repairCalls === 1 ? misread : repairDraft)}}]});
+  };
+  const repaired = await extractReceipt(file, "ocr", "test-only-key");
+  assert.equal(repairCalls, 2);
+  assert.deepEqual(repaired.draft.items, food.items);
+  assert.deepEqual(repaired.draft.adjustments, food.adjustments);
+  validateReceipt({...repaired, ...repaired.draft, keepItems: true, paymentConfirmed: false}, 4360000);
+  repairCalls = 0;
+  repairDraft = {...food, total: "43600.00"};
+  assert.deepEqual((await extractReceipt(file, "ocr", "test-only-key")).draft.items, food.items, "Equivalent decimal formatting preserves the final charge");
+  repairCalls = 0;
+  repairDraft = {...food, total: "90600"};
+  const changedTotal = await extractReceipt(file, "ocr", "test-only-key");
+  assert.equal(changedTotal.draft.total, "43600", "Recheck cannot change the final expense to make items fit");
+  assert.deepEqual(changedTotal.draft.items, misread.items);
+  repairCalls = 0;
+  repairDraft = misread;
+  const unresolved = await extractReceipt(file, "ocr", "test-only-key");
+  assert.throws(() => validateReceipt({...unresolved, ...unresolved.draft, keepItems: true, paymentConfirmed: false}, 4360000), /equal/, "Unresolved extraction cannot bypass exact reconciliation");
+  repairCalls = 0;
+  repairDraft = {...food, items: []};
+  assert.deepEqual((await extractReceipt(file, "ocr", "test-only-key")).draft.items, misread.items, "Recheck cannot discard items and force total-only mode");
+  globalThis.fetch = async (input) => String(input).endsWith("layout_parsing")
+    ? Response.json({md_results: "Order screenshot"})
+    : ++repairCalls === 1
+    ? Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify(misread)}}]})
+    : Response.json({}, {status:429});
+  repairCalls = 0;
+  assert.deepEqual((await extractReceipt(file, "ocr", "test-only-key")).draft.items, misread.items, "Failed optional recheck retains the editable OCR draft");
   globalThis.fetch = async (input,init) => {
     calls.push({url:String(input),body:JSON.parse(String(init?.body))});
     return Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify(draft)}}]});

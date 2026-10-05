@@ -127,7 +127,14 @@ export function validateTransactionDetails(receipt: TransactionDetails, total: n
     return;
   }
   if (!receipt.items.length) throw new Error("Add items or choose total only.");
-  const sum =
+  if (transactionDetailsTotal(receipt) !== BigInt(total))
+    throw new Error(
+      "Items plus tax, service charges, discounts and rounding must equal the final total. Correct the details or choose total only.",
+    );
+}
+
+export function transactionDetailsTotal(receipt: TransactionDetails) {
+  return (
     receipt.items.reduce((sum, item) => {
       if (item.lineTotal === null)
         throw new Error(
@@ -145,9 +152,25 @@ export function validateTransactionDetails(receipt: TransactionDetails, total: n
     receipt.adjustments.reduce(
       (sum, adjustment) => sum + BigInt(money(adjustment.amount)),
       BigInt(0),
-    );
-  if (sum !== BigInt(total))
-    throw new Error(
-      "Items plus tax, service charges, discounts and rounding must equal the final total. Correct the details or choose total only.",
-    );
+    )
+  );
+}
+
+export function receiptDetailsMatch(draft: Draft) {
+  if (!draft.total || !draft.items.length) return false;
+  try {
+    return transactionDetailsTotal({ ...draft, keepItems: true }) === BigInt(money(draft.total));
+  } catch {
+    return false;
+  }
+}
+
+export function transactionDetailsDifference(details: TransactionDetails, amount: string) {
+  if (!details.items.length) return null;
+  try {
+    const total = transactionDetailsTotal(details);
+    return { total, difference: BigInt(money(amount, true)) - total };
+  } catch {
+    return null;
+  }
 }

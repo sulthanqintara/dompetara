@@ -2,18 +2,23 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert } from "@/components/ui/alert";
 import { ReceiptItemRow } from "@/features/receipts/components/receipt-item-row";
 import { ReceiptAdjustmentRow } from "@/features/receipts/components/receipt-adjustment-row";
 import type { TransactionDetails as Details } from "@/features/receipts/receipts";
+import { transactionDetailsDifference } from "@/features/receipts/receipts";
+import { format } from "../../format";
 import type { Currency } from "../../ledger";
 import { LedgerSelect } from "../shared/ledger-select";
 
 export function TransactionDetails({
   initial,
   currency,
+  amount,
 }: {
   initial?: Details;
   currency: Currency;
+  amount: string;
 }) {
   const [details, setDetails] = useState<Details>(
     initial ?? {
@@ -26,6 +31,7 @@ export function TransactionDetails({
   const saved = details.keepItems
     ? details
     : { ...details, items: [], adjustments: [] };
+  const reconciliation = transactionDetailsDifference(details, amount);
   const addAdjustment = (label: string) =>
     setDetails({
       ...details,
@@ -47,6 +53,16 @@ export function TransactionDetails({
       />
       {details.keepItems && (
         <div className="space-y-3">
+          <Alert variant={reconciliation && reconciliation.difference !== BigInt(0) ? "destructive" : "default"} role="status">
+            {reconciliation ? (
+              <>
+                <p>Items + adjustments: {format(Number(reconciliation.total), currency)}</p>
+                <p>{reconciliation.difference === BigInt(0)
+                  ? "Matches the transaction amount."
+                  : `Difference: ${format(Number(reconciliation.difference), currency)}. Check item prices, discounts and fees against your receipt.`}</p>
+              </>
+            ) : <p>Enter every line total and adjustment to check them against the transaction amount.</p>}
+          </Alert>
           <Label className="form-field">
             Receipt number (optional)
             <Input

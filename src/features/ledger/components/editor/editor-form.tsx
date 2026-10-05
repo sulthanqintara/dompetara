@@ -8,11 +8,13 @@ import { ReceiptPreview } from "@/features/receipts/components/receipt-preview";
 import { Alert } from "@/components/ui/alert";
 import { useRef, useState, type FormEvent } from "react";
 import { localDate } from "../../format";
-import { ReceiptText, Trash2, X } from "lucide-react";
+import { ReceiptText, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { DialogContent } from "@/components/ui/dialog-content";
-import { DialogTitle } from "@/components/ui/dialog-title";
+import { EditorHeader } from "./editor-header";
+import { EditorBody } from "./editor-body";
+import { EditorFooter } from "./editor-footer";
 import { LedgerError } from "../shared/ledger-error";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -26,12 +28,15 @@ import { EntryFields } from "./entry-fields";
 import { WalletFields } from "./wallet-fields";
 import { ConfirmationDialog } from "../shared/confirmation-dialog";
 
-export type Editor =
-  | { type: "entry"; entry?: Entry }
-  | { type: "wallet"; wallet?: Wallet; currency?: Currency };
+export type Editor = (
+  | { type: "entry"; entry?: Entry; kind?: "income" | "expense" | "transfer" }
+  | { type: "receipt" }
+  | { type: "wallet"; wallet?: Wallet; currency?: Currency }
+) & { restoreFocus?: HTMLElement | null };
 
 export function EditorForm({
   editor,
+  kind = "expense",
   extraction: initialExtraction,
   image: initialImage,
   restoreFocus,
@@ -42,7 +47,8 @@ export function EditorForm({
   close,
   save,
 }: {
-  editor: Editor;
+  editor: Exclude<Editor, { type: "receipt" }>;
+  kind?: "income" | "expense" | "transfer";
   extraction?: Extraction;
   image?: File;
   restoreFocus?: HTMLElement | null;
@@ -59,7 +65,10 @@ export function EditorForm({
   const importButton = useRef<HTMLButtonElement>(null);
   const form = useRef<HTMLFormElement>(null);
   const [importing, setImporting] = useState(false);
-  const [imported, setImported] = useState<{ extraction: Extraction; image: File }>();
+  const [imported, setImported] = useState<{
+    extraction: Extraction;
+    image: File;
+  }>();
   const extraction = imported?.extraction ?? initialExtraction;
   const image = imported?.image ?? initialImage;
   const [formError, setFormError] = useState("");
@@ -132,72 +141,70 @@ export function EditorForm({
         showCloseButton={false}
         finalFocus={() => returnFocus}
       >
-        <div className="panel-heading">
-          <div>
-            <DialogTitle>
-              {editor.type === "wallet"
-                ? wallet
-                  ? "Edit wallet"
-                  : "Add a wallet"
-                : extraction && !entry
-                  ? "Review receipt"
-                  : entry
-                    ? "Edit transaction"
-                    : "Add transaction"}
-            </DialogTitle>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Close"
-            onClick={close}
-            disabled={pending}
-          >
-            <X />
-          </Button>
-        </div>
-        {editor.type === "entry" && !entry && !initialExtraction && (
-          <ReceiptUpload
-            hidden={!importing}
-            onBack={() => {
-              setImporting(false);
-              requestAnimationFrame(() => importButton.current?.focus());
-            }}
-            onRead={(extraction, image) => {
-              setImported({ extraction, image });
-              setFormError("");
-              setImporting(false);
-              requestAnimationFrame(() =>
-                form.current?.querySelector<HTMLInputElement>('input[name="title"]')?.focus(),
-              );
-            }}
-          />
-        )}
+        <EditorHeader
+          title={
+            editor.type === "wallet"
+              ? wallet
+                ? "Edit wallet"
+                : "Add a wallet"
+              : extraction && !entry
+                ? "Review receipt"
+                : `${entry ? "Edit" : "Add"} ${entry?.kind === "correction" ? "opening balance" : kind}`
+          }
+          close={close}
+          pending={pending}
+        />
+        {editor.type === "entry" &&
+          kind === "expense" &&
+          !entry &&
+          !initialExtraction && (
+            <ReceiptUpload
+              hidden={!importing}
+              onBack={() => {
+                setImporting(false);
+                requestAnimationFrame(() => importButton.current?.focus());
+              }}
+              onRead={(extraction, image) => {
+                setImported({ extraction, image });
+                setFormError("");
+                setImporting(false);
+                requestAnimationFrame(() =>
+                  form.current
+                    ?.querySelector<HTMLInputElement>('input[name="title"]')
+                    ?.focus(),
+                );
+              }}
+            />
+          )}
         <form
           ref={form}
           onSubmit={submit}
+          onChange={() => setFormError("")}
           style={importing ? { display: "none" } : undefined}
         >
-          <div className="editor-body">
-            {editor.type === "entry" && !entry && !extraction && (
-              <div className="receipt-import-option">
-                <Button
-                  ref={importButton}
-                  type="button"
-                  variant="secondary"
-                  disabled={pending}
-                  onClick={() => {
-                    setImporting(true);
-                    requestAnimationFrame(() =>
-                      document.getElementById("receipt-image")?.focus(),
-                    );
-                  }}
-                >
-                  <ReceiptText />
-                  Import receipt
-                </Button>
-              </div>
-            )}
+          <EditorBody>
+            {editor.type === "entry" &&
+              kind === "expense" &&
+              !entry &&
+              !extraction && (
+                <div className="receipt-import-option">
+                  <Button
+                    ref={importButton}
+                    type="button"
+                    variant="secondary"
+                    disabled={pending}
+                    onClick={() => {
+                      setImporting(true);
+                      requestAnimationFrame(() =>
+                        document.getElementById("receipt-image")?.focus(),
+                      );
+                    }}
+                  >
+                    <ReceiptText />
+                    Import receipt
+                  </Button>
+                </div>
+              )}
             {image && <ReceiptPreview file={image} />}
             {editor.type === "wallet" ? (
               <WalletFields
@@ -208,6 +215,7 @@ export function EditorForm({
             ) : (
               <EntryFields
                 key={extraction?.importId ?? "manual"}
+                kind={kind}
                 entry={entry}
                 data={data}
                 draft={extraction?.draft}
@@ -219,8 +227,8 @@ export function EditorForm({
               </Alert>
             )}
             <LedgerError />
-          </div>
-          <div className="form-actions">
+          </EditorBody>
+          <EditorFooter>
             {entry && (
               <ConfirmationDialog
                 pending={pending}
@@ -258,7 +266,7 @@ export function EditorForm({
               {pending && <Spinner />}
               {pending ? "Saving…" : "Save"}
             </Button>
-          </div>
+          </EditorFooter>
         </form>
       </DialogContent>
     </Dialog>

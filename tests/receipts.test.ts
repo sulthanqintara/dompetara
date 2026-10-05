@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   draftSchema,
   providerDraftSchema,
   suggestReceiptWallet,
   receiptSchema,
   validateReceipt,
+  transactionDetailsDifference,
 } from "../src/features/receipts/receipts.ts";
 import {
   emptyLedger,
@@ -32,6 +34,14 @@ const receipt = receiptSchema.parse({
     { label: "Rounding", amount: "-4" },
   ],
 });
+const foodDraft = draftSchema.parse(JSON.parse(readFileSync("tests/fixtures/shopee-food.json", "utf8")));
+const foodReceipt = receiptSchema.parse({ ...receipt, ...foodDraft, keepItems: true });
+validateReceipt(foodReceipt, 4360000);
+assert.deepEqual(transactionDetailsDifference(foodReceipt, "43600"), {total: BigInt(4360000), difference: BigInt(0)});
+const wrongDelivery = {...foodReceipt, adjustments: foodReceipt.adjustments.map(row => row.label === "Biaya Pengiriman" ? {...row, amount: "6500"} : row)};
+assert.throws(() => validateReceipt(wrongDelivery, 4360000), /equal/);
+assert.equal(transactionDetailsDifference(wrongDelivery, "43600")?.difference, BigInt(-600000));
+assert.throws(() => validateReceipt({...foodReceipt, items: foodReceipt.items.map((item, i) => i === 2 ? {...item, lineTotal: "41000"} : item)}, 4360000), /equal/);
 validateReceipt(receipt, 19100000);
 assert.throws(() => validateReceipt(receipt, 19100400), /equal/);
 assert.throws(
@@ -265,3 +275,8 @@ const manualEdited = mutateLedger(manual,{...manualPayload,id:manual.entries[0].
 assert.deepEqual(manualEdited.entries[0].details,itemDetails);
 assert.equal(manualEdited.entries[0].title,"Groceries");
 assert.match(ledgerExport({data:manual,version:1},"csv").content,/transaction_details/);
+const foodSaved = mutateLedger(detailedLedger, {...manualPayload, action: "receipt", amount: "43600", title: "Food order", details: undefined, receipt: foodReceipt});
+assert.equal(foodSaved.entries.length, 1);
+assert.equal(foodSaved.entries[0].amount, 4360000);
+assert.deepEqual(foodSaved.entries[0].receipt?.items, foodDraft.items);
+assert.deepEqual(foodSaved.entries[0].receipt?.adjustments, foodDraft.adjustments);

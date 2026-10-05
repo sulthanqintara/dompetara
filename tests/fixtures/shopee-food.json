@@ -1,0 +1,23 @@
+{
+  "documentKind": "receipt",
+  "merchant": "ShopeeFood",
+  "date": "2026-10-02",
+  "time": "11:30",
+  "currency": "IDR",
+  "receiptNumber": null,
+  "total": "43600",
+  "items": [
+    { "name": "Nasi gulai ISO / usus", "quantity": 1, "unitPrice": null, "lineTotal": "38000" },
+    { "name": "Nasi Ayam Gulai", "quantity": 1, "unitPrice": null, "lineTotal": "34000" },
+    { "name": "Nasi rendang daging", "quantity": 1, "unitPrice": null, "lineTotal": "0" }
+  ],
+  "adjustments": [
+    { "label": "Voucher Diskon", "amount": "-32400" },
+    { "label": "Biaya Pengiriman", "amount": "500" },
+    { "label": "Biaya Layanan", "amount": "3500" }
+  ],
+  "warnings": ["One menu item is hidden in the collapsed list. Check the full order before saving item details."],
+  "paymentSource": "ShopeePay",
+  "suggestedWallet": null,
+  "suggestedCategory": null
+}

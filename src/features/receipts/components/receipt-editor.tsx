@@ -2,19 +2,24 @@
 import { useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { DialogContent } from "@/components/ui/dialog-content";
-import { DialogTitle } from "@/components/ui/dialog-title";
-import { Button } from "@/components/ui/button";
+import { EditorHeader } from "@/features/ledger/components/editor/editor-header";
 import { useLedgerContext } from "@/features/ledger/use-ledger-context";
 import type { Entry } from "@/features/ledger/ledger";
 import { localDate } from "@/features/ledger/format";
 import type { Extraction } from "../receipts";
 import { ReceiptUpload } from "./receipt-upload";
 import { ReceiptReview } from "./receipt-review";
-export function ReceiptEditor({ entry }: { entry?: Entry }) {
+export function ReceiptEditor({
+  entry,
+  restoreFocus,
+}: {
+  entry?: Entry;
+  restoreFocus?: HTMLElement | null;
+}) {
   const { pending, setEditor, setError } = useLedgerContext();
   const [image, setImage] = useState<File>();
   const [returnFocus] = useState(
-    () => document.activeElement as HTMLElement | null,
+    () => restoreFocus ?? (document.activeElement as HTMLElement | null),
   );
   const [extraction, setExtraction] = useState<Extraction | undefined>(() =>
     entry?.receipt
@@ -67,20 +72,12 @@ export function ReceiptEditor({ entry }: { entry?: Entry }) {
         showCloseButton={false}
         finalFocus={() => returnFocus}
       >
-        <div className="panel-heading">
-          <DialogTitle>
-            {extraction ? "Review receipt" : "Import receipt"}
-          </DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Close"
-            disabled={pending}
-            onClick={close}
-          >
-            ×
-          </Button>
-        </div>
+        <EditorHeader
+          title="Import receipt"
+          close={close}
+          pending={pending}
+          eyebrow=""
+        />
         <ReceiptUpload
           onRead={(result, file) => {
             setImage(file);

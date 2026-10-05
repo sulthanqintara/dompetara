@@ -1,4 +1,4 @@
-import { EditorForm } from "@/features/ledger/components/editor/editor-form";
+import { ExpenseModal } from "@/features/ledger/components/editor/expense-modal";
 import { useLedgerContext } from "@/features/ledger/use-ledger-context";
 import type { Entry } from "@/features/ledger/ledger";
 import type { Extraction } from "../receipts";
@@ -18,7 +18,7 @@ export function ReceiptReview({
 }) {
   const { data, save, pending, conflict, error } = useLedgerContext();
   return (
-    <EditorForm
+    <ExpenseModal
       editor={{ type: "entry", entry }}
       extraction={extraction}
       image={image}

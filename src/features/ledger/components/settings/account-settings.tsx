@@ -1,6 +1,6 @@
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { signOut } from "@/features/auth/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -30,8 +30,7 @@ export function AccountSettings({
         onClick={async () => {
           setPending(true);
           try {
-            const result = await authClient.signOut();
-            if (result.error) throw new Error(result.error.message);
+            await signOut();
             router.push("/sign-in");
             router.refresh();
           } catch {

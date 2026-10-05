@@ -1,3 +1,5 @@
+import { EditorBody } from "@/features/ledger/components/editor/editor-body";
+import { EditorFooter } from "@/features/ledger/components/editor/editor-footer";
 import { Alert } from "@/components/ui/alert";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
@@ -55,7 +57,7 @@ export function ReceiptUpload({
       aria-busy={busy}
       style={hidden ? { display: "none" } : undefined}
     >
-      <div className="editor-body">
+      <EditorBody>
         <p>
           Images are processed by AI providers and are not saved in your ledger.
         </p>
@@ -86,8 +88,8 @@ export function ReceiptUpload({
             {error}
           </Alert>
         )}
-      </div>
-      <div className="form-actions">
+      </EditorBody>
+      <EditorFooter>
         {onBack && (
           <Button
             type="button"
@@ -101,7 +103,7 @@ export function ReceiptUpload({
         <Button disabled={busy} type="submit">
           {busy ? "Reading receipt…" : "Read receipt"}
         </Button>
-      </div>
+      </EditorFooter>
     </form>
   );
 }

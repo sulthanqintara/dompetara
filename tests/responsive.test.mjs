@@ -381,14 +381,21 @@ async function checkNavigationClearance(page, name, width, height) {
     const nav = document.querySelector(".mobile-navigation").getBoundingClientRect();
     const footer = document.querySelector(".workspace > footer").getBoundingClientRect();
     const content = document.querySelector(".page-content").getBoundingClientRect();
-    return { navTop: nav.top, navBottom: nav.bottom, footerBottom: footer.bottom, contentBottom: content.bottom };
+    const add = document.querySelector(".ledger-add-button");
+    return { navTop: nav.top, navBottom: nav.bottom, footerBottom: footer.bottom, contentBottom: content.bottom, addTop: add?.getBoundingClientRect().top };
   });
   assert.ok(layout.navTop >= 0 && layout.navBottom <= height, "Floating navigation stays inside the viewport");
   assert.ok(layout.footerBottom < layout.navTop, `${name}: footer clears the floating navigation`);
   assert.ok(layout.contentBottom < layout.navTop, `${name}: final content clears the floating navigation`);
+  if (layout.addTop !== undefined) assert.ok(layout.footerBottom < layout.addTop && layout.contentBottom < layout.addTop, `${name}: content clears the floating plus button`);
   assert.equal(await page.getByRole("dialog", { name: "Workspace navigation", exact: true }).count(), 0);
   await page.getByRole("tab", { name: name === "transactions" ? "Transactions" : name[0].toUpperCase() + name.slice(1), exact: true }).click();
   assert.equal(await page.evaluate(() => window.scrollY), 0, "Phone navigation returns to the top of the section");
+}
+
+async function openTransaction(page, kind = "expense") {
+  await page.getByRole("button", { name: "Add transaction", exact: true }).click();
+  await page.getByRole("menuitem", { name: kind[0].toUpperCase() + kind.slice(1), exact: true }).click();
 }
 
 async function choose(page, label, option) {
@@ -634,10 +641,7 @@ async function checkTransferFees(page, width, height) {
     .data;
   const cacheBefore =
     await sql`select rate_date, last_checked_at from public.exchange_rate_cache order by rate_date`;
-  await page
-    .getByRole("button", { name: "Add transaction", exact: true })
-    .click();
-  await page.getByRole("tab", { name: "transfer", exact: true }).click();
+  await openTransaction(page, "transfer");
   await choose(page, "To wallet", "GoPay");
   await page
     .getByRole("textbox", { name: "Amount sent", exact: true })
@@ -715,10 +719,7 @@ async function checkTransferFees(page, width, height) {
     "Deleting a transfer must remove its fee atomically.",
   );
 
-  await page
-    .getByRole("button", { name: "Add transaction", exact: true })
-    .click();
-  await page.getByRole("tab", { name: "transfer", exact: true }).click();
+  await openTransaction(page, "transfer");
   await choose(page, "Source currency", "USD");
   await choose(page, "To wallet", "GoPay");
   const rate = page.getByRole("spinbutton", {
@@ -804,10 +805,7 @@ async function checkTransferFees(page, width, height) {
   await page.route("**/api/exchange-rates?*", (route) =>
     route.fulfill({ json: { suggestion: null } }),
   );
-  await page
-    .getByRole("button", { name: "Add transaction", exact: true })
-    .click();
-  await page.getByRole("tab", { name: "transfer", exact: true }).click();
+  await openTransaction(page, "transfer");
   await choose(page, "Source currency", "USD");
   await choose(page, "To wallet", "GoPay");
   await page
@@ -839,10 +837,7 @@ async function checkTransferFees(page, width, height) {
   );
   await removeFeeTransfer(page);
   await page.unroute("**/api/exchange-rates?*");
-  await page
-    .getByRole("button", { name: "Add transaction", exact: true })
-    .click();
-  await page.getByRole("tab", { name: "transfer", exact: true }).click();
+  await openTransaction(page, "transfer");
   await choose(page, "Source currency", "CAD");
   await choose(page, "To wallet", "GoPay");
   const sent = page.getByRole("textbox", {
@@ -979,7 +974,7 @@ async function checkConflicts(page, width, height) {
   expectedLedgerFailure = true;
   await switchView(page, "Transactions");
   await page.getByRole("button", { name: "Edit Lunch and groceries", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Edit transaction", exact: true });
+  const dialog = page.getByRole("dialog", { name: "Edit expense", exact: true });
   await dialog.getByRole("textbox", { name: "Title", exact: true }).fill("Unsaved groceries A B C");
   await dialog.getByRole("textbox", { name: "Amount", exact: true }).fill("200000");
   await dialog.getByRole("textbox", { name: /Note/ }).fill("Keep my draft after reload");
@@ -1034,9 +1029,8 @@ async function checkConflicts(page, width, height) {
   await wallet.waitFor({ state: "detached" });
 
   await switchView(page, "Transactions");
-  await page.getByRole("button", { name: "Add transaction", exact: true }).click();
-  const transfer = page.getByRole("dialog", { name: "Add transaction", exact: true });
-  await transfer.getByRole("tab", { name: "transfer", exact: true }).click();
+  await openTransaction(page, "transfer");
+  const transfer = page.getByRole("dialog", { name: "Add transfer", exact: true });
   await choose(page, "From wallet", "BCA Main Account");
   await choose(page, "To wallet", "GoPay");
   await transfer.getByRole("textbox", { name: "Amount sent", exact: true }).fill("45");
@@ -1076,8 +1070,8 @@ async function checkConflicts(page, width, height) {
 async function checkInlineCategories(page, width, height) {
   await switchView(page, "Transactions");
   const before = await (await page.request.get(`${origin}/api/ledger`)).json();
-  await page.getByRole("button", { name: "Add transaction", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Add transaction", exact: true });
+  await openTransaction(page);
+  const dialog = page.getByRole("dialog");
   await choose(page, "Category", "Food & drink");
   await check(page, "inline-category-existing", width, height);
   await dialog.getByRole("button", { name: "Add category", exact: true }).click();
@@ -1088,8 +1082,7 @@ async function checkInlineCategories(page, width, height) {
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
   assert.deepEqual(await (await page.request.get(`${origin}/api/ledger`)).json(), before);
   for (const kind of ["expense", "income"]) {
-    await page.getByRole("button", { name: "Add transaction", exact: true }).click();
-    await dialog.getByRole("tab", { name: kind, exact: true }).click();
+    await openTransaction(page, kind);
     await choose(page, "Wallet", "BCA Main Account");
     await dialog.getByLabel("Amount", { exact: true }).fill("1");
     await dialog.getByLabel("Title", { exact: true }).fill(`Inline ${kind} ${width}`);
@@ -1111,7 +1104,7 @@ async function checkReceipts(page, width, height) {
   await page.getByRole("heading", { name: "Transactions", exact: true, level: 1 }).waitFor();
   await check(page, "transactions-receipt-entry", width, height);
   assert.equal(await page.getByRole("button", { name: "Import receipt", exact: true }).count(), 0, "Receipt import belongs inside Add transaction");
-  await page.getByRole("button", { name: "Add transaction", exact: true }).click();
+  await openTransaction(page);
   const manual = page.getByRole("dialog");
   await check(page, "add-transaction", width, height);
   await manual.getByRole("textbox", { name: "Title", exact: true }).fill("Keep my draft");
@@ -1124,7 +1117,7 @@ async function checkReceipts(page, width, height) {
   await manual.waitFor({ state: "detached" });
   assert.equal(await page.getByRole("button", { name: "Add transaction", exact: true }).evaluate(el => el === document.activeElement), true);
   const image = { name: "receipt.png", mimeType: "image/png", buffer: await readFile("tests/receipt-images/bebek.png") };
-  await page.getByRole("button", { name: "Add transaction", exact: true }).click();
+  await openTransaction(page);
   await page.getByRole("dialog").getByRole("button", { name: "Import receipt", exact: true }).click();
   await check(page, "receipt-upload", width, height);
   const dialog = page.getByRole("dialog");
@@ -1221,7 +1214,7 @@ async function checkReceipts(page, width, height) {
   fixture.importId = randomUUID(); fixture.fingerprint = String(width).padStart(64, "b");
   fixture.draft.merchant = `Payment check ${width}`;
   fixture.draft.suggestedCategory = { name: `Gifts ${width}`, reason: "Possible gift expense. Confirm against your own payment context." };
-  await page.getByRole("button", { name: "Add transaction", exact: true }).click();
+  await openTransaction(page);
   await page.getByRole("dialog").getByRole("button", { name: "Import receipt", exact: true }).click();
   await choose(page, "Read with", "AI — image recognition");
   await dialog.getByLabel("Receipt image").setInputFiles(image);
@@ -1280,7 +1273,7 @@ async function checkReceipts(page, width, height) {
   assert.equal(noted.entries.find((entry) => entry.id === "lunch").description, `Remember this purchase ${width}`);
   if (width === 320 && process.env.RECEIPT_TEST_IMAGES) {
     for (const path of JSON.parse(process.env.RECEIPT_TEST_IMAGES)) {
-      await page.getByRole("button", { name: "Add transaction", exact: true }).click();
+      await openTransaction(page);
       await page.getByRole("dialog").getByRole("button", { name: "Import receipt", exact: true }).click();
       await choose(page, "Read with", "AI — image recognition");
       await dialog.getByLabel("Receipt image").setInputFiles(path);
@@ -1633,11 +1626,7 @@ try {
     assert.ok(response.ok(), `Save failed: ${await response.text()}`);
     await page.getByRole("dialog").waitFor({ state: "detached" });
     assert.equal(await page.locator("[data-slot=dialog-overlay]").count(), 0);
-    await page
-      .getByRole("button", { name: "Add transaction", exact: true })
-      .click();
-    await page.getByRole("dialog").waitFor();
-    await page.getByRole("tab", { name: "transfer", exact: true }).click();
+    await openTransaction(page, "transfer");
     await choose(page, "Destination currency", "USD");
     await check(page, "transfer-editor", width, height);
     if (width === 320 || width === 1440) {
@@ -1672,9 +1661,7 @@ try {
         "Transfer must save with both Select values",
       );
       await dialog.waitFor({ state: "detached" });
-      await page
-        .getByRole("button", { name: "Add transaction", exact: true })
-        .click();
+      await openTransaction(page);
       await page.getByRole("dialog").waitFor();
     }
     await page
