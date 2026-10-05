@@ -4,7 +4,8 @@ import { Alert } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { ArrowUpRight, Layers3, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, ShieldCheck } from "lucide-react";
+import { BrandIcon } from "@/features/branding/components/brand-icon";
 
 export function SignInForm() {
   const [error, setError] = useState("");
@@ -30,7 +31,7 @@ export function SignInForm() {
     <main className="login">
       <section className="login-story">
         <div className="brand">
-          <Layers3 /> Dompetara<span className="brand-dot">.</span>
+          <BrandIcon size={64} />
         </div>
         <div>
           <h1>

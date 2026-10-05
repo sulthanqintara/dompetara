@@ -12,6 +12,7 @@ import { Sidebar } from "../navigation/sidebar";
 import { AccountMenu } from "../navigation/account-menu";
 import { LedgerActions } from "../navigation/ledger-actions";
 import { LedgerEditor } from "../editor/ledger-editor";
+import { BrandIcon } from "@/features/branding/components/brand-icon";
 
 export function LedgerShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -49,7 +50,7 @@ export function LedgerShell({ children }: { children: ReactNode }) {
               {children}
             </TabsContent>
           </div>
-          <footer>DOMPETARA</footer>
+          <footer><BrandIcon size={32} /></footer>
         </main>
         <LedgerEditor />
       </WorkspaceTabs>

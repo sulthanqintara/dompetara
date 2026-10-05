@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <title>Dompetara — North Star</title>
+  <rect width="256" height="256" rx="60" fill="#173D48"/>
+  <circle cx="128" cy="128" r="72" stroke="#78C3C4" stroke-width="13"/>
+  <path d="m128 55 19 54 54 19-54 19-19 54-19-54-54-19 54-19 19-54Z" fill="#F4EDD9"/>
+  <path d="m128 55 19 54-19 19V55Z" fill="#F4C66A"/>
+  <circle cx="128" cy="128" r="12" fill="#173D48"/>
+</svg>

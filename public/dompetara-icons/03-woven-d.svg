@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <title>Dompetara — Woven D</title>
+  <rect width="256" height="256" rx="60" fill="#4148A5"/>
+  <path d="M73 68h51c36 0 65 27 65 60s-29 60-65 60H73V68Z" stroke="#F5F1E8" stroke-width="25" stroke-linejoin="round"/>
+  <path d="M73 174v-55c0-17 14-31 31-31h21" stroke="#A6BCFF" stroke-width="25" stroke-linecap="round"/>
+  <path d="M73 144v44" stroke="#F5F1E8" stroke-width="25" stroke-linecap="round"/>
+  <circle cx="125" cy="88" r="12.5" fill="#BCE9CF"/>
+</svg>

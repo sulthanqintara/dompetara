@@ -14,6 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Dompetara",
+  applicationName: "Dompetara",
+  appleWebApp: { capable: true, title: "Dompetara", statusBarStyle: "default" },
   description: "Track your income and expenses, all in one place.",
 };
 

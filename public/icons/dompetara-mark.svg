@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <title>Dompetara — transparent green Pocket D</title>
+  <defs>
+    <mask id="mark" maskUnits="userSpaceOnUse" x="0" y="0" width="256" height="256">
+      <path d="M66 62h55c47 0 76 26 76 66s-29 66-76 66H66V62Z" fill="white"/>
+      <path d="M91 89h27c30 0 49 14 49 39s-19 39-49 39H91V89Z" fill="black"/>
+      <rect x="129" y="109" width="76" height="38" rx="19" fill="white"/>
+      <circle cx="151" cy="128" r="7" fill="black"/>
+    </mask>
+  </defs>
+  <path d="M0 0h256v256H0Z" fill="#4B806E" mask="url(#mark)"/>
+</svg>

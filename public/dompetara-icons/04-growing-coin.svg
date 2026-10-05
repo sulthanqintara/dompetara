@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <title>Dompetara — Growing Coin</title>
+  <rect width="256" height="256" rx="60" fill="#C65D48"/>
+  <circle cx="128" cy="144" r="58" fill="#FBEACD"/>
+  <path d="M128 170v-64" stroke="#91402F" stroke-width="11" stroke-linecap="round"/>
+  <path d="M128 116c-33 0-53-20-53-48 33 0 53 18 53 48Z" fill="#FBEACD"/>
+  <path d="M128 99c0-30 19-48 51-48 0 30-19 48-51 48Z" fill="#B9D9AD"/>
+  <path d="M100 172h56" stroke="#91402F" stroke-width="9" stroke-linecap="round"/>
+</svg>
