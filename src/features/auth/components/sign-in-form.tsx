@@ -30,7 +30,7 @@ export function SignInForm() {
     <main className="login">
       <section className="login-story">
         <div className="brand">
-          <Layers3 /> personal ledger<span className="brand-dot">.</span>
+          <Layers3 /> Dompetara<span className="brand-dot">.</span>
         </div>
         <div>
           <h1>

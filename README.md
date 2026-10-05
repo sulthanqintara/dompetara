@@ -1,4 +1,6 @@
-# Personal Ledger
+# Dompetara
+
+Dompetara was previously called Personal Ledger. Existing production URLs and cloud resource IDs below retain their original names.
 
 A private Google-account ledger built with Next.js, Better Auth, Drizzle, and Supabase Postgres.
 
@@ -25,7 +27,7 @@ Better Auth manages identity and sessions; Supabase supplies Postgres, not Supab
 - Removing a category preserves its name in transaction history.
 - Times are entered and displayed in the device timezone and stored as UTC instants. Month boundaries use the device timezone.
 - Every API operation uses the authenticated user ID. Version checks reject conflicting saves from different tabs instead of overwriting changes.
-- Each personal ledger is stored as one JSON document. Large histories will eventually need normalized entries and pagination.
+- Each user ledger is stored as one JSON document. Large histories will eventually need normalized entries and pagination.
 
 ## Receipt import
 
@@ -55,7 +57,7 @@ After migrating the database, log the Supabase CLI into the project's account an
 pnpm fx:setup YOUR_PROJECT_REF
 ```
 
-This deploys `refresh-exchange-rates`, configures a private refresh token in Supabase function secrets and Vault, installs the named cron job, and performs the initial refresh. It is repeatable for the same project; it does not create duplicate jobs. The linked personal-ledger project has already been configured.
+This deploys `refresh-exchange-rates`, configures a private refresh token in Supabase function secrets and Vault, installs the named cron job, and performs the initial refresh. It is repeatable for the same project; it does not create duplicate jobs. The linked Supabase project has already been configured.
 
 The job runs at 17:00 UTC on weekdays, with 18:00/19:00 retry slots. Fresh snapshots skip provider requests based on `Cache-Control` and `Age`; expired snapshots send their ETag using `If-None-Match`. HTTP 304 preserves rates and updates verification metadata; successful HTTP 200 responses are validated and stored. Errors preserve the previous snapshot. New publication dates retain earlier cached snapshots for historical defaults. Reference dates and last-check timestamps remain distinct, and the UI warns after four days without successful verification. ECB holidays can retain earlier rates; these defaults are estimates, and the bank's actual converted amount takes precedence.
 
@@ -91,6 +93,6 @@ Production environment variables are configured on Vercel: `DATABASE_URL`, `BETT
 
 Google OAuth is configured in the `personal-ledger-510306` Google Cloud project under `sulthanqintara@gmail.com`, using the existing `NextJS-personal-ledger` client. Its authorized redirect URIs include `https://personal-ledger-inky-alpha.vercel.app/api/auth/callback/google` and the existing localhost callback. Production Google sign-in was verified through the callback to `/transactions`, with authenticated ledger access returning HTTP 200.
 
-The project was transferred to the personal account on 2026-10-03, preserving its production URL, deployments and environment variables. The CLI is signed in to the personal account and linked locally. Redeploy the current workspace with `vercel deploy --prod --scope msulthanqs-projects`. GitHub repository `sulthanqintara/personal-ledger` is connected, with `main` as the production branch; future pushes trigger Git deployments. Current workspace changes are deployed through the CLI but remain uncommitted, so commit and push them before relying on Git deployments for this version. Production variables are scoped to production; configure separate preview settings before using preview deployments.
+The project was transferred to the personal account on 2026-10-03, preserving its production URL, deployments and environment variables. The CLI is signed in to the personal account and linked locally. Redeploy the current workspace with `vercel deploy --prod --scope msulthanqs-projects`. GitHub repository `sulthanqintara/dompetara` is connected, with `main` as the production branch; future pushes trigger Git deployments. Current workspace changes are deployed through the CLI but remain uncommitted, so commit and push them before relying on Git deployments for this version. Production variables are scoped to production; configure separate preview settings before using preview deployments.
 
 Deployment verification (2026-10-03): cloud build succeeded, the sign-in page loaded, unauthenticated ledger access was rejected, authenticated reads/writes and reload persistence passed with a temporary test account, invalid origins were rejected, and live production OCR returned Shopee IDR 81,200 with payment date/time 2026-09-28 13:26 and the matching BCA wallet. Test accounts and their data were deleted; no receipt expense was saved.

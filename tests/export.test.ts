@@ -23,9 +23,9 @@ const original = structuredClone(data);
 const now = new Date("2026-10-01T12:00:00.000Z");
 const json = ledgerExport({ data, version: 42 }, "json", now);
 assert.deepEqual(JSON.parse(json.content), {
-  format: "personal-ledger", schemaVersion: 1, exportedAt: now.toISOString(), ledgerVersion: 42, data,
+  format: "dompetara", schemaVersion: 1, exportedAt: now.toISOString(), ledgerVersion: 42, data,
 });
-assert.equal(json.filename, "personal-ledger-2026-10-01T12-00-00-000Z.json");
+assert.equal(json.filename, "dompetara-2026-10-01T12-00-00-000Z.json");
 assert.match(json.mimeType, /application\/json/);
 const csv = ledgerExport({ data, version: 42 }, "csv", now);
 assert.ok(csv.content.startsWith('\uFEFF"id","kind","date_utc"'));

@@ -16,8 +16,8 @@ export function Sidebar({ name, tab }: { name: string; tab: string }) {
   return (
     <SidebarPanel>
       <SidebarHeader className="ledger-sidebar-header">
-        <Link href="/" className="brand" aria-label="Personal ledger">
-          <Layers3 /><span className="brand-name">personal ledger<span className="brand-dot">.</span></span>
+        <Link href="/" className="brand" aria-label="Dompetara">
+          <Layers3 /><span className="brand-name">Dompetara<span className="brand-dot">.</span></span>
         </Link>
         <SidebarTrigger placement="sidebar" />
       </SidebarHeader>

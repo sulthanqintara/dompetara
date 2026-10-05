@@ -1,4 +1,4 @@
-project_id = "personal-ledger"
+project_id = "dompetara"
 
 [functions.refresh-exchange-rates]
 # The handler validates a private cron token; this is not a browser endpoint.

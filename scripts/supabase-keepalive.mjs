@@ -6,7 +6,7 @@ const sql = postgres(process.env.DATABASE_URL, {
   prepare: false,
   max: 1,
   connect_timeout: 10,
-  connection: { application_name: "personal-ledger-keepalive" },
+  connection: { application_name: "dompetara-keepalive" },
 });
 
 try {

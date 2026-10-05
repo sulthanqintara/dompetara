@@ -12,7 +12,7 @@ const sql =
     max: 2,
     idle_timeout: 20,
     connect_timeout: 10,
-    connection: { application_name: "personal-ledger" },
+    connection: { application_name: "dompetara" },
   });
 if (process.env.NODE_ENV !== "production") globalDb.ledgerSql = sql;
 

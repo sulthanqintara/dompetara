@@ -1,4 +1,4 @@
-# Personal Ledger feature checklist
+# Dompetara feature checklist
 
 Reviewed: 2026-10-02. Checked items are implemented; unchecked items remain. Verification notes state what has been tested.
 
@@ -212,4 +212,4 @@ These extend the original request and are optional.
 - [x] Verify deployment uploads exclude environment files, personal receipt images and local worktrees.
 - [x] Complete cloud build and production endpoint, authentication, database read/write, persistence and live OCR checks using temporary accounts; remove test data afterward.
 - [x] Register the production Google OAuth callback on `NextJS-personal-ledger` in Google Cloud project `personal-ledger-510306` under `sulthanqintara@gmail.com`, preserving localhost. Verified real Google sign-in returns to `/transactions` with the correct account and authenticated ledger access (HTTP 200).
-- [x] Connect `sulthanqintara/personal-ledger` through the personal account's existing GitHub integration, with production branch `main`. Update local CLI authentication and project linking to the personal scope. Current deployed workspace changes remain uncommitted; future Git deployments use pushed commits.
+- [x] Connect `sulthanqintara/dompetara` through the personal account's existing GitHub integration, with production branch `main`. Update local CLI authentication and project linking to the personal scope. Current deployed workspace changes remain uncommitted; future Git deployments use pushed commits.

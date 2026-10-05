@@ -15,7 +15,7 @@ export function ledgerExport(state: LedgerState, format: ExportFormat, now = new
   let content: string;
   if (format === "json") {
     content = JSON.stringify({
-      format: "personal-ledger",
+      format: "dompetara",
       schemaVersion: 1,
       exportedAt,
       ledgerVersion: state.version,
@@ -39,7 +39,7 @@ export function ledgerExport(state: LedgerState, format: ExportFormat, now = new
   }
   return {
     content,
-    filename: `personal-ledger-${exportedAt.replace(/[:.]/g, "-")}.${format}`,
+    filename: `dompetara-${exportedAt.replace(/[:.]/g, "-")}.${format}`,
     mimeType: format === "json" ? "application/json;charset=utf-8" : "text/csv;charset=utf-8",
   };
 }

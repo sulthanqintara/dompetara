@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Personal Ledger",
+  title: "Dompetara",
   description: "Track your income and expenses, all in one place.",
 };
 

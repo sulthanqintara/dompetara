@@ -49,7 +49,7 @@ export function LedgerShell({ children }: { children: ReactNode }) {
               {children}
             </TabsContent>
           </div>
-          <footer>PERSONAL LEDGER</footer>
+          <footer>DOMPETARA</footer>
         </main>
         <LedgerEditor />
       </WorkspaceTabs>

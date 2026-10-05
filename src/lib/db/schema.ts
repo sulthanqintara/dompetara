@@ -13,7 +13,7 @@ import { user } from "./schema/auth";
 import type { Ledger } from "@/features/ledger/ledger";
 import type { RateSnapshot } from "@/features/exchange-rates/exchange-rates";
 
-// ponytail: one JSON document per personal ledger; normalize entries when history requires pagination.
+// ponytail: one JSON document per user ledger; normalize entries when history requires pagination.
 export const ledger = pgTable("ledger", {
   userId: text("user_id")
     .primaryKey()
