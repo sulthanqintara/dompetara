@@ -285,9 +285,10 @@ a:focus-visible {
   flex-shrink: 0;
 }
 .sidebar-bottom {
-  padding: 8px 16px 16px;
+  padding: 8px 14px 16px;
   margin-top: auto;
-  overflow-wrap: anywhere;
+  flex-shrink: 0;
+  align-items: flex-start;
 }
 .topbar-navigation {
   display: flex;
@@ -303,22 +304,6 @@ a:focus-visible {
   padding: 20px 8px 30px;
 }
 .private-note small {
-  color: var(--muted-foreground);
-  font-size: 10px;
-}
-.profile {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-top: 20px;
-}
-.profile strong {
-  display: block;
-  max-width: 145px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.profile small {
   color: var(--muted-foreground);
   font-size: 10px;
 }
@@ -483,6 +468,12 @@ h1 {
   letter-spacing: -1.1px;
   font-weight: 600;
   margin: 8px 0;
+}
+.page-heading h1 {
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.6px;
+  margin: 0;
 }
 p {
   color: var(--muted-foreground);
@@ -1145,6 +1136,11 @@ footer span {
 }
 
 @media (min-width: 640px) {
+  .page-heading h1 {
+    font-size: 31px;
+    letter-spacing: -1.1px;
+    margin: 8px 0;
+  }
   .page-content {
     padding: 30px 24px;
   }
@@ -1349,18 +1345,15 @@ footer span {
     width: 48px;
     justify-content: center;
   }
-  .ledger-desktop-sidebar[data-state="collapsed"] :is(.brand-name, .nav-label, .nav-text, .active-dot, .private-note, .profile > div:last-child) {
+  .ledger-desktop-sidebar[data-state="collapsed"] :is(.brand-name, .nav-label, .nav-text, .active-dot, .private-note) {
     display: none;
   }
-  .ledger-desktop-sidebar[data-state="collapsed"] :is(.ledger-sidebar-content, .sidebar-bottom) {
+  .ledger-desktop-sidebar[data-state="collapsed"] .ledger-sidebar-content {
     padding-inline: 12px;
   }
   .ledger-desktop-sidebar[data-state="collapsed"] .nav-item {
     justify-content: center;
     padding: 12px;
-  }
-  .ledger-desktop-sidebar[data-state="collapsed"] .profile {
-    justify-content: center;
   }
   .page-content {
     padding: 43px 42px;
