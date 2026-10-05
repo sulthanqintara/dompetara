@@ -14,6 +14,7 @@ const filtersOnly = process.env.RESPONSIVE_SCOPE === "filters";
 const categoriesOnly = process.env.RESPONSIVE_SCOPE === "categories";
 const receiptsOnly = process.env.RESPONSIVE_SCOPE === "receipts";
 const reportsOnly = process.env.RESPONSIVE_SCOPE === "reports";
+const balancesOnly = process.env.RESPONSIVE_SCOPE === "balances";
 const sql = postgres(process.env.DATABASE_URL, { prepare: false, max: 1 });
 const id = randomUUID();
 const token = randomUUID();
@@ -320,6 +321,16 @@ async function checkBalances(page, width, height) {
     await page.reload();
     await page.locator('.balance-stat[aria-busy="false"]').waitFor();
     assert.equal(await page.getByRole("combobox", { name: "Currency", exact: true }).innerText(), "IDR");
+    const toggle = page.getByRole("button", { name: "Show wallet balances", exact: true });
+    assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+    assert.equal(await page.locator(".balance-breakdown").isVisible(), false);
+    await check(page, "balance-collapsed", width, height);
+    const collapsedHeight = await page.locator(".stats").evaluate((el) => el.getBoundingClientRect().height);
+    await toggle.focus();
+    await page.keyboard.press("Enter");
+    assert.equal(await page.getByRole("button", { name: "Hide wallet balances", exact: true }).getAttribute("aria-expanded"), "true");
+    assert.equal(await page.locator(".balance-breakdown").isVisible(), true);
+    assert.ok(await page.locator(".stats").evaluate((el) => el.getBoundingClientRect().height) > collapsedHeight, "Collapsing the breakdown reduces summary height");
     for (const target of ["IDR", "USD", "CAD"]) {
       if (target !== "IDR") await choose(page, "Currency", target);
       await page.locator('.balance-stat[aria-busy="false"]').waitFor();
@@ -334,6 +345,10 @@ async function checkBalances(page, width, height) {
       }
       await check(page, `balance-${target}`, width, height);
     }
+    await page.getByRole("button", { name: "Hide wallet balances", exact: true }).focus();
+    await page.keyboard.press("Space");
+    assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+    assert.equal(await page.locator(".balance-breakdown").isVisible(), false);
     if (width === 320) {
       mode = "missing";
       await choose(page, "Currency", "IDR");
@@ -1659,6 +1674,17 @@ try {
     await page
       .getByRole("button", { name: "Add transaction", exact: true })
       .waitFor();
+    if (balancesOnly) {
+      await checkBalances(page, width, height);
+      await switchView(page, "Report");
+      assert.equal(await page.locator(".balance-breakdown").isVisible(), false);
+      await check(page, "report-balance-collapsed", width, height);
+      await page.getByRole("button", { name: "Show wallet balances", exact: true }).click();
+      assert.equal(await page.locator(".balance-breakdown").isVisible(), true);
+      await check(page, "report-balance-expanded", width, height);
+      await context.close();
+      continue;
+    }
     if (filtersOnly) { await checkTransactionFilters(page, width, height); await context.close(); continue; }
     await checkReceipts(page, width, height);
     if (categoriesOnly) { await checkInlineCategories(page, width, height); await context.close(); continue; }
@@ -1804,7 +1830,7 @@ try {
   }
   assert.deepEqual(errors, [], "JavaScript page errors");
   console.log(
-    filtersOnly ? "Transaction filter and animation checks passed at eight sizes." : categoriesOnly ? "Inline category and receipt checks passed at eight sizes; creation, cancel, income/expense, suggestions and reload persistence verified." : receiptsOnly ? "Receipt browser checks passed: eight sizes, OCR/AI choice, missing API key, editable review, item reconciliation, one wallet charge, conflict recovery, durable retries, reload persistence and deletion." : reportsOnly
+    balancesOnly ? "Balance checks passed at eight sizes on Transactions and Report: collapsed defaults, keyboard toggles, conversions, retry, and responsive layouts." : filtersOnly ? "Transaction filter and animation checks passed at eight sizes." : categoriesOnly ? "Inline category and receipt checks passed at eight sizes; creation, cancel, income/expense, suggestions and reload persistence verified." : receiptsOnly ? "Receipt browser checks passed: eight sizes, OCR/AI choice, missing API key, editable review, item reconciliation, one wallet charge, conflict recovery, durable retries, reload persistence and deletion." : reportsOnly
       ? "Report browser checks passed: eight sizes, conflict recovery and draft preservation, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, custom dates, daily/monthly charts, exact amounts, empty periods, currencies, and accessible controls."
       : "Responsive checks passed: eight sizes, conflict recovery and draft preservation, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, date ranges, daily/monthly reports, JSON/CSV downloads and retry, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
   );

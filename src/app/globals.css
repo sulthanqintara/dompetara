@@ -347,6 +347,14 @@ a:focus-visible {
   gap: 12px;
   font-size: 12px;
 }
+.balance-breakdown[hidden] {
+  display: none;
+}
+.balance-toggle {
+  align-self: flex-start;
+  margin-top: 8px;
+  gap: 8px;
+}
 .transaction-pagination {
   display: flex;
   flex-direction: column;
