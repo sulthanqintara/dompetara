@@ -1,0 +1,21 @@
+import assert from "node:assert/strict";
+import { filterTransactions, transactionFiltersSchema } from "../src/features/ledger/transaction-filters.ts";
+import { emptyLedger, type Entry } from "../src/features/ledger/ledger.ts";
+import { transactionPage } from "../src/features/ledger/pagination.ts";
+
+const data = emptyLedger();
+data.wallets = [{ id: "bank", name: "Bank", currencies: ["IDR"] }, { id: "cash", name: "Cash", currencies: ["USD"] }];
+const entry: Entry = { id: "expense", kind: "expense", wallet: "bank", currency: "IDR", amount: 100, date: "2026-10-05T00:00:00Z", title: "Lunch", category: "Archived dining", description: "With friends" };
+data.entries = [entry, { ...entry, id: "transfer", kind: "transfer", toWallet: "cash", toCurrency: "USD", category: "", title: "Transfer", description: "", received: 1 }, { ...entry, id: "opening", kind: "correction", category: "", title: "Opening balance", description: "" }];
+const filter = (values: Record<string, unknown>) => filterTransactions(data.entries, data, transactionFiltersSchema.parse(values)).map((item) => item.id);
+assert.deepEqual(filter({}), ["expense", "transfer", "opening"]);
+assert.deepEqual(filter({ search: "  FRIENDS " }), ["expense"]);
+assert.deepEqual(filter({ search: "Cash" }), ["transfer"]);
+assert.deepEqual(filter({ wallet: "cash", currency: "USD", type: "transfer" }), ["transfer"]);
+assert.deepEqual(filter({ category: "Archived dining" }), ["expense"]);
+assert.deepEqual(filter({ type: "correction" }), ["opening"]);
+assert.deepEqual(filter({ wallet: "missing" }), []);
+assert.deepEqual(filter({ category: "Archived dining", currency: "USD" }), []);
+assert.deepEqual(filter({ search: ["bad"], type: "invalid", currency: "EUR" }), ["expense", "transfer", "opening"]);
+assert.equal(transactionPage(filterTransactions(data.entries, data, transactionFiltersSchema.parse({ type: "correction" })), "9").page, 1);
+console.log("Transaction filters passed: combined filters, search, transfer destinations, historical categories and pagination.");

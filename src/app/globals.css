@@ -1781,3 +1781,20 @@ button.account-trigger { margin-left: auto; min-width: 0; max-width: 100%; paddi
   .ledger-add-button svg { width: 17px; height: 17px; }
   .account-name { max-width: 260px; }
 }
+
+.transaction-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+}
+.transaction-filters .form-field { min-width: 0; }
+.transaction-filters [data-slot="select-trigger"] { width: 100%; }
+.transaction-filter-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+@media (min-width: 640px) {
+  .transaction-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .transaction-search { grid-column: 1 / -1; }
+}
+@media (min-width: 1024px) {
+  .transaction-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

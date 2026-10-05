@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
   List,
   Plus,
+  Scale,
   Wallet as WalletIcon,
 } from "lucide-react";
 import { walletName } from "../../derive";
@@ -48,7 +49,7 @@ export function TransactionsTab({
           Transaction history{" "}
           <Badge variant="secondary">{entries.length}</Badge>
         </h3>
-        <span>{periodLabel} · all currencies</span>
+        <span>{periodLabel}</span>
       </div>
       {!data.wallets.length ? (
         <Empty className="empty">
@@ -62,7 +63,7 @@ export function TransactionsTab({
       ) : !entries.length ? (
         <Empty className="empty">
           <List />
-          <h3>No transactions in this period</h3>
+          <h3>No transactions match this period and filters</h3>
         </Empty>
       ) : (
         <div className="table-wrap">
@@ -98,6 +99,8 @@ export function TransactionsTab({
                       >
                         {e.kind === "transfer" ? (
                           <ArrowLeftRight size={18} />
+                        ) : e.kind === "correction" ? (
+                          <Scale size={18} />
                         ) : e.kind === "income" ? (
                           <ArrowDownLeft size={18} />
                         ) : (

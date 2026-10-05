@@ -10,6 +10,7 @@ import { crossRate } from "../src/features/exchange-rates/exchange-rates.ts";
 
 const origin = process.env.LEDGER_TEST_URL ?? "http://localhost:3000";
 const screenshots = process.env.RESPONSIVE_SCREENSHOTS;
+const filtersOnly = process.env.RESPONSIVE_SCOPE === "filters";
 const categoriesOnly = process.env.RESPONSIVE_SCOPE === "categories";
 const receiptsOnly = process.env.RESPONSIVE_SCOPE === "receipts";
 const reportsOnly = process.env.RESPONSIVE_SCOPE === "reports";
@@ -161,6 +162,18 @@ async function checkPagination(page, width, height) {
   const extra = Array.from({ length: 41 }, (_, index) => ({ id: `pagination-${index}`, kind: "expense", wallet: "bank", currency: "IDR", amount: 1, date, title: `Pagination transaction ${String(index).padStart(2, "0")}`, category: "Food & drink", description: "Pagination verification" }));
   await sql`update public.ledger set data = ${sql.json({ ...before.data, entries: [...extra, ...before.data.entries] })} where user_id = ${id}`;
   try {
+    if (filtersOnly) {
+      await page.goto(`${origin}/transactions?search=Pagination&type=expense`);
+      await page.getByText("Page 1 of 3", { exact: true }).waitFor();
+      await page.getByRole("button", { name: "Next page", exact: true }).click();
+      await page.getByText("Page 2 of 3", { exact: true }).waitFor();
+      assert.equal(new URL(page.url()).searchParams.get("search"), "Pagination");
+      assert.equal(new URL(page.url()).searchParams.get("type"), "expense");
+      await page.getByRole("form", { name: "Filter transaction history" }).getByRole("searchbox").fill("FRIENDS");
+      await page.getByRole("button", { name: "Apply filters", exact: true }).click();
+      await page.getByText("Page 1 of 1", { exact: true }).waitFor();
+      assert.equal(new URL(page.url()).searchParams.has("page"), false);
+    }
     await page.goto(`${origin}/transactions`);
     const rows = page.locator('[aria-label="Transaction history"] tbody tr');
     await page.getByText("Page 1 of 3", { exact: true }).waitFor();
@@ -191,6 +204,69 @@ async function checkPagination(page, width, height) {
     assert.equal(new URL(page.url()).searchParams.has("page"), false, "Changing the period resets pagination");
   } finally {
     await sql`update public.ledger set data = ${sql.json(before.data)}, version = ${before.version} where user_id = ${id}`;
+    await page.goto(`${origin}/transactions`);
+  }
+}
+
+async function checkTransactionFilters(page, width, height) {
+  const form = page.getByRole("form", { name: "Filter transaction history" });
+  const rows = page.locator('[aria-label="Transaction history"] tbody tr');
+  await check(page, "transaction-filters", width, height);
+  assert.ok(await page.locator('.entry-icon.correction .lucide-scale').count());
+  await form.getByRole("searchbox", { name: "Search transactions" }).fill("FRIENDS");
+  await form.getByRole("button", { name: "Apply filters", exact: true }).click();
+  await page.waitForURL((url) => url.searchParams.get("search") === "FRIENDS");
+  await page.getByText("Showing 1–1 of 1 transactions", { exact: true }).waitFor();
+  assert.equal(await rows.count(), 1);
+  assert.ok((await rows.innerText()).includes("Lunch and groceries"));
+  await page.reload();
+  await form.getByRole("searchbox").waitFor();
+  assert.equal(await form.getByRole("searchbox").inputValue(), "FRIENDS");
+  await form.getByRole("searchbox").fill("");
+  await form.getByRole("combobox", { name: "Transaction type", exact: true }).click();
+  await page.getByRole("option", { name: "Opening balances & corrections", exact: true }).click();
+  await check(page, "transaction-filters-long-selection", width, height);
+  await form.getByRole("button", { name: "Apply filters", exact: true }).click();
+  await page.waitForURL((url) => url.searchParams.get("type") === "correction");
+  await page.getByText("Showing 1–2 of 2 transactions", { exact: true }).waitFor();
+  assert.equal(await rows.count(), 2);
+  await form.getByRole("button", { name: "Clear filters", exact: true }).click();
+  await page.waitForURL((url) => url.search === "");
+  await page.goto(`${origin}/transactions?wallet=bank&type=transfer&currency=USD`);
+  await page.getByText("Showing 1–1 of 1 transactions", { exact: true }).waitFor();
+  assert.equal(await rows.count(), 1);
+  await check(page, "transaction-filters-transfer", width, height);
+  await page.goto(`${origin}/transactions?category=missing`);
+  await page.getByRole("heading", { name: "No transactions match this period and filters" }).waitFor();
+  await check(page, "transaction-filters-empty", width, height);
+  await page.goto(`${origin}/transactions`);
+  await page.getByRole("button", { name: "Add transaction", exact: true }).click();
+  const menu = page.locator('[data-slot="dropdown-menu-content"]');
+  await menu.waitFor();
+  assert.equal(await menu.evaluate((element) => getComputedStyle(element).animationName), "enter");
+  assert.equal(await menu.evaluate((element) => getComputedStyle(element).animationDuration), "0.2s");
+  await check(page, "transaction-add-menu", width, height);
+  await page.getByRole("menuitem", { name: "Expense", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Add expense", exact: true });
+  await dialog.waitFor();
+  const animation = await dialog.evaluate((element) => ({ name: getComputedStyle(element).animationName, duration: getComputedStyle(element).animationDuration }));
+  console.log("Editor animation", animation);
+  assert.notEqual(animation.name, "none");
+  assert.equal(animation.duration, "0.2s");
+  await check(page, "transaction-editor-animation", width, height);
+  await page.keyboard.press("Escape");
+  await dialog.waitFor({ state: "detached" });
+  assert.equal(await page.getByRole("button", { name: "Add transaction", exact: true }).evaluate((element) => element === document.activeElement), true);
+  await page.getByRole("button", { name: "Account menu", exact: true }).click();
+  await menu.waitFor();
+  assert.equal(await menu.evaluate((element) => getComputedStyle(element).animationName), "enter");
+  assert.equal(await menu.evaluate((element) => getComputedStyle(element).animationDuration), "0.2s");
+  await check(page, "account-menu-animation", width, height);
+  await page.keyboard.press("Escape");
+  await menu.waitFor({ state: "detached" });
+  assert.equal(await page.getByRole("button", { name: "Account menu", exact: true }).evaluate((element) => element === document.activeElement), true);
+  if (width === 320 || width === 1440) {
+    await checkPagination(page, width, height);
     await page.goto(`${origin}/transactions`);
   }
 }
@@ -547,11 +623,11 @@ async function check(page, name, width, height) {
         })),
       narrowTitles: [
         ...document.querySelectorAll(
-          ".transaction-detail .transaction-name > span:last-child",
+          ".transaction-detail .transaction-name strong",
         ),
       ].filter(
         (el) =>
-          el.textContent.length > 40 && el.getBoundingClientRect().width < 120,
+          el.textContent.length > 40 && el.getBoundingClientRect().width < (getComputedStyle(el).webkitLineClamp === "2" ? 64 : 120),
       ).length,
     };
   });
@@ -1548,6 +1624,7 @@ try {
     await page
       .getByRole("button", { name: "Add transaction", exact: true })
       .waitFor();
+    if (filtersOnly) { await checkTransactionFilters(page, width, height); await context.close(); continue; }
     await checkReceipts(page, width, height);
     if (categoriesOnly) { await checkInlineCategories(page, width, height); await context.close(); continue; }
     if (receiptsOnly) { await context.close(); continue; }
@@ -1692,7 +1769,7 @@ try {
   }
   assert.deepEqual(errors, [], "JavaScript page errors");
   console.log(
-    categoriesOnly ? "Inline category and receipt checks passed at eight sizes; creation, cancel, income/expense, suggestions and reload persistence verified." : receiptsOnly ? "Receipt browser checks passed: eight sizes, OCR/AI choice, missing API key, editable review, item reconciliation, one wallet charge, conflict recovery, durable retries, reload persistence and deletion." : reportsOnly
+    filtersOnly ? "Transaction filter and animation checks passed at eight sizes." : categoriesOnly ? "Inline category and receipt checks passed at eight sizes; creation, cancel, income/expense, suggestions and reload persistence verified." : receiptsOnly ? "Receipt browser checks passed: eight sizes, OCR/AI choice, missing API key, editable review, item reconciliation, one wallet charge, conflict recovery, durable retries, reload persistence and deletion." : reportsOnly
       ? "Report browser checks passed: eight sizes, conflict recovery and draft preservation, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, custom dates, daily/monthly charts, exact amounts, empty periods, currencies, and accessible controls."
       : "Responsive checks passed: eight sizes, conflict recovery and draft preservation, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, date ranges, daily/monthly reports, JSON/CSV downloads and retry, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
   );

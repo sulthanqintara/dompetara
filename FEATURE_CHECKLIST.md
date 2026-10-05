@@ -176,7 +176,7 @@ Component organization: ledger UI lives in `components/layout`, `navigation`, `t
 
 These extend the original request and are optional.
 
-- [ ] Search transactions and filter by wallet, category, type, and currency.
+- [x] Search transactions and filter by wallet, category, type, and currency. Filters apply within the selected period, persist in the URL, reset pagination when applied, and match either side of transfers.
 - [ ] Add a reason and optional effective date to balance corrections so later reconciliation is understandable.
 - [ ] Archive wallets without losing their history.
 - [x] Export CSV/JSON for backups. JSON preserves the complete ledger; CSV includes all transactions, exact minor-unit amounts, transfer destinations/rates, and linked fees.
@@ -213,3 +213,5 @@ These extend the original request and are optional.
 - [x] Complete cloud build and production endpoint, authentication, database read/write, persistence and live OCR checks using temporary accounts; remove test data afterward.
 - [x] Register the production Google OAuth callback on `NextJS-personal-ledger` in Google Cloud project `personal-ledger-510306` under `sulthanqintara@gmail.com`, preserving localhost. Verified real Google sign-in returns to `/transactions` with the correct account and authenticated ledger access (HTTP 200).
 - [x] Connect `sulthanqintara/dompetara` through the personal account's existing GitHub integration, with production branch `main`. Update local CLI authentication and project linking to the personal scope. Current deployed workspace changes remain uncommitted; future Git deployments use pushed commits.
+
+Transaction history verification (2026-10-05): opening balances and corrections use a scale icon, separate from income/expense arrows. Search and wallet/category/type/currency filters persist in URLs and are applied before pagination. Domain checks cover combined filters, notes, destination wallets/currencies, historical categories, malformed parameters and page clamping. Lint, TypeScript, domain tests and the production build passed. `RESPONSIVE_SCOPE=filters pnpm test:responsive` passed at all eight sizes, including long content, refresh, filtered pagination, reset on Apply, empty results, and 200 ms shadcn dialog/dropdown animations with restored focus. Rebased onto the newer compact history and account/action menus, preserving their layouts and branding; the shared dropdown now animates both the plus menu and top-right account menu. Phone, tablet and desktop screenshots were inspected; temporary test data was removed.
