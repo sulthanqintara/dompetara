@@ -1770,9 +1770,9 @@ button.account-trigger { margin-left: auto; min-width: 0; max-width: 100%; paddi
 .account-menu { width: 260px; }
 .account-menu-details { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
 .account-menu-details span { font-size: 12px; color: var(--muted-foreground); }
-.compact-pill { height: auto; min-height: 28px; max-width: 100%; padding: 2px 10px; gap: 2px; white-space: normal; overflow: visible; }
+.compact-pill { height: auto; min-height: 28px; max-width: 100%; padding: 2px 10px; gap: 2px; white-space: nowrap; overflow: hidden; }
 .compact-pill.removable-pill { min-height: 44px; padding: 8px 10px; gap: 6px; }
-.compact-pill > span { min-width: 0; overflow-wrap: anywhere; }
+.compact-pill > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .compact-pill > svg { flex-shrink: 0; width: 14px; height: 14px; }
 @media (min-width: 768px) {
   .workspace-with-action { padding-bottom: 0; }
