@@ -16,6 +16,7 @@ export function LedgerSelect({
   placeholder = "Choose an option",
   required,
   disabled,
+  compact = false,
 }: {
   label: string;
   options: { value: string; label: string }[];
@@ -26,11 +27,12 @@ export function LedgerSelect({
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
+  compact?: boolean;
 }) {
   const id = useId();
   return (
     <div className="form-field">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id} className={compact ? "sr-only" : undefined}>{label}</Label>
       <Select
         items={options}
         name={name}

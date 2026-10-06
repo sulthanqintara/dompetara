@@ -7,9 +7,10 @@ import { periodLabel, periodRange, validPeriod, type Period } from "../../derive
 import { LedgerSelect } from "../shared/ledger-select";
 import { MonthPicker } from "./month-picker";
 
-export function PeriodPicker({ period, onChange }: {
+export function PeriodPicker({ period, onChange, draftOnly = false }: {
   period: Period;
   onChange: (period: Period) => void;
+  draftOnly?: boolean;
 }) {
   const id = useId();
   const [mode, setMode] = useState("month" in period ? "month" : "custom");
@@ -25,7 +26,11 @@ export function PeriodPicker({ period, onChange }: {
           setMode(value);
           setDraft(periodRange(period));
           setError("");
-          if (value === "month") onChange({ month: periodRange(period).start.slice(0, 7) });
+          if (value === "month") {
+            const start = periodRange(period).start;
+            onChange({ month: validPeriod(start, start) ? start.slice(0, 7) : new Date().toISOString().slice(0, 7) });
+          }
+          else if (draftOnly) onChange(periodRange(period));
         }}
       />
       {mode === "month" ? (
@@ -43,18 +48,26 @@ export function PeriodPicker({ period, onChange }: {
           <div className="form-field">
             <Label htmlFor={`${id}-start`}>Start date</Label>
             <Input id={`${id}-start`} name="start" type="date" required min="0001-01-01" max="9999-12-31"
-              value={draft.start} onChange={(event) => setDraft({ ...draft, start: event.target.value })} />
+              value={draft.start} onChange={(event) => {
+                const next = { ...draft, start: event.target.value };
+                setDraft(next);
+                if (draftOnly) onChange(next);
+              }} />
           </div>
           <div className="form-field">
             <Label htmlFor={`${id}-end`}>End date</Label>
             <Input id={`${id}-end`} name="end" type="date" required min="0001-01-01" max="9999-12-31"
-              value={draft.end} onChange={(event) => setDraft({ ...draft, end: event.target.value })} />
+              value={draft.end} onChange={(event) => {
+                const next = { ...draft, end: event.target.value };
+                setDraft(next);
+                if (draftOnly) onChange(next);
+              }} />
           </div>
-          <Button type="submit">Apply dates</Button>
+          {!draftOnly && <Button type="submit">Apply dates</Button>}
           {error && <Alert variant="destructive" className="period-status">{error}</Alert>}
-          <p className="period-status" role="status">
+          {!draftOnly && <p className="period-status" role="status">
             Showing {periodLabel(period)}. Dates use your device timezone; both endpoints are included.
-          </p>
+          </p>}
         </form>
       )}
     </>

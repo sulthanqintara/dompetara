@@ -30,12 +30,13 @@ export function LedgerShell({ children }: { children: ReactNode }) {
           <header className="topbar">
             <div className="topbar-navigation">
               <SidebarTrigger />
+              <h1 className="mobile-page-title">{tab}</h1>
             </div>
             <AccountMenu />
           </header>
           <div className="page-content">
             <div className="page-heading">
-              <div>
+              <div className="desktop-page-title">
                 <h1>{tab}</h1>
               </div>
               <LedgerActions tab={tab} />

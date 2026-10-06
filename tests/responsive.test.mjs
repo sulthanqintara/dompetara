@@ -112,6 +112,8 @@ const data = {
 };
 
 async function switchView(page, name) {
+  // Keep the development indicator from covering the phone navigation.
+  await page.addStyleTag({ content: "nextjs-portal { pointer-events: none; }" });
   const navigation = page.getByRole("tab", { name, exact: true });
   if (page.viewportSize().width < 768) await navigation.waitFor({ state: "visible" });
   if (!(await navigation.isVisible())) {
@@ -170,8 +172,9 @@ async function checkPagination(page, width, height) {
       await page.getByText("Page 2 of 3", { exact: true }).waitFor();
       assert.equal(new URL(page.url()).searchParams.get("search"), "Pagination");
       assert.equal(new URL(page.url()).searchParams.get("type"), "expense");
-      await page.getByRole("form", { name: "Filter transaction history" }).getByRole("searchbox").fill("FRIENDS");
-      await page.getByRole("button", { name: "Apply filters", exact: true }).click();
+      const search = page.getByRole("form", { name: width < 768 ? "Search transaction history" : "Filter transaction history" });
+      await search.getByRole("searchbox").fill("FRIENDS");
+      await search.getByRole("button", { name: width < 768 ? "Search transactions" : "Apply filters", exact: true }).click();
       await page.getByText("Page 1 of 1", { exact: true }).waitFor();
       assert.equal(new URL(page.url()).searchParams.has("page"), false);
     }
@@ -186,6 +189,7 @@ async function checkPagination(page, width, height) {
     assert.equal(await rows.count(), 20);
     await check(page, "transactions-page-2", width, height);
     await page.reload();
+    if (width < 768) await page.locator(".mobile-navigation").waitFor();
     await page.getByText("Page 2 of 3", { exact: true }).waitFor();
     await rows.first().getByRole("button", { name: /Edit/ }).click();
     await page.getByRole("textbox", { name: "Title", exact: true }).fill("Pagination edited transaction");
@@ -209,21 +213,63 @@ async function checkPagination(page, width, height) {
   }
 }
 
+async function checkMobileFilters(page, width, height) {
+  const heading = page.getByRole("heading", { name: "Transactions", exact: true, level: 1 });
+  assert.equal(await heading.count(), 1);
+  assert.ok(await heading.evaluate((el) => !!el.closest("header")));
+  assert.equal(await page.locator(".account-name").isVisible(), false);
+  await check(page, "mobile-compact-summary", width, height);
+  const period = page.getByRole("button", { name: /^Change period:/ });
+  const original = await period.getAttribute("aria-label");
+  await page.getByRole("button", { name: "Previous month", exact: true }).click();
+  assert.notEqual(await period.getAttribute("aria-label"), original);
+  await page.getByRole("button", { name: "Next month", exact: true }).click();
+  assert.equal(await period.getAttribute("aria-label"), original);
+  await period.click();
+  await choose(page, "Period type", "Custom dates");
+  await page.getByLabel("Start date", { exact: true }).and(page.locator("input:visible")).fill("2026-03-02");
+  await page.getByLabel("End date", { exact: true }).and(page.locator("input:visible")).fill("2026-03-01");
+  assert.equal(await page.getByRole("button", { name: "Apply period", exact: true }).isDisabled(), true);
+  await check(page, "mobile-period-invalid", width, height);
+  const singleDay = singleDate.toISOString().slice(0, 10);
+  await page.getByLabel("Start date", { exact: true }).and(page.locator("input:visible")).fill(singleDay);
+  await page.getByLabel("End date", { exact: true }).and(page.locator("input:visible")).fill(singleDay);
+  await page.getByRole("button", { name: "Apply period", exact: true }).click();
+  await page.getByRole("dialog").waitFor({ state: "detached" });
+  assert.equal(await page.getByRole("button", { name: "Edit Previous month bill", exact: true }).count(), 1);
+  await check(page, "mobile-custom-period", width, height);
+  await switchView(page, "Report");
+  await check(page, "mobile-report-custom-period", width, height);
+  await period.click();
+  await choose(page, "Period type", "Month");
+  await chooseMonth(page, date.slice(0, 7));
+  await check(page, "mobile-period-sheet", width, height);
+  await page.getByRole("button", { name: "Apply period", exact: true }).click();
+  await page.getByRole("dialog").waitFor({ state: "detached" });
+  await check(page, "mobile-report-compact", width, height);
+  await switchView(page, "Transactions");
+  assert.equal(await period.getAttribute("aria-label"), original);
+}
+
 async function checkTransactionFilters(page, width, height) {
+  const mobile = width < 768;
+  if (mobile) await checkMobileFilters(page, width, height);
   const form = page.getByRole("form", { name: "Filter transaction history" });
+  const searchForm = mobile ? page.getByRole("form", { name: "Search transaction history" }) : form;
   const rows = page.locator('[aria-label="Transaction history"] tbody tr');
   await check(page, "transaction-filters", width, height);
   assert.ok(await page.locator('.entry-icon.correction .lucide-scale').count());
-  await form.getByRole("searchbox", { name: "Search transactions" }).fill("FRIENDS");
-  await form.getByRole("button", { name: "Apply filters", exact: true }).click();
+  await searchForm.getByRole("searchbox", { name: "Search transactions" }).fill("FRIENDS");
+  await searchForm.getByRole("button", { name: mobile ? "Search transactions" : "Apply filters", exact: true }).click();
   await page.waitForURL((url) => url.searchParams.get("search") === "FRIENDS");
   await page.getByText("Showing 1–1 of 1 transactions", { exact: true }).waitFor();
   assert.equal(await rows.count(), 1);
   assert.ok((await rows.innerText()).includes("Lunch and groceries"));
   await page.reload();
-  await form.getByRole("searchbox").waitFor();
-  assert.equal(await form.getByRole("searchbox").inputValue(), "FRIENDS");
-  await form.getByRole("searchbox").fill("");
+  await searchForm.getByRole("searchbox").waitFor();
+  assert.equal(await searchForm.getByRole("searchbox").inputValue(), "FRIENDS");
+  await searchForm.getByRole("searchbox").fill("");
+  if (mobile) await page.getByRole("button", { name: "Filters", exact: true }).click();
   await form.getByRole("combobox", { name: "Transaction type", exact: true }).click();
   await page.getByRole("option", { name: "Opening balances & corrections", exact: true }).click();
   await check(page, "transaction-filters-long-selection", width, height);
@@ -231,12 +277,32 @@ async function checkTransactionFilters(page, width, height) {
   await page.waitForURL((url) => url.searchParams.get("type") === "correction");
   await page.getByText("Showing 1–2 of 2 transactions", { exact: true }).waitFor();
   assert.equal(await rows.count(), 2);
-  await form.getByRole("button", { name: "Clear filters", exact: true }).click();
+  if (mobile) {
+    await page.getByRole("button", { name: "Filters (1)", exact: true }).click();
+    await form.getByRole("button", { name: "Reset", exact: true }).click();
+    await form.getByRole("button", { name: "Apply filters", exact: true }).click();
+  } else await form.getByRole("button", { name: "Clear filters", exact: true }).click();
   await page.waitForURL((url) => url.search === "");
   await page.goto(`${origin}/transactions?wallet=bank&type=transfer&currency=USD`);
   await page.getByText("Showing 1–1 of 1 transactions", { exact: true }).waitFor();
   assert.equal(await rows.count(), 1);
   await check(page, "transaction-filters-transfer", width, height);
+  if (mobile) {
+    await page.getByRole("button", { name: "Filters (3)", exact: true }).click();
+    await choose(page, "Wallet", "Long wallet ".repeat(12).trim());
+    await check(page, "mobile-filter-sheet-long", width, height);
+    await page.keyboard.press("Escape");
+    await page.getByRole("dialog").waitFor({ state: "detached" });
+    assert.equal(await page.getByRole("button", { name: "Filters (3)", exact: true }).evaluate((el) => el === document.activeElement), true);
+    await page.getByRole("button", { name: "Filters (3)", exact: true }).click();
+    assert.match(await form.getByRole("combobox", { name: "Wallet", exact: true }).innerText(), /BCA Main Account/);
+    await page.keyboard.press("Escape");
+    await page.getByRole("dialog").waitFor({ state: "detached" });
+    await page.getByRole("button", { name: "Remove Currency: USD", exact: true }).click();
+    await page.waitForURL((url) => !url.searchParams.has("currency"));
+    assert.equal(new URL(page.url()).searchParams.get("wallet"), "bank");
+    assert.equal(new URL(page.url()).searchParams.get("type"), "transfer");
+  }
   await page.goto(`${origin}/transactions?category=missing`);
   await page.getByRole("heading", { name: "No transactions match this period and filters" }).waitFor();
   await check(page, "transaction-filters-empty", width, height);
@@ -535,6 +601,11 @@ async function choose(page, label, option) {
 }
 
 async function chooseMonth(page, value) {
+  const needsSheet = page.viewportSize().width < 768 && !(await page.getByRole("dialog", { name: "Period and summary currency", exact: true }).isVisible());
+  if (needsSheet) {
+    await page.getByRole("button", { name: /^Change period:/ }).click();
+    await choose(page, "Period type", "Month");
+  }
   await page.getByRole("button", { name: "Month", exact: true }).click();
   await page
     .getByRole("spinbutton", { name: "Year", exact: true })
@@ -554,6 +625,10 @@ async function chooseMonth(page, value) {
       exact: true,
     })
     .click();
+  if (needsSheet) {
+    await page.getByRole("button", { name: "Apply period", exact: true }).click();
+    await page.getByRole("dialog").waitFor({ state: "detached" });
+  }
 }
 
 async function check(page, name, width, height) {
@@ -579,6 +654,12 @@ async function check(page, name, width, height) {
     return title.top < bounds.top + 8 || title.bottom > bounds.bottom;
   }).length);
   assert.equal(clippedTitles, 0, `${name}: modal title must stay inside its header`);
+  const clippedSheetTitles = await page.evaluate(() => [...document.querySelectorAll(".mobile-filter-sheet")].filter((sheet) => {
+    const title = sheet.querySelector('[data-slot="sheet-title"]').getBoundingClientRect();
+    const bounds = sheet.getBoundingClientRect();
+    return title.top < bounds.top || title.bottom > bounds.bottom;
+  }).length);
+  assert.equal(clippedSheetTitles, 0, `${name}: filter sheet title must stay visible when fields receive focus`);
   const modalGaps = await page.evaluate(() => [...document.querySelectorAll(".editor-with-body")].map((modal) => {
     const heading = modal.querySelector(".panel-heading");
     const body = [...modal.children].find((child) => child.tagName === "FORM" && child.getClientRects().length);
@@ -1476,12 +1557,18 @@ async function checkExports(page, width, height) {
 }
 
 async function checkDateRange(page, width, height) {
+  const mobile = width < 768;
+  const applyDates = async () => {
+    await page.getByRole("button", { name: mobile ? "Apply period" : "Apply dates", exact: true }).click();
+    if (mobile) await page.getByRole("dialog").waitFor({ state: "detached" });
+  };
   const currentBalance = await page.locator(".balance-stat h2").innerText();
   assert.match(await page.locator(".balance-stat").innerText(), /Current balance.*All time/s);
+  if (mobile) await page.getByRole("button", { name: /^Change period:/ }).click();
   await choose(page, "Period type", "Custom dates");
-  await page.getByLabel("Start date", { exact: true }).fill(singleDate.toISOString().slice(0, 10));
-  await page.getByLabel("End date", { exact: true }).fill(date.slice(0, 10));
-  await page.getByRole("button", { name: "Apply dates", exact: true }).click();
+  await page.getByLabel("Start date", { exact: true }).and(page.locator("input:visible")).fill(singleDate.toISOString().slice(0, 10));
+  await page.getByLabel("End date", { exact: true }).and(page.locator("input:visible")).fill(date.slice(0, 10));
+  await applyDates();
   const groups = page.locator(".expense-category-list .report-row");
   assert.equal(await groups.count(), 3, "Custom range includes both months");
   assert.match(await groups.filter({ hasText: "Bills" }).innerText(), /100/);
@@ -1495,25 +1582,33 @@ async function checkDateRange(page, width, height) {
   await check(page, "report-custom-range", width, height);
   await switchView(page, "Transactions");
   assert.equal(await page.getByRole("button", { name: "Edit Previous month bill", exact: true }).count(), 1);
-  assert.equal(await page.getByLabel("Start date", { exact: true }).inputValue(), singleDate.toISOString().slice(0, 10));
+  if (mobile) await page.getByRole("button", { name: /^Change period:/ }).click();
+  assert.equal(await page.getByLabel("Start date", { exact: true }).and(page.locator("input:visible")).inputValue(), singleDate.toISOString().slice(0, 10));
   assert.equal(await page.locator(".balance-stat h2").innerText(), currentBalance, "Changing the period must not change current balances");
   await check(page, "transactions-custom-range", width, height);
   const singleDay = singleDate.toISOString().slice(0, 10);
-  await page.getByLabel("Start date", { exact: true }).fill(singleDay);
-  await page.getByLabel("End date", { exact: true }).fill(singleDay);
-  await page.getByRole("button", { name: "Apply dates", exact: true }).click();
+  await page.getByLabel("Start date", { exact: true }).and(page.locator("input:visible")).fill(singleDay);
+  await page.getByLabel("End date", { exact: true }).and(page.locator("input:visible")).fill(singleDay);
+  await applyDates();
   assert.match(await page.locator(".stats .stat").nth(1).locator("h2").innerText(), /^IDR\s+100$/);
   assert.equal(await page.getByRole("button", { name: /^Edit / }).count(), 1, "Same-day range includes only that day's entries");
   assert.equal(await page.locator(".balance-stat h2").innerText(), currentBalance);
   await check(page, "transactions-single-day", width, height);
-  await page.getByLabel("Start date", { exact: true }).fill("2026-03-02");
-  await page.getByLabel("End date", { exact: true }).fill("2026-03-01");
-  await page.getByRole("button", { name: "Apply dates", exact: true }).click();
-  await page.getByRole("alert").filter({ hasText: "Enter valid dates" }).waitFor();
-  assert.equal(await page.getByRole("button", { name: "Edit Previous month bill", exact: true }).count(), 1, "Invalid ranges preserve the applied period");
+  if (mobile) await page.getByRole("button", { name: /^Change period:/ }).click();
+  await page.getByLabel("Start date", { exact: true }).and(page.locator("input:visible")).fill("2026-03-02");
+  await page.getByLabel("End date", { exact: true }).and(page.locator("input:visible")).fill("2026-03-01");
+  if (mobile) {
+    assert.equal(await page.getByRole("button", { name: "Apply period", exact: true }).isDisabled(), true);
+    await page.getByRole("status").filter({ hasText: "Enter valid dates" }).waitFor();
+  } else {
+    await applyDates();
+    await page.getByRole("alert").filter({ hasText: "Enter valid dates" }).waitFor();
+  }
+  assert.equal(await page.locator('[aria-label="Edit Previous month bill"]').count(), 1, "Invalid ranges preserve the applied period");
   await check(page, "invalid-date-range", width, height);
   await choose(page, "Period type", "Month");
   await chooseMonth(page, date.slice(0, 7));
+  if (mobile) await applyDates();
   await switchView(page, "Report");
 }
 

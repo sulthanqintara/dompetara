@@ -34,7 +34,7 @@ export function AccountMenu() {
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
         <span className="account-name">{name || email}</span>
-        <ChevronDown size={16} />
+        <ChevronDown size={16} className="account-chevron" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="account-menu">
         <div className="account-menu-details">
