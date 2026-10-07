@@ -5,6 +5,7 @@ import { useCachedRate } from "@/features/exchange-rates/hooks";
 import { walletTotalIdr } from "../../derive";
 import { format, localDate } from "../../format";
 import { balance, type Currency, type Ledger, type Wallet } from "../../ledger";
+import { BalanceAmount } from "../shared/balance-amount";
 
 export function WalletsTab({
   data,
@@ -41,7 +42,7 @@ export function WalletsTab({
               onClick={() => onEditWallet(w, c)}
             >
               <span>{c}</span>
-              <strong>{format(balance(data, w.id, c), c)}</strong>
+              <strong><BalanceAmount>{format(balance(data, w.id, c), c)}</BalanceAmount></strong>
               <ChevronRight size={17} />
             </Button>
           ))}
@@ -50,7 +51,7 @@ export function WalletsTab({
             return (
               <div className="wallet-balance wallet-total">
                 <span>Total (IDR){partial && " · partial"}</span>
-                <strong>{format(total, "IDR")}</strong>
+                <strong><BalanceAmount>{format(total, "IDR")}</BalanceAmount></strong>
                 <span aria-hidden />
               </div>
             );

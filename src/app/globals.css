@@ -342,15 +342,38 @@ a:focus-visible {
   box-shadow: 0 8px 32px #172d2426;
 }
 .balance-breakdown {
-  margin-block: 16px;
+  margin: 0;
+  padding-block: 16px;
   display: grid;
   gap: 12px;
   font-size: 12px;
 }
-.balance-breakdown[hidden] {
+.balance-panel[hidden] {
   display: none;
 }
-.balance-toggle[data-slot="button"] {
+.balance-panel {
+  height: var(--collapsible-panel-height);
+  overflow: hidden;
+  opacity: 1;
+  transition: height 240ms ease, opacity 240ms ease;
+}
+.balance-panel[data-starting-style],
+.balance-panel[data-ending-style] {
+  height: 0;
+  opacity: 0;
+}
+.balance-toggle svg {
+  transition: rotate 240ms ease, transform 240ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .balance-panel,
+  .balance-toggle svg {
+    transition: none;
+  }
+}
+.balance-toggle[data-slot="collapsible-trigger"] {
+  min-height: 44px;
+  translate: none;
   align-self: stretch;
   justify-content: space-between;
   width: 100%;
@@ -538,6 +561,7 @@ p {
 }
 .stat > span {
   display: flex;
+  min-height: 20px;
   align-items: center;
   justify-content: space-between;
   font-size: 12px;
@@ -564,6 +588,57 @@ p {
 }
 .balance-stat h2 {
   color: #286f5c;
+}
+.balance-visibility-toggle[data-slot="button"] {
+  width: 44px;
+  height: 44px;
+}
+.balance-stat > span {
+  position: relative;
+  padding-right: 44px;
+}
+.balance-stat .balance-visibility-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+}
+.balance-amount {
+  display: inline-grid;
+  max-width: 100%;
+  vertical-align: top;
+}
+.balance-amount-value {
+  grid-area: 1 / 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.hidden-balance {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  align-self: start;
+  justify-self: start;
+  align-items: center;
+  height: 1lh;
+  vertical-align: top;
+}
+.wallet-balance .hidden-balance,
+.balance-breakdown .hidden-balance {
+  justify-self: end;
+}
+.hidden-balance svg {
+  width: 32px;
+  height: 100%;
+  max-height: 24px;
+}
+.wallet-visibility-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: var(--muted-foreground);
+  font-size: 14px;
 }
 .panel {
   background: white;
@@ -1840,6 +1915,13 @@ button.account-trigger { margin-left: auto; min-width: 0; max-width: 100%; paddi
 @media (min-width: 640px) {
   .transaction-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .transaction-search { grid-column: 1 / -1; }
+}
+@media (min-width: 768px) {
+  .transaction-filter-actions {
+    grid-column: 1 / -1;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
 }
 @media (min-width: 1024px) {
   .transaction-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }

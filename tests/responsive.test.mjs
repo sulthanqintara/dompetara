@@ -257,6 +257,14 @@ async function checkTransactionFilters(page, width, height) {
   const form = page.getByRole("form", { name: "Filter transaction history" });
   const searchForm = mobile ? page.getByRole("form", { name: "Search transaction history" }) : form;
   const rows = page.locator('[aria-label="Transaction history"] tbody tr');
+  if (!mobile) {
+    const clear = await form.getByRole("button", { name: "Clear filters", exact: true }).boundingBox();
+    const apply = await form.getByRole("button", { name: "Apply filters", exact: true }).boundingBox();
+    const actions = await form.locator(".transaction-filter-actions").boundingBox();
+    assert.ok(Math.abs(clear.y - apply.y) < 1, "Clear and Apply share one row");
+    assert.ok(clear.x + clear.width < apply.x, "Clear comes before Apply");
+    assert.ok(Math.abs(apply.x + apply.width - actions.x - actions.width) < 1, "Filter actions align to the right");
+  }
   await check(page, "transaction-filters", width, height);
   assert.ok(await page.locator('.entry-icon.correction .lucide-scale').count());
   await searchForm.getByRole("searchbox", { name: "Search transactions" }).fill("FRIENDS");
@@ -390,13 +398,62 @@ async function checkBalances(page, width, height) {
     const toggle = page.getByRole("button", { name: "Show wallet balances", exact: true });
     assert.equal(await toggle.getAttribute("aria-expanded"), "false");
     assert.equal(await page.locator(".balance-breakdown").isVisible(), false);
+    assert.equal(await page.locator(".balance-stat h2").innerText(), "", "Balances start masked, with no amount text");
+    assert.deepEqual(await page.locator(".stats h2").evaluateAll((elements) => elements.map((el) => el.innerText)), ["", "", ""], "Income, expenses and balance all start hidden");
+    assert.equal(await page.locator(".stats h2 .hidden-balance").count(), 3);
+    assert.ok(!(await page.locator(".balance-stat").innerText()).includes("All time"), "The redundant balance subtext is removed");
+    await page.locator(".balance-stat h2").getByRole("img", { name: "Amount hidden" }).waitFor();
     await check(page, "balance-collapsed", width, height);
+    const headingOffsets = await page.locator(".stats > .stat").evaluateAll((cards) => cards.map((card) => card.querySelector("h2").getBoundingClientRect().top - card.getBoundingClientRect().top));
+    if (width >= 640) assert.ok(Math.max(...headingOffsets) - Math.min(...headingOffsets) < 1, "All summary amounts align, including the hidden balance");
     const collapsedHeight = await page.locator(".stats").evaluate((el) => el.getBoundingClientRect().height);
+    const collapsedLabel = await page.locator(".balance-toggle > span").evaluate((el) => {
+      const label = el.getBoundingClientRect();
+      const card = el.closest(".balance-stat").getBoundingClientRect();
+      return { x: label.x - card.x, y: label.y - card.y, width: label.width, height: label.height };
+    });
+    assert.equal(await page.locator(".balance-toggle > span").innerText(), "Wallet balances");
     await toggle.focus();
     await page.keyboard.press("Enter");
+    if (width === 320) {
+      await page.waitForFunction(() => document.querySelector(".balance-panel").getAnimations().some((animation) => animation.transitionProperty === "height"));
+    }
+    await page.locator(".balance-breakdown").waitFor({ state: "visible" });
+    await page.locator(".balance-panel").evaluate(async (el) => {
+      const start = el.getBoundingClientRect().height;
+      await Promise.all(el.getAnimations().map((animation) => animation.finished.catch(() => {})));
+      if (el.getBoundingClientRect().height < start) throw new Error("Expanding must grow the breakdown");
+    });
+    await page.waitForFunction(() => {
+      const panel = document.querySelector(".balance-panel");
+      return !panel.hasAttribute("data-starting-style") && panel.getBoundingClientRect().height > 0 && panel.getAnimations().length === 0;
+    });
     assert.equal(await page.getByRole("button", { name: "Hide wallet balances", exact: true }).getAttribute("aria-expanded"), "true");
     assert.equal(await page.locator(".balance-breakdown").isVisible(), true);
+    assert.equal(await page.locator(".balance-toggle > span").innerText(), "Wallet balances");
+    const expandedLabel = await page.locator(".balance-toggle > span").evaluate((el) => {
+      const label = el.getBoundingClientRect();
+      const card = el.closest(".balance-stat").getBoundingClientRect();
+      return { x: label.x - card.x, y: label.y - card.y, width: label.width, height: label.height };
+    });
+    for (const dimension of ["x", "y", "width", "height"]) assert.ok(Math.abs(collapsedLabel[dimension] - expandedLabel[dimension]) < 1, `The wallet breakdown label keeps its ${dimension} when expanded`);
     assert.ok(await page.locator(".stats").evaluate((el) => el.getBoundingClientRect().height) > collapsedHeight, "Collapsing the breakdown reduces summary height");
+    assert.equal(await page.locator(".balance-breakdown dd").first().innerText(), "", "Expanding the breakdown must not reveal masked amounts");
+    const visibility = page.getByRole("button", { name: "Show amounts", exact: true });
+    const targetSize = await visibility.boundingBox();
+    assert.ok(targetSize.width >= 44 && targetSize.height >= 44, "The eye toggle has a full touch target");
+    await visibility.focus();
+    await page.keyboard.press("Enter");
+    assert.equal(await page.getByRole("button", { name: "Hide amounts", exact: true }).getAttribute("aria-pressed"), "true");
+    if (width >= 1200) {
+      const visibleHeight = await page.locator(".balance-stat").evaluate((el) => el.getBoundingClientRect().height);
+      await page.getByRole("button", { name: "Hide amounts", exact: true }).click();
+      const hiddenHeight = await page.locator(".balance-stat").evaluate((el) => el.getBoundingClientRect().height);
+      assert.ok(Math.abs(visibleHeight - hiddenHeight) < 1, "Masking an expanded currency breakdown preserves the card height");
+      await page.getByRole("button", { name: "Show amounts", exact: true }).click();
+    }
+    assert.equal(await page.locator(".stats h2 .hidden-balance").count(), 0, "One toggle reveals income, expenses and balance");
+    assert.ok((await page.locator(".stats h2").evaluateAll((elements) => elements.map((el) => el.innerText))).every((text) => /\d/.test(text)));
     for (const target of ["IDR", "USD", "CAD"]) {
       if (target !== "IDR") await choose(page, "Currency", target);
       await page.locator('.balance-stat[aria-busy="false"]').waitFor();
@@ -404,6 +461,8 @@ async function checkBalances(page, width, height) {
       const expected = balanceBreakdown(before.data, target, rates);
       const money = (amount, currency) => new Intl.NumberFormat("en", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount / 100);
       assert.equal(await page.locator(".balance-stat h2").innerText(), money(expected.total, target));
+      const offsets = await page.locator(".stats > .stat").evaluateAll((cards) => cards.map((card) => card.querySelector("h2").getBoundingClientRect().top - card.getBoundingClientRect().top));
+      if (width >= 640) assert.ok(Math.max(...offsets) - Math.min(...offsets) < 1, "Revealed balances stay aligned for every currency");
       for (const row of expected.rows) {
         const item = page.locator(".balance-breakdown > div").filter({ has: page.getByText(`${row.currency} wallets`, { exact: true }) });
         assert.ok((await item.innerText()).includes(money(row.amount, row.currency)));
@@ -411,11 +470,38 @@ async function checkBalances(page, width, height) {
       }
       await check(page, `balance-${target}`, width, height);
     }
+    await switchView(page, "Wallet");
+    assert.equal(await page.locator(".wallet-balance .hidden-balance").count(), 0, "Reveal state is shared across views and currencies");
+    await check(page, "wallet-balances-visible", width, height);
+    await page.getByRole("button", { name: "Hide amounts", exact: true }).focus();
+    await page.keyboard.press("Space");
+    assert.ok(await page.locator(".wallet-balance .hidden-balance").count() >= 5);
+    assert.equal((await page.locator(".wallet-balance strong").evaluateAll((elements) => elements.map((el) => el.innerText))).join(""), "", "Wallet masks contain no amount text");
+    await check(page, "wallet-balances-hidden", width, height);
+    await switchView(page, "Transactions");
+    assert.equal(await page.locator(".balance-stat h2").innerText(), "", "Hiding balances applies to the summary too");
+    assert.deepEqual(await page.locator(".stats h2").evaluateAll((elements) => elements.map((el) => el.innerText)), ["", "", ""], "The wallet toggle also hides income and expenses");
+    await page.getByRole("button", { name: "Show amounts", exact: true }).click();
+    await page.getByRole("button", { name: "Show wallet balances", exact: true }).click();
+    await page.locator(".balance-breakdown").waitFor({ state: "visible" });
+    await page.waitForFunction(() => {
+      const panel = document.querySelector(".balance-panel");
+      return !panel.hasAttribute("data-starting-style") && panel.getAnimations().length === 0;
+    });
     await page.getByRole("button", { name: "Hide wallet balances", exact: true }).focus();
     await page.keyboard.press("Space");
     assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+    if (width === 320) await page.waitForFunction(() => document.querySelector(".balance-panel").getAnimations().some((animation) => animation.transitionProperty === "height"));
+    await page.locator(".balance-breakdown").waitFor({ state: "hidden" });
     assert.equal(await page.locator(".balance-breakdown").isVisible(), false);
     if (width === 320) {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      assert.ok(await page.locator(".balance-panel").evaluate((el) => getComputedStyle(el).transitionDuration.split(",").every((duration) => parseFloat(duration) <= 0.001)), "Reduced motion disables the visible transition");
+      await toggle.click();
+      await page.locator(".balance-breakdown").waitFor({ state: "visible" });
+      await page.getByRole("button", { name: "Hide wallet balances", exact: true }).click();
+      await page.locator(".balance-breakdown").waitFor({ state: "hidden" });
+      await page.emulateMedia({ reducedMotion: "no-preference" });
       mode = "missing";
       await choose(page, "Currency", "IDR");
       await page.getByRole("button", { name: "Retry conversion", exact: true }).waitFor();
@@ -437,6 +523,7 @@ async function checkBalances(page, width, height) {
   }
   await page.reload();
   await page.locator('.balance-stat[aria-busy="false"]').waitFor();
+  assert.equal(await page.locator(".balance-stat h2").innerText(), "", "Reload always restores hidden balances");
 }
 
 async function checkNavigation(page, width, height) {
@@ -1557,13 +1644,15 @@ async function checkExports(page, width, height) {
 }
 
 async function checkDateRange(page, width, height) {
+  const reveal = page.getByRole("button", { name: "Show amounts", exact: true });
+  if (await reveal.isVisible()) await reveal.click();
   const mobile = width < 768;
   const applyDates = async () => {
     await page.getByRole("button", { name: mobile ? "Apply period" : "Apply dates", exact: true }).click();
     if (mobile) await page.getByRole("dialog").waitFor({ state: "detached" });
   };
   const currentBalance = await page.locator(".balance-stat h2").innerText();
-  assert.match(await page.locator(".balance-stat").innerText(), /Current balance.*All time/s);
+  assert.match(await page.locator(".balance-stat").innerText(), /Current balance/);
   if (mobile) await page.getByRole("button", { name: /^Change period:/ }).click();
   await choose(page, "Period type", "Custom dates");
   await page.getByLabel("Start date", { exact: true }).and(page.locator("input:visible")).fill(singleDate.toISOString().slice(0, 10));
@@ -1613,6 +1702,8 @@ async function checkDateRange(page, width, height) {
 }
 
 async function checkExpenseReport(page, width, height) {
+  const reveal = page.getByRole("button", { name: "Show amounts", exact: true });
+  if (await reveal.isVisible()) await reveal.click();
   const chart = page.getByRole("img", { name: "Expense category pie chart" });
   await chart.waitFor();
   await page.getByRole("img", { name: "Daily spending chart", exact: true }).waitFor();
@@ -1749,7 +1840,7 @@ try {
     }
     await context.addCookies([
       {
-        name: "better-auth.session_token",
+        name: origin.startsWith("https:") ? "__Secure-better-auth.session_token" : "better-auth.session_token",
         value: encodeURIComponent(`${token}.${signature}`),
         url: origin,
         httpOnly: true,
@@ -1775,7 +1866,11 @@ try {
       assert.equal(await page.locator(".balance-breakdown").isVisible(), false);
       await check(page, "report-balance-collapsed", width, height);
       await page.getByRole("button", { name: "Show wallet balances", exact: true }).click();
+      await page.locator(".balance-breakdown").waitFor({ state: "visible" });
+      await page.locator(".balance-panel").evaluate((el) => Promise.all(el.getAnimations().map((animation) => animation.finished.catch(() => {}))));
       assert.equal(await page.locator(".balance-breakdown").isVisible(), true);
+      assert.equal(await page.locator(".balance-stat h2").innerText(), "");
+      await page.getByRole("button", { name: "Show amounts", exact: true }).click();
       await check(page, "report-balance-expanded", width, height);
       await context.close();
       continue;

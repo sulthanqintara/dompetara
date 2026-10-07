@@ -9,5 +9,6 @@ export const LedgerContext = createContext<(ReturnType<typeof useLedger> & {
   name: string; email: string; timeZone: string;
   period: Period; setPeriod: (period: Period) => void;
   currency: Currency; setCurrency: Dispatch<SetStateAction<Currency>>;
+  balancesVisible: boolean; setBalancesVisible: Dispatch<SetStateAction<boolean>>;
   editor: Editor | undefined; setEditor: Dispatch<SetStateAction<Editor | undefined>>;
 }) | null>(null);

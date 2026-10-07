@@ -37,6 +37,7 @@ Keep the existing localhost and production entries. If the Google consent screen
 
 ## Ledger behavior
 
+- Summary income, expenses, and current and wallet balances start hidden behind dots. The eye toggle shows or hides these amounts for every currency across views; reloading hides them again.
 - Wallets can contain IDR, USD, and CAD balances. Amounts use integer minor units with at most two decimal places.
 - Monthly income and expenses are shown in the selected currency. Total balance is the current balance across all wallets in that currency; currencies are never added together.
 - Transfers select source and destination wallets/currencies. Different-currency transfers suggest an ECB reference rate from the shared database cache. Enter both actual amounts to calculate the effective rate: CAD 159.33 sent and IDR 2,000,000 received gives 1 CAD = 12,552.563861168644 IDR. Changing either actual amount preserves the other and recalculates the rate; explicitly editing the rate or choosing the suggested rate recalculates the received amount instead. Amounts before service fees and the applied rate/source/date are saved with the transfer and survive future reference-rate updates.

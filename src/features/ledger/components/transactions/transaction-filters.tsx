@@ -20,8 +20,8 @@ export function TransactionFilters({ data, filters }: { data: Ledger; filters: F
     </div>
     <TransactionFilterFields data={data} filters={filters} />
     <div className="transaction-filter-actions">
-      <Button type="submit">Apply filters</Button>
       <Button variant="outline" nativeButton={false} render={<Link href="/transactions" scroll={false} />}>Clear filters</Button>
+      <Button type="submit">Apply filters</Button>
     </div>
     <p className="hint transaction-search">Filters apply within the selected period. Transfers match either wallet and either currency. Summary totals use the period and summary currency.</p>
   </Form>
