@@ -1323,7 +1323,7 @@ async function checkReceipts(page, width, height) {
   await page.keyboard.press("Escape");
   await manual.waitFor({ state: "detached" });
   assert.equal(await page.getByRole("button", { name: "Add transaction", exact: true }).evaluate(el => el === document.activeElement), true);
-  const image = { name: "receipt.png", mimeType: "image/png", buffer: await readFile("tests/receipt-images/bebek.png") };
+  const image = { name: "receipt.png", mimeType: "image/png", buffer: await readFile("tests/fixtures/receipt.png") };
   await openTransaction(page);
   await page.getByRole("dialog").getByRole("button", { name: "Import receipt", exact: true }).click();
   await check(page, "receipt-upload", width, height);

@@ -90,6 +90,13 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
   if (!raw || typeof raw !== "object" || Array.isArray(raw))
     throw new Error("Invalid request.");
   const p = raw as Record<string, unknown>;
+  if (p.action === "removeReceiptImage") {
+    const data = structuredClone(previous);
+    const entry = data.entries.find((entry) => entry.id === p.id);
+    if (!entry?.receipt) throw new Error("Receipt not found.");
+    delete entry.receipt.imageId;
+    return data;
+  }
   if (p.action === "receipt") {
     const receipt = receiptSchema.parse(p.receipt);
     if (

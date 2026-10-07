@@ -73,6 +73,7 @@ export const transactionDetailsSchema = z.object({
 });
 export type TransactionDetails = z.infer<typeof transactionDetailsSchema>;
 export const receiptSchema = z.object({
+  imageId: z.uuid().optional(),
   importId: z.uuid(),
   fingerprint: z.string().regex(/^[a-f0-9]{64}$/),
   method: z.enum(["ocr", "ai"]),

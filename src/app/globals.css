@@ -737,6 +737,37 @@ p {
   min-width: 44px;
   min-height: 44px;
 }
+.receipt-image-option {
+  margin-block: 12px 20px;
+  min-width: 0;
+}
+.receipt-image-option p {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+.saved-receipt-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 60dvh;
+  object-fit: contain;
+  margin-block: 12px;
+}
+.receipt-image-option .saved-receipt-image { max-height: 240px; }
+.receipt-image-title { overflow-wrap: anywhere; }
+.receipt-image-dialog .editor-body { flex: 1; }
+.receipt-image-error { display: flex; flex-direction: column; align-items: start; gap: 12px; }
+.editor .receipt-image-choice {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+.saved-receipt-image-expanded { max-height: none; }
 .entry-icon {
   flex-shrink: 0;
   padding: 10px;

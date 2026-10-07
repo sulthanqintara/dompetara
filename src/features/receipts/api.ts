@@ -4,6 +4,27 @@ export async function readReceipt(
   method: "ocr" | "ai",
   signal: AbortSignal,
 ): Promise<Extraction> {
+  const blob = await prepareReceiptImage(file);
+  signal.throwIfAborted();
+  const form = new FormData();
+  form.set("image", blob, "receipt.jpg");
+  form.set("method", method);
+  const response = await fetch("/api/receipts/extract", {
+    method: "POST",
+    body: form,
+    signal,
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error ?? "Could not read receipt.");
+  const parsed = extractionSchema.safeParse(result);
+  if (!parsed.success)
+    throw new Error(
+      "The receipt response was invalid. Try another image or enter the transaction manually.",
+    );
+  return parsed.data;
+}
+
+export async function prepareReceiptImage(file: File): Promise<Blob> {
   if (
     !["image/jpeg", "image/png"].includes(file.type) ||
     file.size > 16_000_000
@@ -36,21 +57,15 @@ export async function readReceipt(
     throw new Error(
       "This image is too large after resizing. Try a closer crop.",
     );
-  signal.throwIfAborted();
-  const form = new FormData();
-  form.set("image", blob, "receipt.jpg");
-  form.set("method", method);
-  const response = await fetch("/api/receipts/extract", {
-    method: "POST",
-    body: form,
-    signal,
-  });
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.error ?? "Could not read receipt.");
-  const parsed = extractionSchema.safeParse(result);
-  if (!parsed.success)
-    throw new Error(
-      "The receipt response was invalid. Try another image or enter the transaction manually.",
-    );
-  return parsed.data;
+  return blob;
+}
+
+export async function fetchReceiptImage(id: string): Promise<Blob> {
+  const response = await fetch(
+    `/api/receipts/image?id=${encodeURIComponent(id)}`,
+    { cache: "no-store" },
+  );
+  if (!response.ok)
+    throw new Error("Could not load this receipt image. Please retry.");
+  return response.blob();
 }

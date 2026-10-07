@@ -167,7 +167,7 @@ Component organization: ledger UI lives in `components/layout`, `navigation`, `t
 
 - [ ] AI access: identify the actual GLM/ChatGPT plan or API credentials available, then verify the supported integration. Do not assume subscription credit and API credit are interchangeable.
 - [ ] Receipt categories: one category per receipt initially, or item-level splits across categories?
-- [ ] Image retention: discard images after extraction or retain them privately for later review? If retained, define deletion behavior.
+- [x] Image retention: optional private storage on confirmation; owner-only viewing, independent removal, transaction/account deletion, and durable cleanup retries. Production requires the new migration, private bucket, and server storage/cron credentials.
 - [ ] Daily insights: choose the generation trigger and whether regenerating a day replaces the previous analysis or keeps revisions.
 - [ ] Timezone: retain current device-timezone behavior or use a fixed timezone such as Asia/Jakarta for reports and daily insights?
 - [ ] Personal access: allow a private ledger for any Google account, as today, or restrict sign-in to your own account?

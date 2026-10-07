@@ -29,6 +29,13 @@
       "when": 1790851188753,
       "tag": "0003_exchange_rate_cache",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791345223245,
+      "tag": "0004_private_receipt_images",
+      "breakpoints": true
     }
   ]
 }

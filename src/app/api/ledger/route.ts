@@ -5,9 +5,10 @@ import { db } from "@/lib/db";
 import { ledger } from "@/lib/db/schema";
 import { mutateLedger } from "@/features/ledger/ledger";
 import { readLedger } from "@/features/ledger/read-ledger";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { withApiErrorLogging } from "@/lib/with-api-error-logging";
 import { logServerError } from "@/lib/log-server-error";
+import { saveLedgerImages } from "@/features/receipts/save-ledger-images";
 
 export const GET = withApiErrorLogging(async (request: Request) => {
   const session = await auth.api.getSession({ headers: request.headers });
@@ -27,11 +28,36 @@ export const POST = withApiErrorLogging(async (request: Request) => {
   if (!session)
     return Response.json({ error: "Please sign in." }, { status: 401 });
   let payload;
+  let image: File | undefined;
   try {
-    const body = await readLimitedBody(request.body, 300000);
-    payload = JSON.parse(body.toString("utf8"));
+    if (
+      request.headers.get("content-type")?.startsWith("multipart/form-data")
+    ) {
+      const body = await readLimitedBody(request.body, 4_400_000);
+      const form = await new Request(request.url, {
+        method: "POST",
+        headers: { "Content-Type": request.headers.get("content-type")! },
+        body: new Uint8Array(body),
+      }).formData();
+      const json = form.get("payload");
+      const file = form.get("image");
+      if (
+        typeof json !== "string" ||
+        Buffer.byteLength(json) > 300000 ||
+        !(file instanceof File)
+      )
+        throw new Error("Invalid upload.");
+      payload = JSON.parse(json);
+      image = file;
+    } else {
+      const body = await readLimitedBody(request.body, 300000);
+      payload = JSON.parse(body.toString("utf8"));
+    }
   } catch (error) {
-    logServerError({ method: "POST", path: "/api/ledger", stage: "parse request" }, error);
+    logServerError(
+      { method: "POST", path: "/api/ledger", stage: "parse request" },
+      error,
+    );
     return Response.json({ error: "Invalid request." }, { status: 400 });
   }
   const [row] = await db
@@ -66,7 +92,10 @@ export const POST = withApiErrorLogging(async (request: Request) => {
   try {
     data = mutateLedger(row.data, payload);
   } catch (error) {
-    logServerError({ method: "POST", path: "/api/ledger", stage: "mutate ledger" }, error);
+    logServerError(
+      { method: "POST", path: "/api/ledger", stage: "mutate ledger" },
+      error,
+    );
     return Response.json(
       {
         error:
@@ -77,14 +106,32 @@ export const POST = withApiErrorLogging(async (request: Request) => {
       { status: 400 },
     );
   }
-  const updated = await db
-    .update(ledger)
-    .set({ data, version: row.version + 1 })
-    .where(
-      and(eq(ledger.userId, session.user.id), eq(ledger.version, row.version)),
-    )
-    .returning({ version: ledger.version });
-  if (!updated.length)
+  let saved;
+  try {
+    saved = await saveLedgerImages(
+      session.user.id,
+      row.data,
+      data,
+      row.version,
+      payload,
+      image,
+    );
+  } catch (error) {
+    logServerError(
+      { method: "POST", path: "/api/ledger", stage: "save receipt image" },
+      error,
+    );
+    const invalidImage = error instanceof Error && error.cause === 400;
+    return Response.json(
+      {
+        error: invalidImage
+          ? error.message
+          : "Could not save the receipt image. Please retry, or save without the image.",
+      },
+      { status: invalidImage ? 400 : 503 },
+    );
+  }
+  if (!saved)
     return Response.json(
       {
         error:
@@ -92,5 +139,5 @@ export const POST = withApiErrorLogging(async (request: Request) => {
       },
       { status: 409 },
     );
-  return Response.json({ data, version: updated[0].version });
+  return Response.json({ data, version: row.version + 1 });
 });

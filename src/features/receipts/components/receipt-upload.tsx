@@ -59,7 +59,7 @@ export function ReceiptUpload({
     >
       <EditorBody>
         <p>
-          Images are processed by AI providers and are not saved in your ledger.
+          Images are processed by AI providers. You can choose to save a private copy when reviewing the transaction.
         </p>
         <LedgerSelect
           label="Read with"
