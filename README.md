@@ -16,6 +16,25 @@ See [the feature checklist](FEATURE_CHECKLIST.md) for completed features, remain
 
 Better Auth manages identity and sessions; Supabase supplies Postgres, not Supabase Auth. Keep database credentials server-side. The ledger table has RLS enabled with no public policies; the server database role must own the table or have BYPASSRLS. Migrations revoke access to the auth and ledger tables from Supabase's public API roles.
 
+## Local development on the Poco Pad
+
+`pnpm dev` listens on all network interfaces. On the same Wi-Fi, open the Mac's current LAN IP on port 3000 (currently `http://192.168.1.99:3000`). The dev asset allowlist automatically includes the Mac's current IPv4 addresses, so changing networks does not require editing `next.config.ts`.
+
+For Google sign-in, use Tailscale's private HTTPS address: Google does not permit ordinary LAN IPs as OAuth callbacks, and `localhost` on the tablet points to the tablet itself. Connect Tailscale on both the Mac and Poco Pad to the same tailnet, and put the existing database and OAuth credentials in `.env.local` using `.env.example` as the template. Then run:
+
+```sh
+pnpm dev:tablet
+```
+
+This command checks the required credentials, discovers the Mac's Tailscale hostname, configures Tailscale Serve on HTTPS port 8443 forwarding to local port 3000, and starts Next.js with the matching Better Auth URL. It uses a fixed local port; stop another server on port 3000 first. It leaves the private proxy configured after stopping Next.js; turn it off with `tailscale serve --https=8443 off`.
+
+For this Mac, open **https://sulthans-mac-mini.tailad97fe.ts.net:8443** in Chrome on the Poco Pad. In Google Cloud project `personal-ledger-510306`, edit the existing **NextJS-personal-ledger** OAuth Web client and add:
+
+- Authorized JavaScript origin: `https://sulthans-mac-mini.tailad97fe.ts.net:8443`
+- Authorized redirect URI: `https://sulthans-mac-mini.tailad97fe.ts.net:8443/api/auth/callback/google`
+
+Keep the existing localhost and production entries. If the Google consent screen is in testing mode, your Google account must be a test user. Sign in and continue using the HTTPS address on both devices during a tablet session; its cookies and callbacks belong to that address. Ordinary `pnpm dev` still uses your environment file's `BETTER_AUTH_URL`. On a different Mac, use the origin and callback printed by `pnpm dev:tablet`.
+
 ## Ledger behavior
 
 - Wallets can contain IDR, USD, and CAD balances. Amounts use integer minor units with at most two decimal places.
