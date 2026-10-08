@@ -1,10 +1,12 @@
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function LedgerLoading() {
+  const t = useTranslations("UI");
   return (
-    <div data-ledger-loading role="status" aria-label="Loading workspace content" aria-busy="true" className="space-y-4">
-      <span className="sr-only">Loading workspace content…</span>
+    <div data-ledger-loading role="status" aria-label={t("loadingWorkspaceContent")} aria-busy="true" className="space-y-4">
+      <span className="sr-only">{t("loadingWorkspaceContentEllipsis")}</span>
       <div className="grid gap-4 min-[768px]:grid-cols-3" aria-hidden="true">
         {[0, 1, 2].map((item) => (
           <Card key={item} className="min-w-0 p-5">

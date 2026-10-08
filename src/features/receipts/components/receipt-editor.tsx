@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { DialogContent } from "@/components/ui/dialog-content";
@@ -16,6 +17,7 @@ export function ReceiptEditor({
   entry?: Entry;
   restoreFocus?: HTMLElement | null;
 }) {
+  const t = useTranslations("UI");
   const { pending, setEditor, setError } = useLedgerContext();
   const [image, setImage] = useState<File>();
   const [returnFocus] = useState(
@@ -73,7 +75,7 @@ export function ReceiptEditor({
         finalFocus={() => returnFocus}
       >
         <EditorHeader
-          title="Import receipt"
+          title={t("importReceipt")}
           close={close}
           pending={pending}
           eyebrow=""

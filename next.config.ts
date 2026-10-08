@@ -9,9 +9,10 @@ const networkHosts = Object.values(networkInterfaces()).flatMap((addresses) =>
 const appHosts = [process.env.DEV_APP_URL, process.env.BETTER_AUTH_URL]
   .filter((origin): origin is string => Boolean(origin))
   .map((origin) => new URL(origin).hostname);
+import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: [...new Set([...networkHosts, ...appHosts])],
 };
 
-export default nextConfig;
+export default createNextIntlPlugin("./src/lib/i18n/request.ts")(nextConfig);

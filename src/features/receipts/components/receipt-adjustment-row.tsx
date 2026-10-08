@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -17,11 +18,12 @@ export function ReceiptAdjustmentRow({
   change: (item: Draft["adjustments"][number]) => void;
   remove: () => void;
 }) {
+  const t = useTranslations("UI");
   return (
     <fieldset className="rounded-lg border p-3 min-w-0 space-y-2">
-      <legend>Adjustment {index + 1}</legend>
+      <legend>{t("adjustmentNumber", { number: index + 1 })}</legend>
       <Label htmlFor={`adjustment-${index}-label`}>
-        Tax, service, discount or rounding
+        {t("taxServiceDiscountOrRounding")}
       </Label>
       <Input
         id={`adjustment-${index}-label`}
@@ -30,7 +32,7 @@ export function ReceiptAdjustmentRow({
         onChange={(e) => change({ ...adjustment, label: e.target.value })}
       />
       <Label htmlFor={`adjustment-${index}-amount`}>
-        Amount (negative for discounts)
+        {t("amountNegativeForDiscounts")}
       </Label>
       <CurrencyInput
         currency={currency}
@@ -43,7 +45,7 @@ export function ReceiptAdjustmentRow({
         onValueChange={(value) => change({ ...adjustment, amount: value })}
       />
       <Button type="button" variant="secondary" onClick={remove}>
-        Remove adjustment {index + 1}
+        {t("removeAdjustmentNumber", { number: index + 1 })}
       </Button>
     </fieldset>
   );

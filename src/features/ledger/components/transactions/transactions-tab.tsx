@@ -1,3 +1,5 @@
+import { categoryLabel, entryTitle } from "@/features/i18n/format";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Empty } from "@/components/ui/empty";
@@ -42,12 +44,14 @@ export function TransactionsTab({
   page: unknown;
   timeZone: string;
 }) {
+  const locale = useLocale();
+  const t = useTranslations("UI");
   const pagination = transactionPage(entries, page);
   return (
     <Card className="panel">
       <div className="panel-heading">
         <h3>
-          Transaction history{" "}
+          {t("transactionHistory")}{" "}
           <Badge variant="secondary">{entries.length}</Badge>
         </h3>
         <span>{periodLabel}</span>
@@ -55,36 +59,36 @@ export function TransactionsTab({
       {!data.wallets.length ? (
         <Empty className="empty">
           <WalletIcon />
-          <h3>Start with your first wallet</h3>
+          <h3>{t("startWithYourFirstWallet")}</h3>
           <Button onClick={onAddWallet}>
             <Plus size={16} />
-            Create a wallet
+            {t("createAWallet")}
           </Button>
         </Empty>
       ) : !entries.length ? (
         <Empty className="empty">
           <List />
-          <h3>No transactions match this period and filters</h3>
+          <h3>{t("noTransactionsMatchThisPeriodAndFilters")}</h3>
         </Empty>
       ) : (
         <div className="table-wrap">
-          <Table role="table" aria-label="Transaction history">
+          <Table role="table" aria-label={t("transactionHistory")}>
             <TableHeader role="rowgroup">
               <TableRow role="row">
                 <TableHead role="columnheader" scope="col">
-                  Transaction
+                  {t("transaction")}
                 </TableHead>
                 <TableHead role="columnheader" scope="col">
-                  Date & time
+                  {t("dateTime")}
                 </TableHead>
                 <TableHead role="columnheader" scope="col">
-                  Wallet
+                  {t("wallet")}
                 </TableHead>
                 <TableHead role="columnheader" scope="col">
-                  Amount
+                  {t("amount")}
                 </TableHead>
                 <TableHead role="columnheader" scope="col">
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">{t("actions")}</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -96,7 +100,7 @@ export function TransactionsTab({
                       <Badge
                         variant="secondary"
                         className={`entry-icon ${e.kind}`}
-                        aria-label={e.kind}
+                        aria-label={t(e.kind)}
                       >
                         {e.kind === "transfer" ? (
                           <ArrowLeftRight size={18} />
@@ -109,35 +113,35 @@ export function TransactionsTab({
                         )}
                       </Badge>
                       <span>
-                        <strong>{e.title}</strong>
+                        <strong>{entryTitle(e, t)}</strong>
                         <small className="transaction-mobile-date">
-                          {new Date(e.date).toLocaleDateString("en", {
+                          {new Date(e.date).toLocaleDateString(locale, {
                             timeZone,
                             day: "numeric",
                             month: "short",
                             year: "numeric",
                           })}
                           {" · "}
-                          {new Date(e.date).toLocaleTimeString("en", {
+                          {new Date(e.date).toLocaleTimeString(locale, {
                             timeZone,
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
                         </small>
                         <small className="transaction-metadata">
-                          {e.category ||
+                          {categoryLabel(data, e.category, t) ||
                             (e.kind === "correction"
-                              ? "Balance correction"
-                              : "Transfer")}
+                              ? t("balanceCorrection")
+                              : t("transfer"))}
                           <span className="transaction-mobile-wallet">
                             {" · "}
                             {walletName(data, e.wallet)}
                           </span>
                           <span className="transaction-desktop-notes">
                             {e.description && ` · ${e.description}`}
-                            {e.transferId && " · Linked to transfer"}
+                            {e.transferId && t("linkedToTransfer")}
                             {e.receipt &&
-                              ` · Receipt${e.receipt.keepItems ? ` · ${e.receipt.items.length} items` : ""}`}
+                              t("linkedReceipt") + (e.receipt.keepItems ? t("receiptItemCount", { count: e.receipt.items.length }) : "")}
                             {e.exchangeRate &&
                               ` · 1 ${e.currency} = ${e.exchangeRate.value} ${e.toCurrency}`}
                           </span>
@@ -145,17 +149,17 @@ export function TransactionsTab({
                         {e.kind === "transfer" && (
                           <small className="transaction-mobile-transfer">
                             → {walletName(data, e.toWallet)} ·{" "}
-                            {format(receivedAfterFee(data, e), e.toCurrency!)}{" "}
-                            received
+                            {format(receivedAfterFee(data, e), e.toCurrency!, locale)}{" "}
+                            {t("received")}
                           </small>
                         )}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell role="cell" className="transaction-date">
-                    {new Date(e.date).toLocaleDateString("en", { timeZone })}
+                    {new Date(e.date).toLocaleDateString(locale, { timeZone })}
                     <small>
-                      {new Date(e.date).toLocaleTimeString("en", {
+                      {new Date(e.date).toLocaleTimeString(locale, {
                         timeZone,
                         hour: "2-digit",
                         minute: "2-digit",
@@ -167,8 +171,8 @@ export function TransactionsTab({
                     {e.kind === "transfer" && (
                       <small>
                         → {walletName(data, e.toWallet)} ·{" "}
-                        {format(receivedAfterFee(data, e), e.toCurrency!)}{" "}
-                        received
+                        {format(receivedAfterFee(data, e), e.toCurrency!, locale)}{" "}
+                        {t("received")}
                       </small>
                     )}
                   </TableCell>
@@ -183,7 +187,7 @@ export function TransactionsTab({
                       : e.amount > 0
                         ? "+"
                         : ""}
-                    {format(e.amount, e.currency)}
+                    {format(e.amount, e.currency, locale)}
                   </TableCell>
                   <TableCell role="cell" className="transaction-actions">
                     {e.receipt?.imageId && <ReceiptImageDialog entry={e} />}
@@ -191,7 +195,7 @@ export function TransactionsTab({
                       <Button
                         variant="ghost"
                         className="text-button"
-                        aria-label={`Edit ${e.title}`}
+                        aria-label={t("editNamedEntry", { title: entryTitle(e, t) })}
                         onClick={() =>
                           onEditEntry(
                             e.transferId
@@ -202,7 +206,7 @@ export function TransactionsTab({
                           )
                         }
                       >
-                        Edit
+                        {t("edit")}
                       </Button>
                     )}
                   </TableCell>

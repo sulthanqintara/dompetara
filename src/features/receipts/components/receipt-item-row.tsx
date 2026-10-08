@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -17,11 +18,12 @@ export function ReceiptItemRow({
   change: (item: Draft["items"][number]) => void;
   remove: () => void;
 }) {
+  const t = useTranslations("UI");
   const prefix = `receipt-item-${index}`;
   return (
     <fieldset className="rounded-lg border p-3 min-w-0 space-y-2">
-      <legend>Item {index + 1}</legend>
-      <Label htmlFor={`${prefix}-name`}>Name</Label>
+      <legend>{t("itemNumber", { number: index + 1 })}</legend>
+      <Label htmlFor={`${prefix}-name`}>{t("name")}</Label>
       <Input
         id={`${prefix}-name`}
         value={item.name}
@@ -31,7 +33,7 @@ export function ReceiptItemRow({
       />
       <div className="form-row">
         <div>
-          <Label htmlFor={`${prefix}-quantity`}>Quantity</Label>
+          <Label htmlFor={`${prefix}-quantity`}>{t("quantity")}</Label>
           <Input
             id={`${prefix}-quantity`}
             type="number"
@@ -47,7 +49,7 @@ export function ReceiptItemRow({
           />
         </div>
         <div>
-          <Label htmlFor={`${prefix}-unit`}>Unit price (optional)</Label>
+          <Label htmlFor={`${prefix}-unit`}>{t("unitPriceOptional")}</Label>
           <CurrencyInput
             currency={currency}
             allowZero
@@ -60,7 +62,7 @@ export function ReceiptItemRow({
           />
         </div>
       </div>
-      <Label htmlFor={`${prefix}-total`}>Line total</Label>
+      <Label htmlFor={`${prefix}-total`}>{t("lineTotal")}</Label>
       <CurrencyInput
         currency={currency}
         allowZero
@@ -71,7 +73,7 @@ export function ReceiptItemRow({
         onValueChange={(value) => change({ ...item, lineTotal: value || null })}
       />
       <Button type="button" variant="secondary" onClick={remove}>
-        Remove item {index + 1}
+        {t("removeItemNumber", { number: index + 1 })}
       </Button>
     </fieldset>
   );

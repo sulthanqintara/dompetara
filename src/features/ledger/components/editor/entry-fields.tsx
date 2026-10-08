@@ -1,3 +1,5 @@
+import { categoryLabel } from "@/features/i18n/format";
+import { useTranslations } from "next-intl";
 import type { Draft } from "@/features/receipts/receipts";
 import { TransactionDetails } from "./transaction-details";
 import { useState } from "react";
@@ -29,6 +31,7 @@ export function EntryFields({
   draft?: Draft;
   kind: "income" | "expense" | "transfer";
 }) {
+  const t = useTranslations("UI");
   const [amount, setAmount] = useState(
     entry ? minorText(entry.amount) : (draft?.total ?? ""),
   );
@@ -56,30 +59,30 @@ export function EntryFields({
   const options = currencies.map((c) => ({ value: c, label: c }));
   const categories = data.categories
     .filter((c) => c.kind === kind)
-    .map((c) => ({ value: c.name, label: c.name }));
+    .map((c) => ({ value: c.name, label: categoryLabel(data, c.name, t) }));
   if (
     entry?.kind === kind &&
     !categories.some((c) => c.value === entry.category)
   )
-    categories.unshift({ value: entry.category, label: entry.category });
+    categories.unshift({ value: entry.category, label: categoryLabel(data, entry.category, t) });
   return (
     <>
       <input type="hidden" name="kind" value={kind} />
       {draft?.documentKind !== undefined &&
         draft.documentKind !== "receipt" && (
           <LedgerSelect
-            label="This payment represents"
+            label={t("thisPaymentRepresents")}
             name="paymentConfirmed"
             defaultValue={entry?.receipt?.paymentConfirmed ? "true" : "false"}
             options={[
               {
                 value: "false",
-                label: "Choose after checking the payment",
+                label: t("chooseAfterCheckingThePayment"),
               },
-              { value: "true", label: "Spending — save as an expense" },
+              { value: "true", label: t("spendingSaveAsAnExpense") },
               {
                 value: "transfer",
-                label: "My own wallets — use Add transaction → Transfer",
+                label: t("myOwnWalletsUseAddTransactionTransfer"),
               },
             ]}
           />
@@ -90,10 +93,10 @@ export function EntryFields({
       />
       <div className="form-row">
         <LedgerSelect
-          label={kind === "transfer" ? "Source currency" : "Currency"}
+          label={kind === "transfer" ? t("sourceCurrency") : t("currency")}
           name="currency"
           required
-          placeholder="Choose currency"
+          placeholder={t("chooseCurrency")}
           value={cur}
           options={options}
           onValueChange={(value) => {
@@ -106,11 +109,11 @@ export function EntryFields({
           }}
         />
         <LedgerSelect
-          label={kind === "transfer" ? "From wallet" : "Wallet"}
+          label={kind === "transfer" ? t("fromWallet") : t("wallet")}
           name="wallet"
           required
           value={walletId}
-          placeholder="Choose wallet"
+          placeholder={t("chooseWallet")}
           onValueChange={(value) => {
             setWalletId(value);
             if (value === toWalletId && cur === toCur) setToWalletId("");
@@ -121,7 +124,7 @@ export function EntryFields({
         />
       </div>
       <Label className="form-field">
-        {kind === "transfer" ? "Amount sent" : "Amount"}
+        {kind === "transfer" ? t("amountSent") : t("amount")}
         <CurrencyInput
           name="amount"
           currency={cur}
@@ -134,7 +137,7 @@ export function EntryFields({
         <>
           <div className="form-row">
             <LedgerSelect
-              label="Destination currency"
+              label={t("destinationCurrency")}
               name="toCurrency"
               value={toCur}
               options={options}
@@ -144,11 +147,11 @@ export function EntryFields({
               }}
             />
             <LedgerSelect
-              label="To wallet"
+              label={t("toWallet")}
               name="toWallet"
               required
               value={toWalletId}
-              placeholder="Choose wallet"
+              placeholder={t("chooseWallet")}
               onValueChange={setToWalletId}
               options={data.wallets
                 .filter(
@@ -178,13 +181,13 @@ export function EntryFields({
       ) : (
         <>
           <Label className="form-field">
-            Title
+            {t("title")}
             <Input
               name="title"
               required
               maxLength={1000}
               defaultValue={entry?.title ?? draft?.merchant ?? ""}
-              placeholder="e.g. Karaokean"
+              placeholder={t("eGKaraokean")}
             />
           </Label>
           <CategoryField
@@ -216,13 +219,14 @@ export function EntryFields({
       )}
       <Label className="form-field">
         <span>
-          Note <span className="optional">optional</span>
+          {t("note")} <span className="optional">{t("optional")}
+        </span>
         </span>
         <Textarea
           name="description"
           maxLength={1000}
           defaultValue={entry?.description}
-          placeholder="For example: a birthday gift for a friend"
+          placeholder={t("forExampleABirthdayGiftForAFriend")}
         />
       </Label>
     </>

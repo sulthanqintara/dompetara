@@ -1,3 +1,4 @@
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
@@ -15,6 +16,8 @@ import { format, localDate } from "../../format";
 import type { Currency, Ledger } from "../../ledger";
 
 export function CurrentBalanceCard({ data, currency }: { data: Ledger; currency: Currency }) {
+  const locale = useLocale();
+  const t = useTranslations("UI");
   const [attempt, setAttempt] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const date = localDate().slice(0, 10);
@@ -26,31 +29,31 @@ export function CurrentBalanceCard({ data, currency }: { data: Ledger; currency:
   const loading = result.rows.some((row) => row.currency !== currency && row.amount !== 0 && states[row.currency].loading);
   return (
     <Card className="stat balance-stat" aria-busy={loading}>
-      <span>Current balance <BalanceVisibilityToggle /></span>
-      <h2><BalanceAmount currency={currency}>{loading ? <Skeleton className="h-8 w-40" /> : result.total === null ? "—" : format(result.total, currency)}</BalanceAmount></h2>
+      <span>{t("currentBalance")}<BalanceVisibilityToggle /></span>
+      <h2><BalanceAmount currency={currency}>{loading ? <Skeleton className="h-8 w-40" /> : result.total === null ? "—" : format(result.total, currency, locale)}</BalanceAmount></h2>
       <Collapsible open={expanded} onOpenChange={setExpanded}>
-      <CollapsibleTrigger render={<Button variant="ghost" />} className="balance-toggle" aria-label={expanded ? "Hide wallet balances" : "Show wallet balances"}>
-        <span>Wallet balances</span>
+      <CollapsibleTrigger render={<Button variant="ghost" />} className="balance-toggle" aria-label={expanded ? t("hideWalletBalances") : t("showWalletBalances")}>
+        <span>{t("walletBalances")}</span>
         <ChevronDown aria-hidden="true" className={expanded ? "rotate-180" : undefined} />
       </CollapsibleTrigger>
       <CollapsibleContent className="balance-panel" keepMounted>
       <dl className="balance-breakdown">
         {result.rows.map((row) => (
           <div key={row.currency}>
-            <dt>{row.currency} wallets</dt>
+            <dt>{t("currencyWallets", { currency: row.currency })}</dt>
             <dd>
-              <span><BalanceAmount currency={row.currency} currencyDisplay="code">{format(row.amount, row.currency)}</BalanceAmount></span>
-              {row.currency !== currency && <span><BalanceAmount currency={currency} currencyDisplay="code" approximate>{states[row.currency].loading && row.amount !== 0 ? "Converting…" : row.converted === null ? "Conversion unavailable" : format(row.converted, currency)}</BalanceAmount></span>}
+              <span><BalanceAmount currency={row.currency} currencyDisplay="code">{format(row.amount, row.currency, locale)}</BalanceAmount></span>
+              {row.currency !== currency && <span><BalanceAmount currency={currency} currencyDisplay="code" approximate>{states[row.currency].loading && row.amount !== 0 ? t("converting") : row.converted === null ? t("conversionUnavailable") : format(row.converted, currency, locale)}</BalanceAmount></span>}
             </dd>
           </div>
         ))}
       </dl>
       </CollapsibleContent>
       </Collapsible>
-      {result.dates.length > 0 && <small>Estimate · ECB reference rates · {result.dates.join(", ")}{result.stale ? " · cached rates may be outdated" : ""}</small>}
+      {result.dates.length > 0 && <small>{t("balanceEstimate", { dates: result.dates.join(", ") })}{result.stale ? t("cachedRatesMayBeOutdated") : ""}</small>}
       {!loading && result.total === null && <Alert>
-        <p>Complete conversion unavailable. Expand wallet balances to see native amounts.</p>
-        <Button variant="outline" onClick={() => setAttempt((value) => value + 1)}>Retry conversion</Button>
+        <p>{t("completeConversionUnavailableExpandWalletBalancesToSeeNativeAmounts")}</p>
+        <Button variant="outline" onClick={() => setAttempt((value) => value + 1)}>{t("retryConversion")}</Button>
       </Alert>}
     </Card>
   );

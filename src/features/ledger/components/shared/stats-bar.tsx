@@ -1,3 +1,4 @@
+import { useLocale, useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { CurrentBalanceCard } from "./current-balance-card";
@@ -16,19 +17,21 @@ export function StatsBar({
   data: Ledger;
   currency: Currency;
 }) {
+  const locale = useLocale();
+  const t = useTranslations("UI");
   return (
     <div className="stats">
       <Card className="stat">
         <span>
-          Period income <ArrowDownLeft size={19} />
+          {t("periodIncome")} <ArrowDownLeft size={19} />
         </span>
-        <h2 className="positive"><BalanceAmount currency={currency}>{format(income, currency)}</BalanceAmount></h2>
+        <h2 className="positive"><BalanceAmount currency={currency}>{format(income, currency, locale)}</BalanceAmount></h2>
       </Card>
       <Card className="stat">
         <span>
-          Period expenses <ArrowUpRight size={19} />
+          {t("periodExpenses")} <ArrowUpRight size={19} />
         </span>
-        <h2><BalanceAmount currency={currency}>{format(expense, currency)}</BalanceAmount></h2>
+        <h2><BalanceAmount currency={currency}>{format(expense, currency, locale)}</BalanceAmount></h2>
       </Card>
       <CurrentBalanceCard data={data} currency={currency} />
     </div>

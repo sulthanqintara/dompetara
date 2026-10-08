@@ -1,3 +1,4 @@
+import { LanguageSettings } from "@/features/i18n/components/language-settings";
 import type { Ledger } from "../../ledger";
 import { ExportSettings } from "./export-settings";
 import { AccountSettings } from "./account-settings";
@@ -31,6 +32,7 @@ export function SettingsTab({
         setPending={setPending}
         setError={setError}
       />
+      <LanguageSettings />
       <ExportSettings pending={pending} />
       <CategoriesSettings
         data={data}

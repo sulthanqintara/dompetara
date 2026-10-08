@@ -13,3 +13,9 @@ assert.equal(localDate(new Date("2026-10-07T17:00:00Z"), "Asia/Jakarta"), "2026-
 assert.equal(localDate(new Date("2026-10-07T17:00:00Z"), "UTC"), "2026-10-07T17:00");
 assert.equal(localDate(new Date("2026-10-07T17:01:00Z"), "Asia/Jakarta"), "2026-10-08T00:01");
 console.log("Amount formatting and timezone checks passed.");
+
+for (const currency of ["IDR", "USD", "CAD"] as const) {
+  const amount = format(12345, currency, "id");
+  assert.equal(splitCurrencyAmount(amount, currency, "symbol", "id").amount, "123,45");
+  assert.equal(splitCurrencyAmount(amount, currency, "code", "id").prefix.trim(), currency);
+}

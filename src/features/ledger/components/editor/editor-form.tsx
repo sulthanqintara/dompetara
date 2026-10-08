@@ -1,3 +1,5 @@
+import { useErrorMessage } from "@/features/i18n/use-error-message";
+import { useTranslations } from "next-intl";
 import type { Extraction } from "@/features/receipts/receipts";
 import {
   transactionDetailsSchema,
@@ -63,6 +65,8 @@ export function EditorForm({
   close: () => void;
   save: (payload: Record<string, unknown>) => Promise<boolean>;
 }) {
+  const errorMessage = useErrorMessage();
+  const t = useTranslations("UI");
   const [returnFocus] = useState(
     () => restoreFocus ?? (document.activeElement as HTMLElement | null),
   );
@@ -154,11 +158,11 @@ export function EditorForm({
           title={
             editor.type === "wallet"
               ? wallet
-                ? "Edit wallet"
-                : "Add a wallet"
+                ? t("editWallet")
+                : t("addAWallet")
               : extraction && !entry
-                ? "Review receipt"
-                : `${entry ? "Edit" : "Add"} ${entry?.kind === "correction" ? "opening balance" : kind}`
+                ? t("reviewReceipt")
+                : t(entry ? "editEntry" : "addEntry", { kind: entry?.kind ?? kind })
           }
           close={close}
           pending={pending}
@@ -210,7 +214,7 @@ export function EditorForm({
                     }}
                   >
                     <ReceiptText />
-                    Import receipt
+                    {t("importReceipt")}
                   </Button>
                 </div>
               )}
@@ -218,9 +222,9 @@ export function EditorForm({
             {entry?.receipt?.imageId ? <div className="receipt-image-option">
               <SavedReceiptImage imageId={entry.receipt.imageId} />
               <Label htmlFor="remove-saved-receipt-image" className="receipt-image-choice min-h-11 cursor-pointer">
-                <Checkbox id="remove-saved-receipt-image" checked={removeImage} onCheckedChange={setRemoveImage} disabled={pending} />Remove saved receipt image
+                <Checkbox id="remove-saved-receipt-image" checked={removeImage} onCheckedChange={setRemoveImage} disabled={pending} />{t("removeSavedReceiptImage")}
               </Label>
-              <p>The image will be removed when you save. Receipt details will be kept.</p>
+              <p>{t("receiptImageRemovedOnSave")}</p>
             </div> : (extraction || entry?.receipt) && <ReceiptImageOption image={image} checked={keepImage} pending={pending} onCheckedChange={setKeepImage} onImageChange={setAttachedImage} />}
             {editor.type === "wallet" ? (
               <WalletFields
@@ -239,7 +243,7 @@ export function EditorForm({
             )}
             {formError && (
               <Alert variant="destructive" className="error">
-                {formError}
+                {errorMessage(formError)}
               </Alert>
             )}
             <LedgerError />
@@ -249,13 +253,13 @@ export function EditorForm({
               <ConfirmationDialog
                 pending={pending}
                 error={error}
-                title="Delete this transaction?"
+                title={t("deleteThisTransaction")}
                 description={
                   entry.kind === "transfer"
-                    ? "This also deletes its linked service fee. Wallet balances will be adjusted. This cannot be undone."
-                    : "This cannot be undone. Wallet balances will be adjusted."
+                    ? t("thisAlsoDeletesItsLinkedServiceFeeWalletBalancesWillBeAdjustedThisCannotBeUndone")
+                    : t("thisCannotBeUndoneWalletBalancesWillBeAdjusted")
                 }
-                action="Delete transaction"
+                action={t("deleteTransaction")}
                 trigger={
                   <Button
                     type="button"
@@ -264,7 +268,7 @@ export function EditorForm({
                     disabled={pending}
                   >
                     <Trash2 />
-                    Delete
+                    {t("delete")}
                   </Button>
                 }
                 onConfirm={() => save({ action: "deleteEntry", id: entry.id })}
@@ -276,11 +280,11 @@ export function EditorForm({
               onClick={close}
               disabled={pending}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" disabled={pending || conflict}>
               {pending && <Spinner />}
-              {pending ? "Saving…" : "Save"}
+              {pending ? t("saving") : t("save")}
             </Button>
           </EditorFooter>
         </form>

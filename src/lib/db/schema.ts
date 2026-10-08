@@ -59,3 +59,9 @@ export const exchangeRateCache = pgTable(
     }),
   ],
 ).enableRLS();
+
+export const userPreferences = pgTable("user_preferences", {
+  userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
+  locale: text("locale").$type<import("@/features/i18n/i18n").Locale>(),
+  languagePromptShownAt: timestamp("language_prompt_shown_at", { withTimezone: true }).notNull(),
+}).enableRLS();

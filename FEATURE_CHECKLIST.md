@@ -1,10 +1,12 @@
 # Dompetara feature checklist
 
-Reviewed: 2026-10-02. Checked items are implemented; unchecked items remain. Verification notes state what has been tested.
+Reviewed: 2026-10-08. Checked items are implemented; unchecked items remain. Verification notes state what has been tested.
 
 Design requirement: mobile first, then tablet, then desktop. Every feature must remain usable at each size, verified by rendering the affected views. This rule is recorded in `AGENTS.md`.
 
 ## Already working
+
+- [x] English/Indonesian translations with unchanged URLs, browser language detection, a first-time account language prompt, and a saved language setting. Matching dictionaries and UI-copy coverage are checked automatically; both languages were rendered at phone, tablet, desktop, and short viewport sizes using an isolated local database. Apply the new preferences migration before deployment.
 
 - [x] Google sign-in through Better Auth, with Supabase Postgres persistence. Login and persistence confirmed by the user.
 - [x] Private ledger per signed-in user; authenticated server routes scope operations to that user.

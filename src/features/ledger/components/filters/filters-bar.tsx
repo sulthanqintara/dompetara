@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { currencies, type Currency } from "../../ledger";
 import { LedgerSelect } from "../shared/ledger-select";
 import type { Period } from "../../derive";
@@ -15,6 +16,7 @@ export function FiltersBar({
   onPeriodChange: (period: Period) => void;
   onCurrencyChange: (currency: Currency) => void;
 }) {
+  const t = useTranslations("UI");
   return (
     <>
     <div className="mobile-summary-controls">
@@ -24,7 +26,7 @@ export function FiltersBar({
     <div className="filters desktop-summary-controls">
       <PeriodPicker key={JSON.stringify(period)} period={period} onChange={onPeriodChange} />
       <LedgerSelect
-        label="Currency"
+        label={t("currency")}
         options={currencies.map((c) => ({ value: c, label: c }))}
         value={currency}
         onValueChange={(value) => onCurrencyChange(value as Currency)}

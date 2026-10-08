@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { useId } from "react";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -13,7 +14,7 @@ export function LedgerSelect({
   value,
   defaultValue,
   onValueChange,
-  placeholder = "Choose an option",
+  placeholder,
   required,
   disabled,
   compact = false,
@@ -29,6 +30,7 @@ export function LedgerSelect({
   disabled?: boolean;
   compact?: boolean;
 }) {
+  const t = useTranslations("UI");
   const id = useId();
   return (
     <div className="form-field">
@@ -45,7 +47,7 @@ export function LedgerSelect({
         }}
       >
         <SelectTrigger id={id}>
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={placeholder ?? t("chooseAnOption")} />
         </SelectTrigger>
         <SelectContent alignItemWithTrigger={false} align="start">
           {options.map((option) => (

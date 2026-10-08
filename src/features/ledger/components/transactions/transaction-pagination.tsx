@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import type { transactionPage } from "../../pagination";
 
 export function TransactionPagination({ page, pages, start, end, total }: Omit<ReturnType<typeof transactionPage>, "rows">) {
+  const t = useTranslations("UI");
   const searchParams = useSearchParams();
   const pageHref = (value: number) => {
     const params = new URLSearchParams(searchParams);
@@ -17,13 +19,13 @@ export function TransactionPagination({ page, pages, start, end, total }: Omit<R
     return `/transactions${params.size ? `?${params}` : ""}`;
   };
   return <div className="transaction-pagination">
-    <p role="status">Showing {start}–{end} of {total} transactions</p>
-    <Pagination aria-label="Transaction history pagination">
+    <p role="status">{t("showingTransactions", { start, end, total })}</p>
+    <Pagination aria-label={t("transactionHistoryPagination")}>
       <PaginationContent>
-        <PaginationItem><Button variant="outline" size="icon" aria-label="Previous page" disabled={page === 1}
+        <PaginationItem><Button variant="outline" size="icon" aria-label={t("previousPage")} disabled={page === 1}
           nativeButton={false} render={<Link href={pageHref(page - 1)} scroll={false} />}><ChevronLeft /></Button></PaginationItem>
-        <PaginationItem><span aria-current="page">Page {page} of {pages}</span></PaginationItem>
-        <PaginationItem><Button variant="outline" size="icon" aria-label="Next page" disabled={page === pages}
+        <PaginationItem><span aria-current="page">{t("pageOfPages", { page, pages })}</span></PaginationItem>
+        <PaginationItem><Button variant="outline" size="icon" aria-label={t("nextPage")} disabled={page === pages}
           nativeButton={false} render={<Link href={pageHref(Math.min(pages, page + 1))} scroll={false} />}><ChevronRight /></Button></PaginationItem>
       </PaginationContent>
     </Pagination>

@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ export function CategoryField({
   category?: string;
   suggestion?: { name: string; reason: string } | null;
 }) {
+  const t = useTranslations("UI");
   const id = useId();
   const match = categories.find(
     (category) =>
@@ -33,13 +35,13 @@ export function CategoryField({
             setCreating(true);
           }}
         >
-          Add category: {suggestion.name}
+          {t("addSuggestedCategory", { name: suggestion.name })}
         </Button>
       )}
       <input type="hidden" name="newCategory" value={String(creating)} />
       {creating ? (
         <div className="form-field">
-          <Label htmlFor={id}>New category name</Label>
+          <Label htmlFor={id}>{t("newCategoryName")}</Label>
           <Input
             id={id}
             name="category"
@@ -54,13 +56,13 @@ export function CategoryField({
             variant="secondary"
             onClick={() => setCreating(false)}
           >
-            Choose an existing category
+            {t("chooseAnExistingCategory")}
           </Button>
         </div>
       ) : (
         <>
           <LedgerSelect
-            label="Category"
+            label={t("category")}
             name="category"
             required
             value={selected}
@@ -68,7 +70,7 @@ export function CategoryField({
             options={categories}
           />
           <Button type="button" variant="secondary" onClick={() => setCreating(true)}>
-            Add category
+            {t("addCategory")}
           </Button>
         </>
       )}

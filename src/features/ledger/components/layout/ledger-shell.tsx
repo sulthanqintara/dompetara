@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { SidebarProvider } from "@/components/ui/sidebar-provider";
@@ -17,6 +18,7 @@ import { NavigationContext } from "../../navigation-context";
 import { LedgerLoading } from "../shared/ledger-loading";
 
 export function LedgerShell({ children }: { children: ReactNode }) {
+  const t = useTranslations("UI");
   const pathname = usePathname();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const [previousPath, setPreviousPath] = useState(pathname);
@@ -45,14 +47,14 @@ export function LedgerShell({ children }: { children: ReactNode }) {
           <header className="topbar">
             <div className="topbar-navigation">
               <SidebarTrigger />
-              <h1 className="mobile-page-title">{tab}</h1>
+              <h1 className="mobile-page-title">{t(section.key)}</h1>
             </div>
             <AccountMenu />
           </header>
           <div className="page-content">
             <div className="page-heading">
               <div className="desktop-page-title">
-                <h1>{tab}</h1>
+                <h1>{t(section.key)}</h1>
               </div>
               <LedgerActions tab={tab} />
             </div>
@@ -60,7 +62,7 @@ export function LedgerShell({ children }: { children: ReactNode }) {
             <TabsContent
               key={section.href}
               value={tab}
-              aria-label={tab}
+              aria-label={t(section.key)}
               className="route-content"
             >
               {loading ? <LedgerLoading /> : children}

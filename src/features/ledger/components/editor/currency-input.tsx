@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { useState, type ComponentProps } from "react";
 import { Input } from "@/components/ui/input";
 import type { Currency } from "../../ledger";
@@ -18,6 +19,7 @@ export function CurrencyInput({
   allowZero?: boolean;
   allowNegative?: boolean;
 }) {
+  const t = useTranslations("UI");
   const [focused, setFocused] = useState(false);
   const displayed = displayAmount(value, currency, !focused);
   return (
@@ -64,7 +66,7 @@ export function CurrencyInput({
               (!Number.isFinite(Number(value)) ||
                 (!allowNegative && Number(value) < (allowZero ? 0 : 0.01)) ||
                 Math.abs(Number(value)) > 999999999999.99)
-              ? "Enter an amount within the allowed range."
+              ? t("enterAnAmountWithinTheAllowedRange")
               : "",
           );
         }}

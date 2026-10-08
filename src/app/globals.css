@@ -2025,3 +2025,7 @@ button.summary-period-trigger { flex: 1; min-width: 0; padding: 8px; gap: 4px; }
   .account-name { display: inline; }
   .account-chevron { display: block; }
 }
+.language-prompt { max-height: calc(100dvh - 2rem); overflow-y: auto; }
+.language-actions { display: flex; flex-direction: column; gap: .75rem; }
+.language-prompt button { min-height: 44px; white-space: normal; }
+@media (min-width: 640px) { .language-actions { flex-direction: row; } .language-actions button { flex: 1; } }

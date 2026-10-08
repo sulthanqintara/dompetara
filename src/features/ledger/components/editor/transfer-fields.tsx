@@ -1,3 +1,5 @@
+import { useErrorMessage } from "@/features/i18n/use-error-message";
+import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +37,9 @@ export function TransferFields({
   amount: string;
   date: string;
 }) {
+  const locale = useLocale();
+  const errorMessage = useErrorMessage();
+  const t = useTranslations("UI");
   const id = useId();
   const crossCurrency = currency !== toCurrency;
   const { suggestion, error, loading } = useCachedRate(
@@ -93,16 +98,16 @@ export function TransferFields({
   const feeCurrency = destination ? toCurrency : currency;
   const totals = transferTotals(amount, received, feeAmount, destination);
   const fromName =
-    data.wallets.find((w) => w.id === wallet)?.name ?? "Source wallet";
+    data.wallets.find((w) => w.id === wallet)?.name ?? t("sourceWallet");
   const toName =
-    data.wallets.find((w) => w.id === toWallet)?.name ?? "Destination wallet";
+    data.wallets.find((w) => w.id === toWallet)?.name ?? t("destinationWallet");
   return (
     <>
       {crossCurrency && (
         <>
           <div className="form-field">
             <Label htmlFor={`${id}-rate`}>
-              Exchange rate (1 {currency} in {toCurrency})
+              {t("exchangeRateLabel", { currency, toCurrency })}
             </Label>
             <Input
               id={`${id}-rate`}
@@ -126,15 +131,15 @@ export function TransferFields({
             <small id={`${id}-rate-help`}>
               {override
                 ? source === "ecb"
-                  ? `Saved ECB reference · ${referenceDate}`
-                  : "Your actual conversion rate."
+                  ? t("savedReference", { date: referenceDate })
+                  : t("yourActualConversionRate")
                 : suggestion
-                  ? `ECB via Frankfurter · ${suggestion.rateDate}${suggestion.stale ? " · refresh overdue" : ""}`
+                  ? t("referenceRate", { date: suggestion.rateDate }) + (suggestion.stale ? t("refreshOverdue") : "")
                   : loading
-                    ? "Loading the saved reference rate…"
-                    : error}
+                    ? t("loadingTheSavedReferenceRate")
+                    : errorMessage(error)}
               {suggestion &&
-                " Reference rates are estimates; your bank’s rate may differ."}
+                t("referenceRatesAreEstimatesYourBankSRateMayDiffer")}
             </small>
             {override && suggestion && (
               <Button
@@ -149,7 +154,7 @@ export function TransferFields({
                   })
                 }
               >
-                Use suggested rate
+                {t("useSuggestedRate")}
               </Button>
             )}
             <input type="hidden" name="rateSource" value={source} />
@@ -159,7 +164,7 @@ export function TransferFields({
       )}
       <div className="form-field">
         <Label htmlFor={`${id}-received`}>
-          Amount received before fee ({toCurrency})
+          {t("receivedBeforeFee", { currency: toCurrency })}
         </Label>
         <CurrencyInput
           currency={toCurrency}
@@ -179,15 +184,15 @@ export function TransferFields({
           }
         />
         {crossCurrency && (
-          <small id={`${id}-received-help`}>Changing this amount updates the exchange rate.</small>
+          <small id={`${id}-received-help`}>{t("changingThisAmountUpdatesTheExchangeRate")}</small>
         )}
       </div>
       {conversion.error && override?.mode !== "received" && !unchangedSaved && (
-        <Alert variant="destructive">{conversion.error}</Alert>
+        <Alert variant="destructive">{errorMessage(conversion.error)}</Alert>
       )}
       <div className="form-row">
         <div className="form-field">
-          <Label htmlFor={`${id}-fee`}>Service fee ({feeCurrency})</Label>
+          <Label htmlFor={`${id}-fee`}>{t("serviceFeeLabel", { currency: feeCurrency })}</Label>
           <CurrencyInput
             id={`${id}-fee`}
             name="feeAmount"
@@ -198,14 +203,14 @@ export function TransferFields({
           />
         </div>
         <LedgerSelect
-          label="Fee charged to"
+          label={t("feeChargedTo")}
           name="feeChargedTo"
           value={chargedTo}
           options={[
-            { value: "source", label: `Source · ${fromName} (${currency})` },
+            { value: "source", label: t("sourceOption", { name: fromName, currency }) },
             {
               value: "destination",
-              label: `Destination · ${toName} (${toCurrency})`,
+              label: t("destinationOption", { name: toName, currency: toCurrency }),
             },
           ]}
           onValueChange={(value) => {
@@ -218,16 +223,16 @@ export function TransferFields({
         {totals && amount && (
           <>
             <p>
-              <strong>{fromName} pays</strong>
-              <span>{format(totals.debit, currency)}</span>
+              <strong>{t("walletPays", { name: fromName })}</strong>
+              <span>{format(totals.debit, currency, locale)}</span>
             </p>
             <p>
-              <strong>{toName} receives</strong>
-              <span>{format(totals.credit, toCurrency)}</span>
+              <strong>{t("walletReceives", { name: toName })}</strong>
+              <span>{format(totals.credit, toCurrency, locale)}</span>
             </p>
           </>
         )}
-        {Number(feeAmount) > 0 && <small>Fee category: Admin fees.</small>}
+        {Number(feeAmount) > 0 && <small>{t("feeCategoryAdminFees")}</small>}
       </div>
     </>
   );

@@ -1460,7 +1460,7 @@ async function checkReceipts(page, width, height) {
   if (width === 320) {
     assert.equal((await page.request.post(`${origin}/api/receipts/extract`, { headers: { Origin: "https://example.invalid" } })).status(), 403);
     expectedLedgerFailure = true;
-    await page.route("**/api/receipts/extract", (route) => route.fulfill({ status: 503, json: { error: "Receipt import needs ZAI_API_KEY on the server. Add it and restart the app." } }));
+    await page.route("**/api/receipts/extract", (route) => route.fulfill({ status: 503, json: { error: "Receipt OCR needs ZAI_API_KEY on the server. Add it and restart the app." } }));
     await dialog.getByLabel("Receipt image").setInputFiles(image);
     await dialog.getByRole("button", { name: "Read receipt", exact: true }).click();
     await dialog.getByRole("alert").filter({ hasText: "ZAI_API_KEY" }).waitFor();
@@ -1857,6 +1857,7 @@ try {
     const context = await browser.newContext({
       viewport: { width, height },
       timezoneId: "Asia/Jakarta",
+      locale: "en-US",
       isMobile: width < 640,
       hasTouch: width < 1024,
     });
@@ -1890,6 +1891,11 @@ try {
       },
     ]);
     await page.goto(origin);
+    if (width === 320) {
+      await page.getByRole("dialog").filter({ hasText: "Choose your language" }).waitFor();
+      await page.getByRole("button", { name: "English", exact: true }).click();
+      await page.getByRole("dialog").waitFor({ state: "detached" });
+    }
     if (width === 320)
       assert.equal(
         (

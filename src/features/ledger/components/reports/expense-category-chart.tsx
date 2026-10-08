@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import { useId } from "react";
 import { Pie, PieChart } from "recharts";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
@@ -16,6 +17,8 @@ export function ExpenseCategoryChart({
   expense: number;
   currency: Currency;
 }) {
+  const locale = useLocale();
+  const t = useTranslations("UI");
   const captionId = useId();
   const data = categoryBreakdown(groups, expense).map((item, index) => ({
     ...item,
@@ -41,7 +44,7 @@ export function ExpenseCategoryChart({
           <PieChart
             accessibilityLayer={false}
             role="img"
-            aria-label="Expense category pie chart"
+            aria-label={t("expenseCategoryPieChart")}
             aria-describedby={captionId}
           >
             <Pie
@@ -57,11 +60,11 @@ export function ExpenseCategoryChart({
           </PieChart>
         </ChartContainer>
         <figcaption id={captionId}>
-          <strong>{format(expense, currency)} in expenses</strong>
-          <span>See the category breakdown for every amount and percentage.</span>
+          <strong>{t("totalExpenses", { amount: format(expense, currency, locale) })}</strong>
+          <span>{t("seeTheCategoryBreakdownForEveryAmountAndPercentage")}</span>
         </figcaption>
       </figure>
-      <dl className="expense-category-list" aria-label="Expense categories">
+      <dl className="expense-category-list" aria-label={t("expenseCategories")}>
         {data.map(({ category, amount, share, color }) => (
           <div className="report-row" key={category}>
             <dt>
@@ -73,8 +76,8 @@ export function ExpenseCategoryChart({
               <span>{category}</span>
             </dt>
             <dd>
-              <strong>{format(amount, currency)}</strong>
-              <span>{formatShare(share)} of expenses</span>
+              <strong>{format(amount, currency, locale)}</strong>
+              <span>{t("expenseShare", { share: formatShare(share, locale) })}</span>
             </dd>
           </div>
         ))}

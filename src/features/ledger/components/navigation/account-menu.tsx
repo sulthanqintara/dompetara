@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { ChevronDown, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu-item";
 import { signOut } from "@/features/auth/api";
 import { useLedgerContext } from "../../use-ledger-context";
 export function AccountMenu() {
+  const t = useTranslations("UI");
   const { name, email, pending, setPending, setError } = useLedgerContext();
   const router = useRouter();
   const initials =
@@ -26,7 +28,7 @@ export function AccountMenu() {
           <Button
             variant="ghost"
             className="account-trigger"
-            aria-label="Account menu"
+            aria-label={t("accountMenu")}
           />
         }
       >
@@ -56,7 +58,7 @@ export function AccountMenu() {
           }}
         >
           <LogOut />
-          Sign out
+          {t("signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

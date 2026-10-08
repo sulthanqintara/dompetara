@@ -1,3 +1,5 @@
+import { categoryLabel } from "@/features/i18n/format";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,10 +21,11 @@ export function CategoriesSettings({
   error: string;
   save: (payload: Record<string, unknown>) => Promise<boolean>;
 }) {
+  const t = useTranslations("UI");
   const { conflict } = useLedgerContext();
   return (
     <Card className="settings-panel">
-      <h3>Categories</h3>
+      <h3>{t("categories")}</h3>
       <form
         className="category-form"
         onSubmit={async (e) => {
@@ -38,30 +41,30 @@ export function CategoriesSettings({
         }}
       >
         <Label className="form-field">
-          Category name
+          {t("categoryName")}
           <Input
             required
             name="name"
             maxLength={1000}
-            placeholder="e.g. Entertainment"
+            placeholder={t("eGEntertainment")}
           />
         </Label>
         <LedgerSelect
-          label="Type"
+          label={t("type")}
           name="kind"
           defaultValue="expense"
           options={[
-            { value: "expense", label: "Expense" },
-            { value: "income", label: "Income" },
+            { value: "expense", label: t("expense") },
+            { value: "income", label: t("income") },
           ]}
         />
         <Button type="submit" disabled={pending || conflict}>
-          Add category
+          {t("addCategory")}
         </Button>
       </form>
       {(["income", "expense"] as const).map((kind) => (
         <div key={kind} className="category-group">
-          <h4>{kind} categories</h4>
+          <h4>{t(kind === "income" ? "incomeCategories" : "expenseCategories")}</h4>
           <div className="chips">
             {data.categories
               .filter((c) => c.kind === kind)
@@ -70,16 +73,16 @@ export function CategoriesSettings({
                   key={c.id}
                   pending={pending}
                   error={error}
-                  title={`Remove ${c.name}?`}
-                  description="This category will no longer be available for new transactions. Past transactions keep their category."
-                  action="Remove category"
+                  title={t("removeCategoryQuestion", { name: categoryLabel(data, c.name, t) })}
+                  description={t("thisCategoryWillNoLongerBeAvailableForNewTransactionsPastTransactionsKeepTheirCategory")}
+                  action={t("removeCategory")}
                   trigger={
                     <Pill
                       removable
-                      aria-label={`Remove ${c.name}`}
+                      aria-label={t("removeNamedCategory", { name: categoryLabel(data, c.name, t) })}
                       disabled={pending}
                     >
-                      {c.name}
+                      {categoryLabel(data, c.name, t)}
                     </Pill>
                   }
                   onConfirm={() => save({ action: "deleteCategory", id: c.id })}

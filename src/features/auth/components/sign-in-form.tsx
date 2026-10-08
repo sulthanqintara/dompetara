@@ -1,4 +1,6 @@
 "use client";
+import { useErrorMessage } from "@/features/i18n/use-error-message";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
@@ -8,6 +10,8 @@ import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { BrandWordmark } from "@/features/branding/components/brand-wordmark";
 
 export function SignInForm() {
+  const errorMessage = useErrorMessage();
+  const t = useTranslations("UI");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   async function signIn() {
@@ -35,15 +39,13 @@ export function SignInForm() {
         </div>
         <div>
           <h1>
-            Your money.
-            <br />
-            All accounted for.
-          </h1>
+            {t("yourMoney")}<br />
+            {t("allAccountedFor")}</h1>
         </div>
       </section>
       <section className="login-form">
         <div>
-          <h2>Sign in</h2>
+          <h2>{t("signIn")}</h2>
           <Button
             variant="outline"
             className="google-button"
@@ -51,18 +53,16 @@ export function SignInForm() {
             disabled={pending}
           >
             {pending ? <Spinner /> : <strong className="google-g">G</strong>}
-            {pending ? "Connecting…" : "Continue with Google"}
+            {pending ? t("connecting") : t("continueWithGoogle")}
             <ArrowUpRight size={18} />
           </Button>
           {error && (
             <Alert variant="destructive" className="error">
-              {error}
+              {errorMessage(error)}
             </Alert>
           )}
           <div className="privacy">
-            <ShieldCheck size={18} /> Your ledger is private to your Google
-            account.
-          </div>
+            <ShieldCheck size={18} />  {t("yourLedgerIsPrivateToYourGoogleAccount")}</div>
         </div>
       </section>
     </main>

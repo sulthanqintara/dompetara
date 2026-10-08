@@ -20,7 +20,7 @@ try {
       has_table_privilege('anon', c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') as anon_access,
       has_table_privilege('authenticated', c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') as authenticated_access
     from pg_class c join pg_namespace n on n.oid = c.relnamespace
-    where n.nspname = 'public' and c.relname in ('account', 'exchange_rate_cache', 'ledger', 'session', 'user', 'verification')
+    where n.nspname = 'public' and c.relname in ('account', 'exchange_rate_cache', 'ledger', 'session', 'user', 'user_preferences', 'verification')
     order by c.relname
   `;
   assert.deepEqual(
@@ -31,6 +31,7 @@ try {
       "ledger",
       "session",
       "user",
+      "user_preferences",
       "verification",
     ],
   );

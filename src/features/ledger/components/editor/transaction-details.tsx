@@ -1,3 +1,4 @@
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,8 @@ export function TransactionDetails({
   currency: Currency;
   amount: string;
 }) {
+  const locale = useLocale();
+  const t = useTranslations("UI");
   const [details, setDetails] = useState<Details>(
     initial ?? {
       receiptNumber: null,
@@ -41,14 +44,14 @@ export function TransactionDetails({
     <div className="transaction-details">
       <input type="hidden" name="details" value={JSON.stringify(saved)} />
       <LedgerSelect
-        label="Save details"
+        label={t("saveDetails")}
         value={details.keepItems ? "items" : "total"}
         onValueChange={(value) =>
           setDetails({ ...details, keepItems: value === "items" })
         }
         options={[
-          { value: "total", label: "Total only" },
-          { value: "items", label: "Total and individual items" },
+          { value: "total", label: t("totalOnly") },
+          { value: "items", label: t("totalAndIndividualItems") },
         ]}
       />
       {details.keepItems && (
@@ -56,15 +59,15 @@ export function TransactionDetails({
           <Alert variant={reconciliation && reconciliation.difference !== BigInt(0) ? "destructive" : "default"} role="status">
             {reconciliation ? (
               <>
-                <p>Items + adjustments: {format(Number(reconciliation.total), currency)}</p>
+                <p>{t("itemsAndAdjustments", { amount: format(Number(reconciliation.total), currency, locale) })}</p>
                 <p>{reconciliation.difference === BigInt(0)
-                  ? "Matches the transaction amount."
-                  : `Difference: ${format(Number(reconciliation.difference), currency)}. Check item prices, discounts and fees against your receipt.`}</p>
+                  ? t("matchesTheTransactionAmount")
+                  : t("receiptDifference", { amount: format(Number(reconciliation.difference), currency, locale) })}</p>
               </>
-            ) : <p>Enter every line total and adjustment to check them against the transaction amount.</p>}
+            ) : <p>{t("enterEveryLineTotalAndAdjustmentToCheckThemAgainstTheTransactionAmount")}</p>}
           </Alert>
           <Label className="form-field">
-            Receipt number (optional)
+            {t("receiptNumberOptional")}
             <Input
               value={details.receiptNumber ?? ""}
               maxLength={1000}
@@ -112,7 +115,7 @@ export function TransactionDetails({
               })
             }
           >
-            Add item
+            {t("addItem")}
           </Button>
           {details.adjustments.map((adjustment, index) => (
             <ReceiptAdjustmentRow
@@ -143,17 +146,17 @@ export function TransactionDetails({
               type="button"
               variant="secondary"
               disabled={details.adjustments.length >= 30}
-              onClick={() => addAdjustment("Discount")}
+              onClick={() => addAdjustment(t("discount"))}
             >
-              Add discount
+              {t("addDiscount")}
             </Button>
             <Button
               type="button"
               variant="secondary"
               disabled={details.adjustments.length >= 30}
-              onClick={() => addAdjustment("Tax")}
+              onClick={() => addAdjustment(t("tax"))}
             >
-              Add tax
+              {t("addTax")}
             </Button>
             <Button
               type="button"
@@ -161,12 +164,11 @@ export function TransactionDetails({
               disabled={details.adjustments.length >= 30}
               onClick={() => addAdjustment("")}
             >
-              Add adjustment
+              {t("addAdjustment")}
             </Button>
           </div>
           <p className="hint">
-            Items and adjustments must equal the amount. Enter discounts as
-            negative amounts; add tax only when it is not already included.
+            {t("itemsAndAdjustmentsMustEqualTheAmountEnterDiscountsAsNegativeAmountsAddTaxOnlyWhenItIsNotAlreadyIncluded")}
           </p>
         </div>
       )}

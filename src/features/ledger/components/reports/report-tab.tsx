@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { Empty } from "@/components/ui/empty";
 import { ChartNoAxesCombined } from "lucide-react";
@@ -21,11 +22,12 @@ export function ReportTab({
   daily: { date: string; amount: number }[];
   monthly: { date: string; amount: number }[];
 }) {
+  const t = useTranslations("UI");
   return (
     <>
       <Card className="panel report">
         <div className="panel-heading">
-          <h3>Spending by category</h3>
+          <h3>{t("spendingByCategory")}</h3>
           <span>{currency} · {periodLabel(period)}</span>
         </div>
         {groups.length ? (
@@ -33,11 +35,11 @@ export function ReportTab({
         ) : (
           <Empty className="empty">
             <ChartNoAxesCombined />
-            <h3>No spending to report yet</h3>
+            <h3>{t("noSpendingToReportYet")}</h3>
           </Empty>
         )}
         <p className="wallet-footnote">
-          Transfers and balance corrections are excluded from income and expenses.
+          {t("transfersAndBalanceCorrectionsAreExcludedFromIncomeAndExpenses")}
         </p>
       </Card>
       <SpendingHistoryChart
@@ -50,7 +52,7 @@ export function ReportTab({
         points={monthly}
         currency={currency}
         interval="monthly"
-        periodLabel="All history"
+        periodLabel={t("allHistory")}
       />
     </>
   );

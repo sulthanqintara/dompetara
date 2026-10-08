@@ -1,8 +1,10 @@
+import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { id as indonesian, enUS } from "react-day-picker/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover } from "@/components/ui/popover";
 import { PopoverTrigger } from "@/components/ui/popover-trigger";
@@ -16,6 +18,8 @@ export function DateTimeField({
   defaultValue: string;
   onDateChange?: (value: string) => void;
 }) {
+  const locale = useLocale();
+  const t = useTranslations("UI");
   const id = useId();
   const [value, setValue] = useState(defaultValue);
   const [open, setOpen] = useState(false);
@@ -25,7 +29,7 @@ export function DateTimeField({
   return (
     <div className="form-row">
       <div className="form-field">
-        <Label htmlFor={`${id}-date`}>Date</Label>
+        <Label htmlFor={`${id}-date`}>{t("date")}</Label>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger
             render={
@@ -37,16 +41,17 @@ export function DateTimeField({
             }
           >
             {validDate
-              ? date.toLocaleDateString(undefined, {
+              ? date.toLocaleDateString(locale, {
                   day: "numeric",
                   month: "short",
                   year: "numeric",
                 })
-              : "Choose date"}
+              : t("chooseDate")}
             <CalendarIcon />
           </PopoverTrigger>
           <PopoverContent className="calendar-popover" align="start">
             <Calendar
+              locale={locale === "id" ? indonesian : enUS}
               mode="single"
               required
               selected={validDate ? date : undefined}
@@ -62,7 +67,7 @@ export function DateTimeField({
         </Popover>
       </div>
       <div className="form-field">
-        <Label htmlFor={`${id}-time`}>Time</Label>
+        <Label htmlFor={`${id}-time`}>{t("time")}</Label>
         <Input
           id={`${id}-time`}
           type="time"

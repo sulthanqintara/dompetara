@@ -10,6 +10,23 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Code rules
 
+## Documentation audience
+
+- Keep `README.md` focused on what users can do in Dompetara: getting started, features, behavior, and relevant privacy details.
+- Put setup commands, testing instructions, architecture, and deployment/operations notes in `docs/DEVELOPMENT.md`. Keep agent and editor rules in `AGENTS.md`, and implementation status or verification history in `FEATURE_CHECKLIST.md`.
+- When updating documentation, preserve useful technical guidance in the appropriate file rather than adding it to the user-facing README.
+
+## Internationalization: required for every feature
+
+- Use the existing `next-intl` setup with unchanged URLs. Support `en` and `id`; reuse the saved preference/browser detection flow instead of adding locale detection in components.
+- Put every new app-authored user-facing string in both `messages/en.json` and `messages/id.json` with matching keys. This includes buttons, headings, empty/loading states, dialogs, validation errors, tooltips, accessibility labels, and metadata. Use `useTranslations` in components and `getTranslations` on the server; never hardcode copy in JSX, props, or display helpers.
+- Use whole ICU messages with named parameters and plural/select rules. Do not assemble sentences from translated fragments or assume English word order.
+- Use `useLocale` / `getLocale` for displayed dates, numbers, currency, and percentages. Reuse the existing formatting helpers; keep stored dates, amounts, currency codes, form field names, and API values independent of display language.
+- Preserve user-entered wallet/category names, transaction titles, notes, and printed receipt text. Translate identified built-in categories and generated titles through the existing i18n display helpers. Proper names and standard codes may remain unchanged.
+- Keep server diagnostics safe and stable; translate known user-facing domain/API errors through `useErrorMessage`. Add matching `Errors` entries for new errors. Localize new component validation messages too; never display raw provider exceptions. Pass the selected language to services that generate user-facing copy.
+- Run `pnpm test:i18n` for every change involving copy or formatting. The production build runs this check too. Extend its coverage when adding a new copy pattern; do not bypass failures or expand the proper-name allowlist to hide untranslated prose.
+- Render affected UI in both languages at phone, tablet, desktop, and short viewport sizes. Check long translated text, keyboard/focus behavior, and accessible names. Automated scans cannot prove that computed text or translation wording is correct.
+
 ## API error logging
 
 - Always log failed API requests on the server with `console.error` through `logServerError` / `withApiErrorLogging` so their messages appear in Vercel runtime logs. Wrap new route handlers with `withApiErrorLogging` to cover error responses and uncaught exceptions.

@@ -1,3 +1,4 @@
+import { localeSchema } from "@/features/i18n/i18n";
 import { readLedger } from "@/features/ledger/read-ledger";
 import { readLimitedBody } from "@/lib/read-limited-body";
 import { auth } from "@/lib/auth";
@@ -45,6 +46,7 @@ export async function extractRequest(request: Request) {
       method = form.get("method");
     if (!(file instanceof File) || (method !== "ocr" && method !== "ai"))
       throw new Error("Choose an image and OCR or AI.");
+    const locale = localeSchema.parse(form.get("locale") ?? "en");
     const key = process.env.ZAI_API_KEY;
     const openaiKey = process.env.OPENAI_API_KEY;
     if ((method === "ocr" && !key) || (method === "ai" && !key && !openaiKey))
@@ -62,7 +64,7 @@ export async function extractRequest(request: Request) {
       .filter((category) => category.kind === "expense")
       .map((category) => category.name);
     return Response.json(
-      await extractReceipt(file, method, key, categories, data.wallets, openaiKey),
+      await extractReceipt(file, method, key, categories, data.wallets, openaiKey, locale),
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {

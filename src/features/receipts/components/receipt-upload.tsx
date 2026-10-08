@@ -1,3 +1,5 @@
+import { useErrorMessage } from "@/features/i18n/use-error-message";
+import { useLocale, useTranslations } from "next-intl";
 import { EditorBody } from "@/features/ledger/components/editor/editor-body";
 import { EditorFooter } from "@/features/ledger/components/editor/editor-footer";
 import { Alert } from "@/components/ui/alert";
@@ -18,6 +20,9 @@ export function ReceiptUpload({
   onBack?: () => void;
   hidden?: boolean;
 }) {
+  const locale = useLocale();
+  const errorMessage = useErrorMessage();
+  const t = useTranslations("UI");
   const [method, setMethod] = useState("ocr"),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -39,6 +44,7 @@ export function ReceiptUpload({
           file,
           method as "ocr" | "ai",
           controller.current.signal,
+          locale === "id" ? "id" : "en",
         ),
         file,
       );
@@ -58,21 +64,19 @@ export function ReceiptUpload({
       style={hidden ? { display: "none" } : undefined}
     >
       <EditorBody>
-        <p>
-          Images are processed by AI providers. You can choose to save a private copy when reviewing the transaction.
-        </p>
+        <p>{t("receiptImageProcessing")}</p>
         <LedgerSelect
-          label="Read with"
+          label={t("readWith")}
           value={method}
           onValueChange={setMethod}
           disabled={busy}
           options={[
-            { value: "ocr", label: "OCR — text recognition" },
-            { value: "ai", label: "AI — image recognition" },
+            { value: "ocr", label: t("oCRTextRecognition") },
+            { value: "ai", label: t("aIImageRecognition") },
           ]}
         />
         <div className="form-field">
-          <Label htmlFor="receipt-image">Receipt image</Label>
+          <Label htmlFor="receipt-image">{t("receiptImage")}</Label>
           <Input
             id="receipt-image"
             name="image"
@@ -81,11 +85,11 @@ export function ReceiptUpload({
             required
             disabled={busy}
           />
-          <p>JPEG or PNG, up to 16 MB.</p>
+          <p>{t("jPEGOrPNGUpTo16MB")}</p>
         </div>
         {error && (
           <Alert variant="destructive" className="error">
-            {error}
+            {errorMessage(error)}
           </Alert>
         )}
       </EditorBody>
@@ -97,11 +101,11 @@ export function ReceiptUpload({
             disabled={busy}
             onClick={onBack}
           >
-            Enter manually
+            {t("enterManually")}
           </Button>
         )}
         <Button disabled={busy} type="submit">
-          {busy ? "Reading receipt…" : "Read receipt"}
+          {busy ? t("readingReceipt") : t("readReceipt")}
         </Button>
       </EditorFooter>
     </form>

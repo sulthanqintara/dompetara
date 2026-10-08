@@ -1,3 +1,4 @@
+import { useLocale, useTranslations } from "next-intl";
 import { useId } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
@@ -12,9 +13,11 @@ export function SpendingHistoryChart({ points, currency, interval, periodLabel }
   interval: "daily" | "monthly";
   periodLabel: string;
 }) {
+  const locale = useLocale();
+  const t = useTranslations("UI");
   const captionId = useId();
-  const label = interval === "daily" ? "Daily spending" : "Monthly spending";
-  const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
+  const label = interval === "daily" ? t("dailySpending") : t("monthlySpending");
+  const compact = new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 });
   return (
     <Card className="panel spending-history">
       <div className="panel-heading">
@@ -26,11 +29,11 @@ export function SpendingHistoryChart({ points, currency, interval, periodLabel }
           <figure>
             <ChartContainer
               className="spending-history-chart"
-              config={{ amount: { label: "Expenses", color: "var(--chart-1)" } }}
+              config={{ amount: { label: t("expenses"), color: "var(--chart-1)" } }}
               initialDimension={{ width: 240, height: 260 }}
             >
               <BarChart data={points} accessibilityLayer={false} role="img"
-                aria-label={`${label} chart`} aria-describedby={captionId}
+                aria-label={t(interval === "daily" ? "dailySpendingChart" : "monthlySpendingChart")} aria-describedby={captionId}
                 margin={{ top: 16, right: 8, bottom: 8, left: 0 }}>
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="date" tickLine={false} axisLine={false} minTickGap={24}
@@ -41,22 +44,21 @@ export function SpendingHistoryChart({ points, currency, interval, periodLabel }
               </BarChart>
             </ChartContainer>
             <figcaption id={captionId} className="sr-only">
-              Expenses in {currency}. Only {interval === "daily" ? "days" : "months"} with spending are shown; others total zero.
-              Transfers and balance corrections are excluded; service fees count as expenses.
+              {t(interval === "daily" ? "dailySpendingDescription" : "monthlySpendingDescription", { currency })}
             </figcaption>
           </figure>
-          <dl className="spending-history-values" aria-label={`${label} amounts`}>
+          <dl className="spending-history-values" aria-label={t(interval === "daily" ? "dailySpendingAmounts" : "monthlySpendingAmounts")}>
             {points.map(({ date, amount }) => (
               <div className="report-row" key={date}>
                 <dt>{date}</dt>
-                <dd><strong>{format(amount, currency)}</strong></dd>
+                <dd><strong>{format(amount, currency, locale)}</strong></dd>
               </div>
             ))}
           </dl>
         </div>
       ) : (
         <Empty className="empty">
-          <h3>{interval === "daily" ? "No daily spending in this period" : "No monthly spending recorded"}</h3>
+          <h3>{interval === "daily" ? t("noDailySpendingInThisPeriod") : t("noMonthlySpendingRecorded")}</h3>
         </Empty>
       )}
     </Card>

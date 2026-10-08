@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { ReceiptText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import type { Entry } from "@/features/ledger/ledger";
 import { SavedReceiptImage } from "./saved-receipt-image";
 
 export function ReceiptImageDialog({ entry }: { entry: Entry }) {
+  const t = useTranslations("UI");
   const [open, setOpen] = useState(false);
   const [returnFocus, setReturnFocus] = useState<HTMLElement | null>(null);
   const fallbackFocus = useRef<HTMLButtonElement | null>(null);
@@ -24,18 +26,17 @@ export function ReceiptImageDialog({ entry }: { entry: Entry }) {
         type="button"
         variant="ghost"
         className="text-button"
-        aria-label={`View receipt for ${entry.title}`}
+        aria-label={t("viewReceiptFor", { title: entry.title })}
         onClick={(event) => {
           fallbackFocus.current =
-            event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(
-              'button[aria-label^="Edit "]',
-            ) ?? null;
+            Array.from(event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("button") ?? [])
+              .find((button) => button !== event.currentTarget) ?? null;
           setReturnFocus(event.currentTarget);
           setOpen(true);
         }}
       >
         <ReceiptText size={16} />
-        <span className="sr-only">View receipt</span>
+        <span className="sr-only">{t("viewReceipt")}</span>
       </Button>
       <Dialog
         open={open}
@@ -51,7 +52,7 @@ export function ReceiptImageDialog({ entry }: { entry: Entry }) {
           }
         >
           <EditorHeader
-            title="Receipt image"
+            title={t("receiptImage")}
             eyebrow=""
             close={close}
             pending={pending}
@@ -66,14 +67,12 @@ export function ReceiptImageDialog({ entry }: { entry: Entry }) {
           </EditorBody>
           <EditorFooter>
             <ConfirmationDialog
-              title="Remove this receipt image?"
-              description="The transaction and its receipt details will be kept. This cannot be undone."
-              action="Remove image"
+              title={t("removeReceiptImageQuestion")}
+              description={t("keepReceiptDetails")}
+              action={t("removeImage")}
               pending={pending}
               trigger={
-                <Button type="button" variant="destructive" disabled={pending}>
-                  Remove image
-                </Button>
+                <Button type="button" variant="destructive" disabled={pending}>{t("removeImage")}</Button>
               }
               onConfirm={async () => {
                 const target = fallbackFocus.current;
@@ -95,9 +94,7 @@ export function ReceiptImageDialog({ entry }: { entry: Entry }) {
               variant="secondary"
               onClick={close}
               disabled={pending}
-            >
-              Close
-            </Button>
+            >{t("close")}</Button>
           </EditorFooter>
         </DialogContent>
       </Dialog>

@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
     "dev:tablet": "node scripts/dev-tablet.mjs",
-    "build": "next build",
+    "build": "pnpm test:i18n && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -13,12 +13,14 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "fx:setup": "node scripts/setup-exchange-rates.mjs",
-    "test": "node --experimental-strip-types tests/ledger.test.ts && node --experimental-strip-types tests/exchange-rates.test.ts && node --experimental-strip-types tests/reports.test.ts && node --experimental-strip-types tests/format.test.ts && node --experimental-strip-types tests/rate-cache.test.ts && node --experimental-strip-types tests/export.test.ts && node --experimental-strip-types tests/balances.test.ts && node --experimental-strip-types tests/pagination.test.ts && node --experimental-strip-types tests/transaction-filters.test.ts && node --experimental-strip-types tests/receipts.test.ts && node --conditions=react-server --experimental-strip-types tests/receipt-provider.test.ts && node --experimental-strip-types tests/currency-input.test.ts && node --conditions=react-server --experimental-strip-types tests/api-error-logging.test.ts && node --conditions=react-server --experimental-strip-types tests/server-performance.test.ts",
+    "test": "node --experimental-strip-types tests/ledger.test.ts && node --experimental-strip-types tests/exchange-rates.test.ts && node --experimental-strip-types tests/reports.test.ts && node --experimental-strip-types tests/format.test.ts && node --experimental-strip-types tests/rate-cache.test.ts && node --experimental-strip-types tests/export.test.ts && node --experimental-strip-types tests/balances.test.ts && node --experimental-strip-types tests/pagination.test.ts && node --experimental-strip-types tests/transaction-filters.test.ts && node --experimental-strip-types tests/receipts.test.ts && node --conditions=react-server --experimental-strip-types tests/receipt-provider.test.ts && node --experimental-strip-types tests/currency-input.test.ts && node --conditions=react-server --experimental-strip-types tests/api-error-logging.test.ts && node --conditions=react-server --experimental-strip-types tests/server-performance.test.ts && node --experimental-strip-types tests/i18n.test.mjs",
     "test:receipts:live": "node --conditions=react-server --experimental-strip-types tests/receipt-live.test.ts",
     "profile:navigation": "node scripts/profile-navigation.mjs",
     "test:db": "node --experimental-strip-types tests/database.test.ts",
     "test:responsive": "node tests/responsive.test.mjs",
-    "test:receipt-images": "node tests/receipt-images.test.mjs"
+    "test:receipt-images": "node tests/receipt-images.test.mjs",
+    "test:i18n": "node --experimental-strip-types tests/i18n.test.mjs",
+    "test:i18n:browser": "node --experimental-strip-types tests/i18n-browser.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -29,6 +31,7 @@
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.42.0",
     "next": "16.3.4",
+    "next-intl": "^4.14.9",
     "postgres": "^3.4.9",
     "react": "19.2.8",
     "react-day-picker": "^10.0.1",

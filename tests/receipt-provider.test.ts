@@ -74,6 +74,9 @@ try {
     "string",
     "OCR structuring call uses text, not another image",
   );
+  await extractReceipt(file, "ocr", "test-only-key", ["Food & drink"], [], undefined, "id");
+  assert.match(JSON.stringify(calls.at(-1)?.body.messages), /Write warnings, suggestion reasons and new category suggestions in Bahasa Indonesia/);
+  assert.match(JSON.stringify(calls.at(-1)?.body.messages), /Preserve printed merchant names, item names, receipt numbers, payment sources and existing category names exactly/);
   globalThis.fetch = async (input) => Response.json(String(input).endsWith("layout_parsing")
     ? {md_results:"INDOMARET\n03.10.26-19:59/4.5.0/TZXN-3517/RAFFA/01"}
     : {choices:[{finish_reason:"stop",message:{content:JSON.stringify({...draft,date:"2026-03-10",time:"19:59",warnings:["PPN breakdown provided but not included in adjustments as per schema","Total is unclear."]})}}]});

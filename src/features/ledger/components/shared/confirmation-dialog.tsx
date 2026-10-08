@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { LedgerError } from "./ledger-error";
 import { useLedgerContext } from "../../use-ledger-context";
 import { useState, type ReactElement } from "react";
@@ -26,6 +27,7 @@ export function ConfirmationDialog({
   error?: string;
   onConfirm: () => Promise<boolean>;
 }) {
+  const t = useTranslations("UI");
   const [open, setOpen] = useState(false);
   const { conflict } = useLedgerContext();
   return (
@@ -41,7 +43,7 @@ export function ConfirmationDialog({
         <AlertDialogDescription>{description}</AlertDialogDescription>
         <LedgerError />
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={pending}>{t("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={pending || conflict}
@@ -49,7 +51,7 @@ export function ConfirmationDialog({
               if (await onConfirm()) setOpen(false);
             }}
           >
-            {pending ? "Removing…" : action}
+            {pending ? t("removing") : action}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

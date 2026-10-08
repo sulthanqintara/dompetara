@@ -18,7 +18,7 @@ import {
 export const currencies = ["IDR", "USD", "CAD"] as const;
 export type Currency = (typeof currencies)[number];
 export type Wallet = { id: string; name: string; currencies: Currency[] };
-export type Category = { id: string; name: string; kind: "income" | "expense" };
+export type Category = { id: string; name: string; kind: "income" | "expense"; system?: "adminFees" };
 export type Entry = {
   id: string;
   kind: "income" | "expense" | "transfer" | "correction";
@@ -274,6 +274,7 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
             category = {
               id: crypto.randomUUID(),
               name: "Admin fees",
+              system: "adminFees",
               kind: "expense",
             };
             data.categories.push(category);

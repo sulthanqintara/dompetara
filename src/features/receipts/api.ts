@@ -3,12 +3,14 @@ export async function readReceipt(
   file: File,
   method: "ocr" | "ai",
   signal: AbortSignal,
+  locale: "en" | "id" = "en",
 ): Promise<Extraction> {
   const blob = await prepareReceiptImage(file);
   signal.throwIfAborted();
   const form = new FormData();
   form.set("image", blob, "receipt.jpg");
   form.set("method", method);
+  form.set("locale", locale);
   const response = await fetch("/api/receipts/extract", {
     method: "POST",
     body: form,

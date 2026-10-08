@@ -1,6 +1,8 @@
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 export function ReceiptPreview({ file }: { file: File }) {
+  const t = useTranslations("UI");
   const [url, setUrl] = useState<string>();
   useEffect(() => {
     const preview = URL.createObjectURL(file);
@@ -12,7 +14,7 @@ export function ReceiptPreview({ file }: { file: File }) {
   return url ? (
     <Image
       src={url}
-      alt="Original receipt for review"
+      alt={t("originalReceiptForReview")}
       width={800}
       height={1200}
       unoptimized

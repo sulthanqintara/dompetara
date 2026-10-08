@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import {
   Plus,
@@ -13,6 +14,7 @@ import { DropdownMenuContent } from "@/components/ui/dropdown-menu-content";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu-item";
 import { useLedgerContext } from "../../use-ledger-context";
 export function LedgerActions({ tab }: { tab: string }) {
+  const t = useTranslations("UI");
   const { data, setEditor, pending, editor } = useLedgerContext();
   const trigger = useRef<HTMLButtonElement>(null);
   if (tab !== "Transactions" && tab !== "Wallet") return null;
@@ -21,14 +23,14 @@ export function LedgerActions({ tab }: { tab: string }) {
       <Button
         ref={trigger}
         className="ledger-add-button"
-        aria-label="Add wallet"
+        aria-label={t("addWallet")}
         disabled={pending}
         onClick={() =>
           setEditor({ type: "wallet", restoreFocus: trigger.current })
         }
       >
         <Plus />
-        <span>Add wallet</span>
+        <span>{t("addWallet")}</span>
       </Button>
     );
   return (
@@ -38,13 +40,13 @@ export function LedgerActions({ tab }: { tab: string }) {
           <Button
             ref={trigger}
             className="ledger-add-button"
-            aria-label="Add transaction"
+            aria-label={t("addTransaction")}
             disabled={pending}
           />
         }
       >
         <Plus />
-        <span>Add transaction</span>
+        <span>{t("addTransaction")}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         mobileBackdrop
@@ -62,7 +64,7 @@ export function LedgerActions({ tab }: { tab: string }) {
           }
         >
           <ArrowDownLeft />
-          Income
+          {t("income")}
         </DropdownMenuItem>
         <DropdownMenuItem
           className="transaction-action expense"
@@ -75,7 +77,7 @@ export function LedgerActions({ tab }: { tab: string }) {
           }
         >
           <ArrowUpRight />
-          Expense
+          {t("expense")}
         </DropdownMenuItem>
         <DropdownMenuItem
           className="transaction-action transfer"
@@ -88,7 +90,7 @@ export function LedgerActions({ tab }: { tab: string }) {
           }
         >
           <ArrowLeftRight />
-          Transfer
+          {t("transfer")}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() =>
@@ -96,7 +98,7 @@ export function LedgerActions({ tab }: { tab: string }) {
           }
         >
           <ReceiptText />
-          Import receipt
+          {t("importReceipt")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

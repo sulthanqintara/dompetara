@@ -163,6 +163,7 @@ try {
   if (screenshots) await mkdir(screenshots, { recursive: true });
   for (let actor = 0; actor < 2; actor++) {
     await sql`insert into public."user" (id, name, email) values (${ids[actor]}, 'Receipt image test', ${ids[actor] + "@example.invalid"})`;
+    await sql`insert into public.user_preferences(user_id,locale,language_prompt_shown_at) values(${ids[actor]},'en',now())`;
     await sql`insert into public.session (id, user_id, token, expires_at, updated_at) values (${randomUUID()}, ${ids[actor]}, ${tokens[actor]}, ${new Date(Date.now() + 3600000)}, ${new Date()})`;
     await sql`insert into public.ledger (user_id, data) values (${ids[actor]}, ${sql.json({ wallets: [{ id: "bank", name: "Bank", currencies: ["IDR"] }], categories: [{ id: "food", name: "Food", kind: "expense" }], entries: [] })})`;
   }
@@ -309,7 +310,7 @@ try {
       [1200, 800],
       [1440, 900],
     ]) {
-      const context = await browser.newContext({ viewport: { width, height } });
+      const context = await browser.newContext({ viewport: { width, height }, locale: "en-US" });
       await context.addCookies([
         {
           name: "better-auth.session_token",

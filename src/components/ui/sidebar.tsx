@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 import type { ComponentProps } from "react";
 import { cn } from "cn";
 import { useSidebar } from "./use-sidebar";
@@ -9,6 +10,7 @@ import { SheetDescription } from "./sheet-description";
 
 // Adapted from shadcn Sidebar with a desktop icon rail and tablet Sheet.
 export function Sidebar({ className, children, ...props }: ComponentProps<"div">) {
+  const t = useTranslations("UI");
   const { isMobile, open, openMobile, setOpenMobile } = useSidebar();
   if (isMobile) {
     return (
@@ -17,8 +19,8 @@ export function Sidebar({ className, children, ...props }: ComponentProps<"div">
           id="workspace-navigation" data-mobile="true" aria-modal="true"
           finalFocus={() => document.querySelector<HTMLElement>('[data-sidebar="trigger"]')}
           {...props}>
-          <SheetTitle className="sr-only">Workspace navigation</SheetTitle>
-          <SheetDescription className="sr-only">Choose a ledger section.</SheetDescription>
+          <SheetTitle className="sr-only">{t("workspaceNavigation")}</SheetTitle>
+          <SheetDescription className="sr-only">{t("chooseALedgerSection")}</SheetDescription>
           {children}
         </SheetContent>
       </Sheet>

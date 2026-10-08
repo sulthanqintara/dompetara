@@ -3,7 +3,9 @@ import { readFile } from "node:fs/promises";
 import sharp from "sharp";
 
 const root = new URL("../", import.meta.url);
-const manifest = JSON.parse(await readFile(new URL("src/app/manifest.webmanifest", root), "utf8"));
+const manifestSource = await readFile(new URL("src/app/manifest.ts", root), "utf8");
+const manifest = JSON.parse(manifestSource.slice(manifestSource.indexOf("return ") + 7, manifestSource.lastIndexOf("};") + 1)
+  .replace(/t\("trackYourIncomeAndExpensesAllInOnePlace"\)/, '"localized description"').replace(/await getLocale\(\)/, '"en"'));
 assert.equal(manifest.name, "Dompetara");
 assert(manifest.icons.some(icon => icon.purpose === "maskable"));
 for (const icon of manifest.icons) {

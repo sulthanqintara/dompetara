@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+import { useErrorMessage } from "@/features/i18n/use-error-message";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -12,6 +14,8 @@ export function SavedReceiptImage({
   imageId: string;
   expandable?: boolean;
 }) {
+  const t = useTranslations("UI");
+  const errorMessage = useErrorMessage();
   const [url, setUrl] = useState<string>();
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
@@ -41,7 +45,7 @@ export function SavedReceiptImage({
   if (error)
     return (
       <Alert variant="destructive" className="receipt-image-error">
-        <p>{error}</p>
+        <p>{errorMessage(error)}</p>
         <Button
           type="button"
           variant="secondary"
@@ -49,9 +53,7 @@ export function SavedReceiptImage({
             setError("");
             setAttempt(attempt + 1);
           }}
-        >
-          Retry image
-        </Button>
+        >{t("retryImage")}</Button>
       </Alert>
     );
   return url ? (
@@ -62,12 +64,12 @@ export function SavedReceiptImage({
           variant="secondary"
           onClick={() => setExpanded(!expanded)}
         >
-          {expanded ? "Fit image" : "Show full-size image"}
+          {expanded ? t("fitImage") : t("showFullSizeImage")}
         </Button>
       )}
       <Image
         src={url}
-        alt="Saved receipt image"
+        alt={t("savedReceiptImage")}
         width={800}
         height={1200}
         unoptimized
@@ -76,8 +78,6 @@ export function SavedReceiptImage({
     </>
   ) : (
     <p role="status" className="flex items-center gap-2 py-3">
-      <Spinner />
-      Loading receipt image…
-    </p>
+      <Spinner />{t("loadingReceiptImage")}</p>
   );
 }

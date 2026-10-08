@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,11 +16,12 @@ export function ReceiptImageOption({
   onCheckedChange: (checked: boolean) => void;
   onImageChange: (image?: File) => void;
 }) {
+  const t = useTranslations("UI");
   return (
     <div className="receipt-image-option">
       {!image && (
         <div className="form-field">
-          <Label htmlFor="saved-receipt-file">Attach receipt image</Label>
+          <Label htmlFor="saved-receipt-file">{t("attachReceiptImage")}</Label>
           <Input
             id="saved-receipt-file"
             type="file"
@@ -30,7 +32,7 @@ export function ReceiptImageOption({
               onCheckedChange(false);
             }}
           />
-          <p>JPEG or PNG, up to 16 MB.</p>
+          <p>{t("jPEGOrPNGUpTo16MB")}</p>
         </div>
       )}
       {image && (
@@ -45,13 +47,8 @@ export function ReceiptImageOption({
               onCheckedChange={onCheckedChange}
               disabled={pending}
               aria-describedby="receipt-image-privacy"
-            />
-            Save receipt image
-          </Label>
-          <p id="receipt-image-privacy">
-            Store a private copy so you can view it later. You can remove it at
-            any time.
-          </p>
+            />{t("saveReceiptImage")}</Label>
+          <p id="receipt-image-privacy">{t("privateReceiptCopy")}</p>
         </>
       )}
     </div>

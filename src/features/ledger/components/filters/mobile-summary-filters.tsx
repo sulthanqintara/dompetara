@@ -1,3 +1,5 @@
+import { useErrorMessage } from "@/features/i18n/use-error-message";
+import { useLocale, useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +19,9 @@ export function MobileSummaryFilters({ period, currency, onPeriodChange, onCurre
   onPeriodChange: (period: Period) => void;
   onCurrencyChange: (currency: Currency) => void;
 }) {
+  const errorMessage = useErrorMessage();
+  const t = useTranslations("UI");
+  const locale = useLocale();
   const { isPhone } = useSidebar();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(period);
@@ -25,7 +30,7 @@ export function MobileSummaryFilters({ period, currency, onPeriodChange, onCurre
   const month = "month" in period ? period.month : null;
   const range = periodRange(draft);
   const valid = validPeriod(range.start, range.end);
-  const label = month ? new Date(`${month}-01T12:00`).toLocaleDateString("en", { month: "short", year: "numeric" }) : "Custom dates";
+  const label = month ? new Date(`${month}-01T12:00`).toLocaleDateString(locale, { month: "short", year: "numeric" }) : t("customDates");
   const moveMonth = (direction: number) => {
     if (!month) return;
     const [year, number] = month.split("-").map(Number);
@@ -35,36 +40,36 @@ export function MobileSummaryFilters({ period, currency, onPeriodChange, onCurre
   };
   return <>
     <div className="mobile-summary-filters">
-      {month && <Button variant="outline" size="icon" aria-label="Previous month" disabled={month === "0001-01"} onClick={() => moveMonth(-1)}><ChevronLeft /></Button>}
-      <Button ref={trigger} variant="outline" className="summary-period-trigger" aria-label={`Change period: ${periodLabel(period)}`}
+      {month && <Button variant="outline" size="icon" aria-label={t("previousMonth")} disabled={month === "0001-01"} onClick={() => moveMonth(-1)}><ChevronLeft /></Button>}
+      <Button ref={trigger} variant="outline" className="summary-period-trigger" aria-label={t("changePeriod", { period: periodLabel(period) })}
         aria-haspopup="dialog" aria-expanded={open} onClick={() => {
           setDraft(period);
           setDraftCurrency(currency);
           setOpen(true);
         }}><span>{label}</span><ChevronDown /></Button>
-      {month && <Button variant="outline" size="icon" aria-label="Next month" disabled={month === "9999-12"} onClick={() => moveMonth(1)}><ChevronRight /></Button>}
-      <LedgerSelect label="Currency" compact value={currency} options={currencies.map((value) => ({ value, label: value }))}
+      {month && <Button variant="outline" size="icon" aria-label={t("nextMonth")} disabled={month === "9999-12"} onClick={() => moveMonth(1)}><ChevronRight /></Button>}
+      <LedgerSelect label={t("currency")} compact value={currency} options={currencies.map((value) => ({ value, label: value }))}
         onValueChange={(value) => onCurrencyChange(value as Currency)} />
     </div>
     {!month && <p className="mobile-period-range">{periodLabel(period)}</p>}
     <Sheet open={open && isPhone} onOpenChange={setOpen}>
       <SheetContent side="bottom" className="mobile-filter-sheet" finalFocus={trigger}>
         <div className="mobile-filter-sheet-heading">
-          <SheetTitle>Period and summary currency</SheetTitle>
-          <SheetDescription>Choose the period and currency used for summary totals.</SheetDescription>
+          <SheetTitle>{t("periodAndSummaryCurrency")}</SheetTitle>
+          <SheetDescription>{t("choosePeriodAndCurrency")}</SheetDescription>
         </div>
         <div className="mobile-filter-sheet-body">
           <PeriodPicker key={open ? "open" : "closed"} period={draft} onChange={setDraft} draftOnly />
-          <LedgerSelect label="Summary currency" value={draftCurrency} options={currencies.map((value) => ({ value, label: value }))}
+          <LedgerSelect label={t("summaryCurrency")} value={draftCurrency} options={currencies.map((value) => ({ value, label: value }))}
             onValueChange={(value) => setDraftCurrency(value as Currency)} />
-          {!valid && <p role="status" className="hint">Enter valid dates with the end on or after the start.</p>}
+          {!valid && <p role="status" className="hint">{errorMessage("Enter valid dates with the end on or after the start.")}</p>}
         </div>
         <div className="mobile-filter-sheet-actions">
           <Button disabled={!valid} onClick={() => {
             onPeriodChange(draft);
             onCurrencyChange(draftCurrency);
             setOpen(false);
-          }}>Apply period</Button>
+          }}>{t("applyPeriod")}</Button>
         </div>
       </SheetContent>
     </Sheet>

@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +22,7 @@ export function WalletFields({
   currency?: Currency;
   data: Ledger;
 }) {
+  const t = useTranslations("UI");
   const [cur, setCur] = useState<Currency>(
     currency ?? wallet?.currencies[0] ?? "IDR",
   );
@@ -29,18 +31,18 @@ export function WalletFields({
   return (
     <>
       <Label className="form-field">
-        Wallet name
+        {t("walletName")}
         <Input
           autoComplete="off"
           name="name"
           required
           maxLength={1000}
           defaultValue={wallet?.name}
-          placeholder="e.g. BCA"
+          placeholder={t("eGBCA")}
         />
       </Label>
       <LedgerSelect
-        label="Currency"
+        label={t("currency")}
         name="currency"
         value={cur}
         onValueChange={(value) => setCur(value as Currency)}
@@ -48,8 +50,8 @@ export function WalletFields({
       />
       <Label className="form-field">
         {wallet?.currencies.includes(cur)
-          ? "Current balance"
-          : "Opening balance"}
+          ? t("currentBalance")
+          : t("openingBalance")}
         <CurrencyInput
           currency={cur}
           name="amount"
@@ -60,7 +62,7 @@ export function WalletFields({
           onValueChange={(value) => setAmounts((previous) => ({ ...previous, [cur]: value }))}
         />
       </Label>
-      {wallet && <p className="hint">Balance changes are recorded as corrections.</p>}
+      {wallet && <p className="hint">{t("balanceChangesAreRecordedAsCorrections")}</p>}
     </>
   );
 }

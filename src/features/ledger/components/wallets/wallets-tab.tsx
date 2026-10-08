@@ -1,3 +1,4 @@
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ChevronRight, Plus, Wallet as WalletIcon } from "lucide-react";
@@ -14,6 +15,8 @@ export function WalletsTab({
   data: Ledger;
   onEditWallet: (wallet?: Wallet, currency?: Currency) => void;
 }) {
+  const locale = useLocale();
+  const t = useTranslations("UI");
   const date = localDate().slice(0, 10);
   const usd = useCachedRate("USD", "IDR", date).suggestion?.rate;
   const cad = useCachedRate("CAD", "IDR", date).suggestion?.rate;
@@ -31,7 +34,7 @@ export function WalletsTab({
               className="text-button"
               onClick={() => onEditWallet(w)}
             >
-              Edit / add currency
+              {t("editAddCurrency")}
             </Button>
           </div>
           {w.currencies.map((c) => (
@@ -42,7 +45,7 @@ export function WalletsTab({
               onClick={() => onEditWallet(w, c)}
             >
               <span>{c}</span>
-              <strong><BalanceAmount currency={c}>{format(balance(data, w.id, c), c)}</BalanceAmount></strong>
+              <strong><BalanceAmount currency={c}>{format(balance(data, w.id, c), c, locale)}</BalanceAmount></strong>
               <ChevronRight size={17} />
             </Button>
           ))}
@@ -50,8 +53,8 @@ export function WalletsTab({
             const { total, partial } = walletTotalIdr(w.currencies.map((c) => ({ currency: c, amount: balance(data, w.id, c) })), { USD: usd, CAD: cad });
             return (
               <div className="wallet-balance wallet-total">
-                <span>Total (IDR){partial && " · partial"}</span>
-                <strong><BalanceAmount currency="IDR">{format(total, "IDR")}</BalanceAmount></strong>
+                <span>{t("totalIDR")}{partial && t("partial")}</span>
+                <strong><BalanceAmount currency="IDR">{format(total, "IDR", locale)}</BalanceAmount></strong>
                 <span aria-hidden />
               </div>
             );
@@ -64,7 +67,7 @@ export function WalletsTab({
         onClick={() => onEditWallet()}
       >
         <Plus />
-        <strong>Add a wallet</strong>
+        <strong>{t("addAWallet")}</strong>
       </Button>
     </div>
   );

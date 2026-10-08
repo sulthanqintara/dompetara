@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Form from "next/form";
 import Link from "next/link";
 import { useId } from "react";
@@ -10,20 +11,21 @@ import { TransactionFilterFields } from "./transaction-filter-fields";
 import { MobileTransactionFilters } from "./mobile-transaction-filters";
 
 export function TransactionFilters({ data, filters }: { data: Ledger; filters: Filters }) {
+  const t = useTranslations("UI");
   const id = useId();
   return <>
     <MobileTransactionFilters data={data} filters={filters} />
-    <Form action="/transactions" scroll={false} className="transaction-filters desktop-history-filters" aria-label="Filter transaction history">
+    <Form action="/transactions" scroll={false} className="transaction-filters desktop-history-filters" aria-label={t("filterTransactionHistory")}>
     <div className="form-field transaction-search">
-      <Label htmlFor={id}>Search transactions</Label>
-      <Input id={id} name="search" type="search" maxLength={1000} defaultValue={filters.search} placeholder="Title, notes, category or wallet" />
+      <Label htmlFor={id}>{t("searchTransactions")}</Label>
+      <Input id={id} name="search" type="search" maxLength={1000} defaultValue={filters.search} placeholder={t("titleNotesCategoryOrWallet")} />
     </div>
     <TransactionFilterFields data={data} filters={filters} />
     <div className="transaction-filter-actions">
-      <Button variant="outline" nativeButton={false} render={<Link href="/transactions" scroll={false} />}>Clear filters</Button>
-      <Button type="submit">Apply filters</Button>
+      <Button variant="outline" nativeButton={false} render={<Link href="/transactions" scroll={false} />}>{t("clearFilters")}</Button>
+      <Button type="submit">{t("applyFilters")}</Button>
     </div>
-    <p className="hint transaction-search">Filters apply within the selected period. Transfers match either wallet and either currency. Summary totals use the period and summary currency.</p>
+    <p className="hint transaction-search">{t("filtersApplyWithinTheSelectedPeriodTransfersMatchEitherWalletAndEitherCurrencySummaryTotalsUseThePeriodAndSummaryCurrency")}</p>
   </Form>
   </>;
 }

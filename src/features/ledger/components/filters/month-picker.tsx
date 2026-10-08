@@ -1,3 +1,4 @@
+import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,16 +15,18 @@ export function MonthPicker({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const locale = useLocale();
+  const t = useTranslations("UI");
   const id = useId();
   const [open, setOpen] = useState(false);
   const [year, setYear] = useState(Number(value.slice(0, 4)));
   const monthNames = Array.from({ length: 12 }, (_, month) =>
-    new Date(2000, month, 1).toLocaleDateString("en", { month: "short" }),
+    new Date(2000, month, 1).toLocaleDateString(locale, { month: "short" }),
   );
   const date = new Date(`${value}-01T12:00`);
   return (
     <div className="form-field">
-      <Label htmlFor={id}>Period</Label>
+      <Label htmlFor={id}>{t("period")}</Label>
       <Popover
         open={open}
         onOpenChange={(next) => {
@@ -37,11 +40,11 @@ export function MonthPicker({
               id={id}
               variant="outline"
               className="date-trigger"
-              aria-label="Month"
+              aria-label={t("month")}
             />
           }
         >
-          {date.toLocaleDateString("en", {
+          {date.toLocaleDateString(locale, {
             month: "long",
             year: "numeric",
           })}
@@ -50,20 +53,20 @@ export function MonthPicker({
         <PopoverContent
           align="start"
           className="month-popover"
-          aria-label="Choose reporting month"
+          aria-label={t("chooseReportingMonth")}
         >
           <div className="month-heading">
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Previous year"
+              aria-label={t("previousYear")}
               disabled={year <= 1}
               onClick={() => setYear(year - 1)}
             >
               <ChevronLeft />
             </Button>
             <Label htmlFor={`${id}-year`} className="sr-only">
-              Year
+              {t("year")}
             </Label>
             <Input
               id={`${id}-year`}
@@ -80,7 +83,7 @@ export function MonthPicker({
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Next year"
+              aria-label={t("nextYear")}
               disabled={year >= 9999}
               onClick={() => setYear(year + 1)}
             >

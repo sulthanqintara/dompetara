@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { signOut } from "@/features/auth/api";
@@ -17,10 +18,11 @@ export function AccountSettings({
   setPending: (pending: boolean) => void;
   setError: (error: string) => void;
 }) {
+  const t = useTranslations("UI");
   const router = useRouter();
   return (
     <Card className="settings-panel">
-      <h3>Your account</h3>
+      <h3>{t("yourAccount")}</h3>
       <p>
         {name} · {email}
       </p>
@@ -40,7 +42,7 @@ export function AccountSettings({
         }}
       >
         <LogOut size={16} />
-        Sign out
+        {t("signOut")}
       </Button>
     </Card>
   );

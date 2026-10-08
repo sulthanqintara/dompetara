@@ -1,6 +1,7 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { readPreferences } from "@/features/i18n/read-preferences";
+import { LanguagePrompt } from "@/features/i18n/components/language-prompt";
 import { readLedger } from "@/features/ledger/read-ledger";
 import { localDate } from "@/features/ledger/format";
 import { LedgerProvider } from "@/features/ledger/components/layout/ledger-provider";
@@ -16,7 +17,7 @@ export default async function LedgerLayout({ children }: { children: React.React
     rsc: requestHeaders.get("rsc") === "1",
   };
   return measureServerStage(context, "layout.prepare", async () => {
-    const session = await measureServerStage(context, "auth.get-session", () => auth.api.getSession({ headers: requestHeaders }));
+    const { session, preferences } = await measureServerStage(context, "auth.get-session", () => readPreferences());
     if (!session) redirect("/sign-in");
     let timeZone = "UTC";
     try {
@@ -26,6 +27,7 @@ export default async function LedgerLayout({ children }: { children: React.React
     return <LedgerProvider initialState={await readLedger(session.user.id, context)} name={session.user.name} email={session.user.email}
       initialTimeZone={timeZone} initialMonth={localDate(new Date(), timeZone).slice(0, 7)}>
       <LedgerShell>{children}</LedgerShell>
+      <LanguagePrompt shouldShow={!preferences?.languagePromptShownAt} />
     </LedgerProvider>;
   });
 }
