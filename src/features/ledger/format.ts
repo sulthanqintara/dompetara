@@ -33,3 +33,13 @@ export function formatShare(share: number) {
     maximumFractionDigits: 1,
   }).format(share);
 }
+
+export function splitCurrencyAmount(value: string, currency: Currency, currencyDisplay: "symbol" | "code" = "symbol") {
+  const symbol = new Intl.NumberFormat("en", { style: "currency", currency })
+    .formatToParts(0).find((part) => part.type === "currency")!.value;
+  const index = value.indexOf(symbol);
+  if (index < 0) return { prefix: `${currency} `, amount: value };
+  const end = index + symbol.length;
+  const spacing = value.slice(end).match(/^\s*/)?.[0] ?? "";
+  return { prefix: value.slice(0, index) + (currencyDisplay === "code" ? currency : symbol) + spacing, amount: value.slice(end + spacing.length) };
+}

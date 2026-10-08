@@ -1,0 +1,1433 @@
+{
+  "date": "2026-10-07",
+  "environment": "Local isolated Next.js 16.3.4 webpack development and production servers; real configured database; synthetic temporary accounts removed afterwards. No CPU/network throttling.",
+  "measurement": "Captured click event to destination route panel followed by two animation frames; does not wait for chart animations, exchange-rate settlement, or the 160ms route entrance animation. First is first visit in that browser context; repeat is revisit. A prefetched route needs no post-click RSC request.",
+  "limitations": [
+    "Local production build, not deployed Vercel measurements.",
+    "Existing amount-format hydration mismatch occurred in each context; profiling records it and exits nonzero.",
+    "The first cold development run completed phone measurements only before the hydration assertion stopped it. Later runs include both phone and desktop.",
+    "First-load database timings are not recurring sibling-tab costs; shared layout stayed mounted and no layout timing logs were emitted for ordinary sibling switches."
+  ],
+  "runs": {
+    "developmentColdPhone": [
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "first",
+        "path": "/wallet",
+        "clickToPaintMs": 3899,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 1496,
+            "durationMs": 1503,
+            "bytes": 2186
+          },
+          {
+            "path": "/wallet",
+            "ttfbMs": 12,
+            "durationMs": 2055,
+            "bytes": 5111
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "first",
+        "path": "/report",
+        "clickToPaintMs": 2829,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 2075,
+            "durationMs": 2080,
+            "bytes": 2186
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "first",
+        "path": "/settings",
+        "clickToPaintMs": 813,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 688,
+            "durationMs": 691,
+            "bytes": 2195
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "first",
+        "path": "/transactions",
+        "clickToPaintMs": 113,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 20,
+            "durationMs": 21,
+            "bytes": 2278
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/wallet",
+        "clickToPaintMs": 96,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 23,
+            "durationMs": 25,
+            "bytes": 2187
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/report",
+        "clickToPaintMs": 129,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 12,
+            "durationMs": 13,
+            "bytes": 2185
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/settings",
+        "clickToPaintMs": 60,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 11,
+            "durationMs": 12,
+            "bytes": 2194
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/transactions",
+        "clickToPaintMs": 112,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 9,
+            "durationMs": 10,
+            "bytes": 2278
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/wallet",
+        "clickToPaintMs": 61,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 13,
+            "durationMs": 14,
+            "bytes": 2186
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/report",
+        "clickToPaintMs": 111,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 10,
+            "durationMs": 11,
+            "bytes": 2187
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/settings",
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 9,
+            "durationMs": 10,
+            "bytes": 2195
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/transactions",
+        "clickToPaintMs": 112,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 9,
+            "durationMs": 10,
+            "bytes": 2278
+          }
+        ]
+      }
+    ],
+    "developmentWarm": [
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "first",
+        "path": "/wallet",
+        "clickToPaintMs": 109,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 11,
+            "durationMs": 14,
+            "bytes": 2186
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "first",
+        "path": "/report",
+        "clickToPaintMs": 310,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 8,
+            "durationMs": 9,
+            "bytes": 2186
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "first",
+        "path": "/settings",
+        "clickToPaintMs": 111,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 9,
+            "durationMs": 9,
+            "bytes": 2195
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "first",
+        "path": "/transactions",
+        "clickToPaintMs": 99,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 7,
+            "durationMs": 9,
+            "bytes": 2277
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/wallet",
+        "clickToPaintMs": 61,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 13,
+            "durationMs": 18,
+            "bytes": 2186
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/report",
+        "clickToPaintMs": 131,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 9,
+            "durationMs": 10,
+            "bytes": 2187
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/settings",
+        "clickToPaintMs": 109,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 14,
+            "durationMs": 16,
+            "bytes": 2194
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/transactions",
+        "clickToPaintMs": 113,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 8,
+            "durationMs": 14,
+            "bytes": 2278
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/wallet",
+        "clickToPaintMs": 63,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 10,
+            "durationMs": 11,
+            "bytes": 2184
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/report",
+        "clickToPaintMs": 131,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 9,
+            "durationMs": 10,
+            "bytes": 2186
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/settings",
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 11,
+            "durationMs": 15,
+            "bytes": 2194
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/transactions",
+        "clickToPaintMs": 94,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 10,
+            "durationMs": 11,
+            "bytes": 2277
+          }
+        ]
+      },
+      {
+        "viewport": "390x844",
+        "browserErrors": 1,
+        "hydrationMismatch": true
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "first",
+        "path": "/wallet",
+        "clickToPaintMs": 114,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 9,
+            "durationMs": 9,
+            "bytes": 2186
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "first",
+        "path": "/report",
+        "clickToPaintMs": 311,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 8,
+            "durationMs": 9,
+            "bytes": 2187
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "first",
+        "path": "/settings",
+        "clickToPaintMs": 115,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 8,
+            "durationMs": 9,
+            "bytes": 2195
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "first",
+        "path": "/transactions",
+        "clickToPaintMs": 112,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 8,
+            "durationMs": 9,
+            "bytes": 2278
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/wallet",
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 7,
+            "durationMs": 18,
+            "bytes": 2186
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/report",
+        "clickToPaintMs": 130,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 7,
+            "durationMs": 8,
+            "bytes": 2185
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/settings",
+        "clickToPaintMs": 64,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 7,
+            "durationMs": 8,
+            "bytes": 2193
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/transactions",
+        "clickToPaintMs": 97,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 8,
+            "durationMs": 9,
+            "bytes": 2277
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/wallet",
+        "clickToPaintMs": 48,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 7,
+            "durationMs": 8,
+            "bytes": 2187
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/report",
+        "clickToPaintMs": 114,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 8,
+            "durationMs": 9,
+            "bytes": 2185
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/settings",
+        "clickToPaintMs": 64,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 9,
+            "durationMs": 21,
+            "bytes": 2196
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/transactions",
+        "clickToPaintMs": 97,
+        "shellPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 8,
+            "durationMs": 9,
+            "bytes": 2277
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "browserErrors": 1,
+        "hydrationMismatch": true
+      }
+    ],
+    "production100Entries": [
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "first",
+        "path": "/wallet",
+        "clickToPaintMs": 52,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "first",
+        "path": "/report",
+        "clickToPaintMs": 113,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "first",
+        "path": "/settings",
+        "clickToPaintMs": 45,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "first",
+        "path": "/transactions",
+        "clickToPaintMs": 113,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/wallet",
+        "clickToPaintMs": 46,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/report",
+        "clickToPaintMs": 113,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/settings",
+        "clickToPaintMs": 46,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/transactions",
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/wallet",
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/report",
+        "clickToPaintMs": 66,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/settings",
+        "clickToPaintMs": 44,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/transactions",
+        "clickToPaintMs": 112,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "browserErrors": 1,
+        "hydrationMismatch": true
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "first",
+        "path": "/wallet",
+        "clickToPaintMs": 49,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "first",
+        "path": "/report",
+        "clickToPaintMs": 96,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "first",
+        "path": "/settings",
+        "clickToPaintMs": 45,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "first",
+        "path": "/transactions",
+        "clickToPaintMs": 112,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/wallet",
+        "clickToPaintMs": 49,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/report",
+        "clickToPaintMs": 63,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/settings",
+        "clickToPaintMs": 46,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/transactions",
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/wallet",
+        "clickToPaintMs": 48,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/report",
+        "clickToPaintMs": 63,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/settings",
+        "clickToPaintMs": 46,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/transactions",
+        "clickToPaintMs": 63,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "browserErrors": 1,
+        "hydrationMismatch": true
+      }
+    ],
+    "production1000Entries": [
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/wallet",
+        "clickToPaintMs": 63,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/report",
+        "clickToPaintMs": 163,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/settings",
+        "clickToPaintMs": 47,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/transactions",
+        "clickToPaintMs": 109,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "clickToPaintMs": 44,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "clickToPaintMs": 219,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "clickToPaintMs": 45,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "clickToPaintMs": 114,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "clickToPaintMs": 45,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "clickToPaintMs": 178,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "clickToPaintMs": 48,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "clickToPaintMs": 110,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "browserErrors": 1,
+        "hydrationMismatch": true
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/wallet",
+        "clickToPaintMs": 60,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/report",
+        "clickToPaintMs": 148,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/settings",
+        "clickToPaintMs": 47,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/transactions",
+        "clickToPaintMs": 113,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "clickToPaintMs": 47,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "clickToPaintMs": 164,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "clickToPaintMs": 47,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "clickToPaintMs": 114,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "clickToPaintMs": 47,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "clickToPaintMs": 164,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "clickToPaintMs": 46,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "clickToPaintMs": 114,
+        "shellPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "browserErrors": 1,
+        "hydrationMismatch": true
+      }
+    ]
+  },
+  "serverStages": [
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "auth.get-session",
+      "durationMs": 2092.9,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.ensure-row",
+      "durationMs": 196,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.select",
+      "durationMs": 191.8,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "layout.prepare",
+      "durationMs": 2510.7,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "auth.get-session",
+      "durationMs": 1333.6,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.ensure-row",
+      "durationMs": 404,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.select",
+      "durationMs": 294.4,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "layout.prepare",
+      "durationMs": 2039.6,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "auth.get-session",
+      "durationMs": 1416.3,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.ensure-row",
+      "durationMs": 190.1,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.select",
+      "durationMs": 194.1,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "layout.prepare",
+      "durationMs": 1804.4,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "auth.get-session",
+      "durationMs": 4937.6,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.ensure-row",
+      "durationMs": 1584.1,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.select",
+      "durationMs": 305.4,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "layout.prepare",
+      "durationMs": 6831.6,
+      "outcome": "completed",
+      "environment": "isolated-dev"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "auth.get-session",
+      "durationMs": 1578.4,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.ensure-row",
+      "durationMs": 191.1,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.select",
+      "durationMs": 204.5,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "layout.prepare",
+      "durationMs": 1985.2,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "auth.get-session",
+      "durationMs": 1394.3,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.ensure-row",
+      "durationMs": 189.2,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.select",
+      "durationMs": 286.8,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "layout.prepare",
+      "durationMs": 1871.8,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "auth.get-session",
+      "durationMs": 3759.5,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.ensure-row",
+      "durationMs": 987,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.select",
+      "durationMs": 296.9,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "layout.prepare",
+      "durationMs": 5044.8,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "auth.get-session",
+      "durationMs": 592,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.ensure-row",
+      "durationMs": 194.7,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.select",
+      "durationMs": 583.4,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "layout.prepare",
+      "durationMs": 1372,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "auth.get-session",
+      "durationMs": 2978.3,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.ensure-row",
+      "durationMs": 792.3,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "ledger.select",
+      "durationMs": 600.2,
+      "outcome": "completed",
+      "environment": "production"
+    },
+    {
+      "source": "ledger-layout",
+      "prefetch": false,
+      "rsc": false,
+      "stage": "layout.prepare",
+      "durationMs": 4372.6,
+      "outcome": "completed",
+      "environment": "production"
+    }
+  ],
+  "developmentFrameworkRequests": [
+    "GET /transactions 200 in 7.8s (next.js: 5.0s, application-code: 2.8s)",
+    "GET /wallet 200 in 1256ms (next.js: 1222ms, application-code: 34ms)",
+    "GET /wallet 200 in 2.1s (next.js: 1.7ms, application-code: 2.1s)",
+    "GET /report 200 in 2.1s (next.js: 1932ms, application-code: 147ms)",
+    "GET /settings 200 in 690ms (next.js: 572ms, application-code: 117ms)",
+    "GET /transactions 200 in 20ms (next.js: 12ms, application-code: 9ms)",
+    "GET /wallet 200 in 23ms (next.js: 13ms, application-code: 10ms)",
+    "GET /report 200 in 12ms (next.js: 4ms, application-code: 8ms)",
+    "GET /settings 200 in 11ms (next.js: 1.5ms, application-code: 9ms)",
+    "GET /transactions 200 in 9ms (next.js: 1.2ms, application-code: 8ms)",
+    "GET /wallet 200 in 13ms (next.js: 1.4ms, application-code: 11ms)",
+    "GET /report 200 in 10ms (next.js: 1.4ms, application-code: 9ms)",
+    "GET /settings 200 in 9ms (next.js: 1.1ms, application-code: 8ms)",
+    "GET /transactions 200 in 9ms (next.js: 1.1ms, application-code: 8ms)",
+    "GET /transactions 200 in 2.1s (next.js: 6ms, application-code: 2.1s)",
+    "GET /wallet 200 in 13ms (next.js: 1.4ms, application-code: 11ms)",
+    "GET /report 200 in 8ms (next.js: 1.2ms, application-code: 7ms)",
+    "GET /settings 200 in 8ms (next.js: 1.2ms, application-code: 7ms)",
+    "GET /transactions 200 in 8ms (next.js: 1.1ms, application-code: 7ms)",
+    "GET /wallet 200 in 16ms (next.js: 1.8ms, application-code: 15ms)",
+    "GET /report 200 in 8ms (next.js: 1.2ms, application-code: 7ms)",
+    "GET /settings 200 in 14ms (next.js: 1.7ms, application-code: 12ms)",
+    "GET /transactions 200 in 13ms (next.js: 1.2ms, application-code: 11ms)",
+    "GET /wallet 200 in 10ms (next.js: 1.4ms, application-code: 8ms)",
+    "GET /report 200 in 8ms (next.js: 1.2ms, application-code: 7ms)",
+    "GET /settings 200 in 14ms (next.js: 1.4ms, application-code: 13ms)",
+    "GET /transactions 200 in 10ms (next.js: 1.2ms, application-code: 8ms)",
+    "GET /transactions 200 in 6.9s (next.js: 0.6ms, application-code: 6.9s)",
+    "GET /wallet 200 in 8ms (next.js: 1.3ms, application-code: 7ms)",
+    "GET /report 200 in 8ms (next.js: 1.1ms, application-code: 6ms)",
+    "GET /settings 200 in 8ms (next.js: 1.1ms, application-code: 6ms)",
+    "GET /transactions 200 in 8ms (next.js: 1.0ms, application-code: 7ms)",
+    "GET /wallet 200 in 17ms (next.js: 0.9ms, application-code: 16ms)",
+    "GET /report 200 in 7ms (next.js: 1.0ms, application-code: 6ms)",
+    "GET /settings 200 in 7ms (next.js: 1.0ms, application-code: 6ms)",
+    "GET /transactions 200 in 8ms (next.js: 1.0ms, application-code: 7ms)",
+    "GET /wallet 200 in 7ms (next.js: 1.0ms, application-code: 6ms)",
+    "GET /report 200 in 8ms (next.js: 1.2ms, application-code: 7ms)",
+    "GET /settings 200 in 19ms (next.js: 1.1ms, application-code: 18ms)",
+    "GET /transactions 200 in 8ms (next.js: 0.9ms, application-code: 7ms)"
+  ]
+}

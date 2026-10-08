@@ -42,7 +42,7 @@ export function WalletsTab({
               onClick={() => onEditWallet(w, c)}
             >
               <span>{c}</span>
-              <strong><BalanceAmount>{format(balance(data, w.id, c), c)}</BalanceAmount></strong>
+              <strong><BalanceAmount currency={c}>{format(balance(data, w.id, c), c)}</BalanceAmount></strong>
               <ChevronRight size={17} />
             </Button>
           ))}
@@ -51,7 +51,7 @@ export function WalletsTab({
             return (
               <div className="wallet-balance wallet-total">
                 <span>Total (IDR){partial && " · partial"}</span>
-                <strong><BalanceAmount>{format(total, "IDR")}</BalanceAmount></strong>
+                <strong><BalanceAmount currency="IDR">{format(total, "IDR")}</BalanceAmount></strong>
                 <span aria-hidden />
               </div>
             );

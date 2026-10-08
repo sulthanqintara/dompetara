@@ -27,7 +27,7 @@ export function CurrentBalanceCard({ data, currency }: { data: Ledger; currency:
   return (
     <Card className="stat balance-stat" aria-busy={loading}>
       <span>Current balance <BalanceVisibilityToggle /></span>
-      <h2><BalanceAmount>{loading ? <Skeleton className="h-8 w-40" /> : result.total === null ? "—" : format(result.total, currency)}</BalanceAmount></h2>
+      <h2><BalanceAmount currency={currency}>{loading ? <Skeleton className="h-8 w-40" /> : result.total === null ? "—" : format(result.total, currency)}</BalanceAmount></h2>
       <Collapsible open={expanded} onOpenChange={setExpanded}>
       <CollapsibleTrigger render={<Button variant="ghost" />} className="balance-toggle" aria-label={expanded ? "Hide wallet balances" : "Show wallet balances"}>
         <span>Wallet balances</span>
@@ -39,8 +39,8 @@ export function CurrentBalanceCard({ data, currency }: { data: Ledger; currency:
           <div key={row.currency}>
             <dt>{row.currency} wallets</dt>
             <dd>
-              <span><BalanceAmount>{format(row.amount, row.currency)}</BalanceAmount></span>
-              {row.currency !== currency && <span><BalanceAmount>{states[row.currency].loading && row.amount !== 0 ? "Converting…" : row.converted === null ? "Conversion unavailable" : `≈ ${format(row.converted, currency)}`}</BalanceAmount></span>}
+              <span><BalanceAmount currency={row.currency} currencyDisplay="code">{format(row.amount, row.currency)}</BalanceAmount></span>
+              {row.currency !== currency && <span><BalanceAmount currency={currency} currencyDisplay="code" approximate>{states[row.currency].loading && row.amount !== 0 ? "Converting…" : row.converted === null ? "Conversion unavailable" : format(row.converted, currency)}</BalanceAmount></span>}
             </dd>
           </div>
         ))}

@@ -15,6 +15,7 @@ const categoriesOnly = process.env.RESPONSIVE_SCOPE === "categories";
 const receiptsOnly = process.env.RESPONSIVE_SCOPE === "receipts";
 const reportsOnly = process.env.RESPONSIVE_SCOPE === "reports";
 const balancesOnly = process.env.RESPONSIVE_SCOPE === "balances";
+const brandingOnly = process.env.RESPONSIVE_SCOPE === "branding";
 const sql = postgres(process.env.DATABASE_URL, { prepare: false, max: 1 });
 const id = randomUUID();
 const token = randomUUID();
@@ -398,14 +399,16 @@ async function checkBalances(page, width, height) {
     const toggle = page.getByRole("button", { name: "Show wallet balances", exact: true });
     assert.equal(await toggle.getAttribute("aria-expanded"), "false");
     assert.equal(await page.locator(".balance-breakdown").isVisible(), false);
-    assert.equal(await page.locator(".balance-stat h2").innerText(), "", "Balances start masked, with no amount text");
-    assert.deepEqual(await page.locator(".stats h2").evaluateAll((elements) => elements.map((el) => el.innerText)), ["", "", ""], "Income, expenses and balance all start hidden");
+    assert.equal(await page.locator(".balance-stat h2 .balance-amount-number").innerText(), "", "Balances start masked, with no amount text");
+    assert.deepEqual(await page.locator(".stats h2 .balance-amount-number").evaluateAll((elements) => elements.map((el) => el.innerText)), ["", "", ""], "Income, expenses and balance all start hidden");
     assert.equal(await page.locator(".stats h2 .hidden-balance").count(), 3);
+    assert.ok((await page.locator(".stats h2 .hidden-balance").evaluateAll((elements) => elements.map((el) => el.children.length))).every((count) => count === 9), "Each amount uses exactly nine dots");
     assert.ok(!(await page.locator(".balance-stat").innerText()).includes("All time"), "The redundant balance subtext is removed");
     await page.locator(".balance-stat h2").getByRole("img", { name: "Amount hidden" }).waitFor();
     await check(page, "balance-collapsed", width, height);
     const headingOffsets = await page.locator(".stats > .stat").evaluateAll((cards) => cards.map((card) => card.querySelector("h2").getBoundingClientRect().top - card.getBoundingClientRect().top));
     if (width >= 640) assert.ok(Math.max(...headingOffsets) - Math.min(...headingOffsets) < 1, "All summary amounts align, including the hidden balance");
+    assert.ok((await page.locator(".stats h2 .balance-amount-currency").allTextContents()).every((text) => text.trim().endsWith("IDR")), "Currency labels remain visible while numbers are masked");
     const collapsedHeight = await page.locator(".stats").evaluate((el) => el.getBoundingClientRect().height);
     const collapsedLabel = await page.locator(".balance-toggle > span").evaluate((el) => {
       const label = el.getBoundingClientRect();
@@ -438,35 +441,53 @@ async function checkBalances(page, width, height) {
     });
     for (const dimension of ["x", "y", "width", "height"]) assert.ok(Math.abs(collapsedLabel[dimension] - expandedLabel[dimension]) < 1, `The wallet breakdown label keeps its ${dimension} when expanded`);
     assert.ok(await page.locator(".stats").evaluate((el) => el.getBoundingClientRect().height) > collapsedHeight, "Collapsing the breakdown reduces summary height");
-    assert.equal(await page.locator(".balance-breakdown dd").first().innerText(), "", "Expanding the breakdown must not reveal masked amounts");
+    assert.equal(await page.locator(".balance-breakdown dd .balance-amount-number").first().innerText(), "", "Expanding the breakdown must not reveal masked amounts");
+    const breakdownAxes = await page.locator(".balance-breakdown .balance-amount").evaluateAll((amounts) => amounts.map((amount) => {
+      const currency = amount.querySelector(".balance-amount-currency").getBoundingClientRect();
+      const dots = amount.querySelector(".hidden-balance").getBoundingClientRect();
+      const indicator = amount.querySelector(".balance-amount-indicator").getBoundingClientRect();
+      return { currency: currency.x, start: dots.x, end: dots.right, indicatorEnd: indicator.right };
+    }));
+    for (const axis of ["currency", "start", "end"]) assert.ok(Math.max(...breakdownAxes.map((row) => row[axis])) - Math.min(...breakdownAxes.map((row) => row[axis])) < 1, `Wallet breakdown shares its ${axis} axis`);
+    assert.ok(breakdownAxes.every((row) => row.indicatorEnd < row.currency), "Conversion signs occupy a separate column before the currency");
+    await check(page, "balance-expanded-hidden", width, height);
     const visibility = page.getByRole("button", { name: "Show amounts", exact: true });
     const targetSize = await visibility.boundingBox();
     assert.ok(targetSize.width >= 44 && targetSize.height >= 44, "The eye toggle has a full touch target");
     await visibility.focus();
     await page.keyboard.press("Enter");
     assert.equal(await page.getByRole("button", { name: "Hide amounts", exact: true }).getAttribute("aria-pressed"), "true");
-    if (width >= 1200) {
+    {
+      const visibleLabels = await page.locator(".stats .balance-amount-currency").evaluateAll((elements) => elements.map((el) => { const rect = el.getBoundingClientRect(); return [rect.x, rect.y, rect.width, rect.height]; }));
+      const visibleStarts = await page.locator(".stats .balance-amount-value").evaluateAll((elements) => elements.map((el) => el.getBoundingClientRect().x));
       const visibleHeight = await page.locator(".balance-stat").evaluate((el) => el.getBoundingClientRect().height);
       await page.getByRole("button", { name: "Hide amounts", exact: true }).click();
+      const hiddenLabels = await page.locator(".stats .balance-amount-currency").evaluateAll((elements) => elements.map((el) => { const rect = el.getBoundingClientRect(); return [rect.x, rect.y, rect.width, rect.height]; }));
+      assert.deepEqual(hiddenLabels, visibleLabels, "Currency labels keep their position and size when toggled");
+      const hiddenStarts = await page.locator(".stats .hidden-balance-dot:first-child").evaluateAll((elements) => elements.map((el) => el.getBoundingClientRect().x));
+      assert.deepEqual(hiddenStarts, visibleStarts, "Dots and values start at the same distance from the currency label");
+      const overflowingDots = await page.locator(".stats .hidden-balance").evaluateAll((elements) => elements.map((el) => ({ right: el.getBoundingClientRect().right, parentRight: el.parentElement.getBoundingClientRect().right, width: el.getBoundingClientRect().width, parentWidth: el.parentElement.getBoundingClientRect().width })).filter((rect) => rect.right > rect.parentRight + 1));
+      assert.deepEqual(overflowingDots, [], "Nine large dots stay inside the amount field");
       const hiddenHeight = await page.locator(".balance-stat").evaluate((el) => el.getBoundingClientRect().height);
       assert.ok(Math.abs(visibleHeight - hiddenHeight) < 1, "Masking an expanded currency breakdown preserves the card height");
       await page.getByRole("button", { name: "Show amounts", exact: true }).click();
     }
     assert.equal(await page.locator(".stats h2 .hidden-balance").count(), 0, "One toggle reveals income, expenses and balance");
-    assert.ok((await page.locator(".stats h2").evaluateAll((elements) => elements.map((el) => el.innerText))).every((text) => /\d/.test(text)));
+    assert.ok((await page.locator(".stats h2 .balance-amount-number").evaluateAll((elements) => elements.map((el) => el.innerText))).every((text) => /\d/.test(text)));
     for (const target of ["IDR", "USD", "CAD"]) {
       if (target !== "IDR") await choose(page, "Currency", target);
       await page.locator('.balance-stat[aria-busy="false"]').waitFor();
       const rates = Object.fromEntries(["IDR", "USD", "CAD"].map((source) => [source, { rate: crossRate(snapshot, source, target), rateDate: "2026-10-01", stale: false }]));
       const expected = balanceBreakdown(before.data, target, rates);
       const money = (amount, currency) => new Intl.NumberFormat("en", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount / 100);
-      assert.equal(await page.locator(".balance-stat h2").innerText(), money(expected.total, target));
+      const codeMoney = (amount, currency) => new Intl.NumberFormat("en", { style: "currency", currency, currencyDisplay: "code", maximumFractionDigits: 2 }).format(amount / 100);
+      assert.equal(await page.locator(".balance-stat h2").evaluate((el) => el.innerText.replace(/\s/g, "")), money(expected.total, target).replace(/\s/g, ""));
       const offsets = await page.locator(".stats > .stat").evaluateAll((cards) => cards.map((card) => card.querySelector("h2").getBoundingClientRect().top - card.getBoundingClientRect().top));
       if (width >= 640) assert.ok(Math.max(...offsets) - Math.min(...offsets) < 1, "Revealed balances stay aligned for every currency");
       for (const row of expected.rows) {
         const item = page.locator(".balance-breakdown > div").filter({ has: page.getByText(`${row.currency} wallets`, { exact: true }) });
-        assert.ok((await item.innerText()).includes(money(row.amount, row.currency)));
-        if (row.currency !== target) assert.ok((await item.innerText()).includes(`≈ ${money(row.converted, target)}`));
+        assert.ok((await item.innerText()).replace(/\s/g, "").includes(codeMoney(row.amount, row.currency).replace(/\s/g, "")));
+        if (row.currency !== target) assert.ok((await item.innerText()).replace(/\s/g, "").includes(`≈ ${codeMoney(row.converted, target)}`.replace(/\s/g, "")));
       }
       await check(page, `balance-${target}`, width, height);
     }
@@ -476,11 +497,16 @@ async function checkBalances(page, width, height) {
     await page.getByRole("button", { name: "Hide amounts", exact: true }).focus();
     await page.keyboard.press("Space");
     assert.ok(await page.locator(".wallet-balance .hidden-balance").count() >= 5);
-    assert.equal((await page.locator(".wallet-balance strong").evaluateAll((elements) => elements.map((el) => el.innerText))).join(""), "", "Wallet masks contain no amount text");
+    assert.equal((await page.locator(".wallet-balance strong .balance-amount-number").evaluateAll((elements) => elements.map((el) => el.innerText))).join(""), "", "Wallet masks contain no amount text");
     await check(page, "wallet-balances-hidden", width, height);
+    const walletAxes = await page.locator(".wallet-card").evaluateAll((cards) => cards.map((card) => [...card.querySelectorAll(".wallet-balance:not(.wallet-total) .hidden-balance")].map((dots) => {
+      const rect = dots.getBoundingClientRect();
+      return { start: rect.x, end: rect.right };
+    })));
+    for (const rows of walletAxes) for (const axis of ["start", "end"]) assert.ok(Math.max(...rows.map((row) => row[axis])) - Math.min(...rows.map((row) => row[axis])) < 1, `Wallet currency masks share their ${axis} axis`);
     await switchView(page, "Transactions");
-    assert.equal(await page.locator(".balance-stat h2").innerText(), "", "Hiding balances applies to the summary too");
-    assert.deepEqual(await page.locator(".stats h2").evaluateAll((elements) => elements.map((el) => el.innerText)), ["", "", ""], "The wallet toggle also hides income and expenses");
+    assert.equal(await page.locator(".balance-stat h2 .balance-amount-number").innerText(), "", "Hiding balances applies to the summary too");
+    assert.deepEqual(await page.locator(".stats h2 .balance-amount-number").evaluateAll((elements) => elements.map((el) => el.innerText)), ["", "", ""], "The wallet toggle also hides income and expenses");
     await page.getByRole("button", { name: "Show amounts", exact: true }).click();
     await page.getByRole("button", { name: "Show wallet balances", exact: true }).click();
     await page.locator(".balance-breakdown").waitFor({ state: "visible" });
@@ -505,12 +531,12 @@ async function checkBalances(page, width, height) {
       mode = "missing";
       await choose(page, "Currency", "IDR");
       await page.getByRole("button", { name: "Retry conversion", exact: true }).waitFor();
-      assert.equal(await page.locator(".balance-stat h2").innerText(), "—", "Missing rates must not display a partial total");
+      assert.equal(await page.locator(".balance-stat h2 .balance-amount-number").innerText(), "—", "Missing rates must not display a partial total");
       await check(page, "balance-missing-rates", width, height);
       mode = "ok";
       await page.getByRole("button", { name: "Retry conversion", exact: true }).click();
       await page.locator('.balance-stat[aria-busy="false"]').waitFor();
-      assert.notEqual(await page.locator(".balance-stat h2").innerText(), "—");
+      assert.notEqual(await page.locator(".balance-stat h2 .balance-amount-number").innerText(), "—");
       mode = "stale";
       await choose(page, "Currency", "USD");
       await page.getByText(/cached rates may be outdated/).waitFor();
@@ -523,7 +549,7 @@ async function checkBalances(page, width, height) {
   }
   await page.reload();
   await page.locator('.balance-stat[aria-busy="false"]').waitFor();
-  assert.equal(await page.locator(".balance-stat h2").innerText(), "", "Reload always restores hidden balances");
+  assert.equal(await page.locator(".balance-stat h2 .balance-amount-number").innerText(), "", "Reload always restores hidden balances");
 }
 
 async function checkNavigation(page, width, height) {
@@ -660,12 +686,17 @@ async function checkNavigationClearance(page, name, width, height) {
     const footer = document.querySelector(".workspace > footer").getBoundingClientRect();
     const content = document.querySelector(".page-content").getBoundingClientRect();
     const add = document.querySelector(".ledger-add-button");
-    return { navTop: nav.top, navBottom: nav.bottom, footerBottom: footer.bottom, contentBottom: content.bottom, addTop: add?.getBoundingClientRect().top };
+    const mark = document.querySelector(".workspace-footer .brand-wordmark").getBoundingClientRect();
+    const action = add?.getBoundingClientRect();
+    return { navTop: nav.top, navBottom: nav.bottom, footerBottom: footer.bottom, contentBottom: content.bottom, addTop: action?.top, markClear: !action || mark.right <= action.left || mark.bottom <= action.top };
   });
   assert.ok(layout.navTop >= 0 && layout.navBottom <= height, "Floating navigation stays inside the viewport");
   assert.ok(layout.footerBottom < layout.navTop, `${name}: footer clears the floating navigation`);
   assert.ok(layout.contentBottom < layout.navTop, `${name}: final content clears the floating navigation`);
-  if (layout.addTop !== undefined) assert.ok(layout.footerBottom < layout.addTop && layout.contentBottom < layout.addTop, `${name}: content clears the floating plus button`);
+  if (layout.addTop !== undefined) {
+    assert.ok(layout.markClear && layout.contentBottom < layout.addTop, `${name}: wordmark and content clear the floating plus button`);
+    assert.ok(layout.addTop - layout.contentBottom <= 24, `${name}: no oversized gap above the floating plus button`);
+  }
   assert.equal(await page.getByRole("dialog", { name: "Workspace navigation", exact: true }).count(), 0);
   await page.getByRole("tab", { name: name === "transactions" ? "Transactions" : name[0].toUpperCase() + name.slice(1), exact: true }).click();
   assert.equal(await page.evaluate(() => window.scrollY), 0, "Phone navigation returns to the top of the section");
@@ -1651,7 +1682,7 @@ async function checkDateRange(page, width, height) {
     await page.getByRole("button", { name: mobile ? "Apply period" : "Apply dates", exact: true }).click();
     if (mobile) await page.getByRole("dialog").waitFor({ state: "detached" });
   };
-  const currentBalance = await page.locator(".balance-stat h2").innerText();
+  const currentBalance = await page.locator(".balance-stat h2").evaluate((el) => el.innerText.replace(/\n/g, ""));
   assert.match(await page.locator(".balance-stat").innerText(), /Current balance/);
   if (mobile) await page.getByRole("button", { name: /^Change period:/ }).click();
   await choose(page, "Period type", "Custom dates");
@@ -1673,7 +1704,7 @@ async function checkDateRange(page, width, height) {
   assert.equal(await page.getByRole("button", { name: "Edit Previous month bill", exact: true }).count(), 1);
   if (mobile) await page.getByRole("button", { name: /^Change period:/ }).click();
   assert.equal(await page.getByLabel("Start date", { exact: true }).and(page.locator("input:visible")).inputValue(), singleDate.toISOString().slice(0, 10));
-  assert.equal(await page.locator(".balance-stat h2").innerText(), currentBalance, "Changing the period must not change current balances");
+  assert.equal(await page.locator(".balance-stat h2").evaluate((el) => el.innerText.replace(/\n/g, "")), currentBalance, "Changing the period must not change current balances");
   await check(page, "transactions-custom-range", width, height);
   const singleDay = singleDate.toISOString().slice(0, 10);
   await page.getByLabel("Start date", { exact: true }).and(page.locator("input:visible")).fill(singleDay);
@@ -1681,7 +1712,7 @@ async function checkDateRange(page, width, height) {
   await applyDates();
   assert.match(await page.locator(".stats .stat").nth(1).locator("h2").innerText(), /^IDR\s+100$/);
   assert.equal(await page.getByRole("button", { name: /^Edit / }).count(), 1, "Same-day range includes only that day's entries");
-  assert.equal(await page.locator(".balance-stat h2").innerText(), currentBalance);
+  assert.equal(await page.locator(".balance-stat h2").evaluate((el) => el.innerText.replace(/\n/g, "")), currentBalance);
   await check(page, "transactions-single-day", width, height);
   if (mobile) await page.getByRole("button", { name: /^Change period:/ }).click();
   await page.getByLabel("Start date", { exact: true }).and(page.locator("input:visible")).fill("2026-03-02");
@@ -1775,7 +1806,7 @@ async function checkExpenseReport(page, width, height) {
   assert.equal(await page.getByRole("img", { name: "Monthly spending chart", exact: true }).count(), 0);
   await choose(page, "Currency", "IDR");
   const originalMonth = date.slice(0, 7);
-  const currentBalance = await page.locator(".balance-stat h2").innerText();
+  const currentBalance = await page.locator(".balance-stat h2").evaluate((el) => el.innerText.replace(/\n/g, ""));
   await chooseMonth(page, singleDate.toISOString().slice(0, 7));
   await chart.waitFor();
   assert.equal(await page.locator(".recharts-pie-sector").count(), 1);
@@ -1792,7 +1823,7 @@ async function checkExpenseReport(page, width, height) {
   assert.equal(await page.getByRole("img", { name: "Monthly spending chart", exact: true }).count(), 1, "All-history chart remains independent of the selected period");
   assert.match(await page.locator(".stats .stat").first().locator("h2").innerText(), /^IDR\s+0$/);
   assert.match(await page.locator(".stats .stat").nth(1).locator("h2").innerText(), /^IDR\s+0$/);
-  assert.equal(await page.locator(".balance-stat h2").innerText(), currentBalance, "An empty historical period still shows current balances");
+  assert.equal(await page.locator(".balance-stat h2").evaluate((el) => el.innerText.replace(/\n/g, "")), currentBalance, "An empty historical period still shows current balances");
   await check(page, "report-empty", width, height);
   await chooseMonth(page, originalMonth);
 }
@@ -1860,6 +1891,18 @@ try {
     await page
       .getByRole("button", { name: "Add transaction", exact: true })
       .waitFor();
+    if (brandingOnly) {
+      if (width >= 768 && width < 1200) await page.waitForFunction(() => !document.querySelector(".ledger-desktop-sidebar"));
+      await checkNavigation(page, width, height);
+      for (const name of ["Transactions", "Wallet", "Report", "Settings"]) {
+        await switchView(page, name);
+        await check(page, name.toLowerCase(), width, height);
+        await checkNavigationClearance(page, name.toLowerCase(), width, height);
+        assert.equal(await page.locator(".workspace-footer .brand-wordmark").getAttribute("aria-label"), "Dompetara");
+      }
+      await context.close();
+      continue;
+    }
     if (balancesOnly) {
       await checkBalances(page, width, height);
       await switchView(page, "Report");
@@ -1869,7 +1912,7 @@ try {
       await page.locator(".balance-breakdown").waitFor({ state: "visible" });
       await page.locator(".balance-panel").evaluate((el) => Promise.all(el.getAnimations().map((animation) => animation.finished.catch(() => {}))));
       assert.equal(await page.locator(".balance-breakdown").isVisible(), true);
-      assert.equal(await page.locator(".balance-stat h2").innerText(), "");
+      assert.equal(await page.locator(".balance-stat h2 .balance-amount-number").innerText(), "");
       await page.getByRole("button", { name: "Show amounts", exact: true }).click();
       await check(page, "report-balance-expanded", width, height);
       await context.close();
@@ -2020,7 +2063,7 @@ try {
   }
   assert.deepEqual(errors, [], "JavaScript page errors");
   console.log(
-    balancesOnly ? "Balance checks passed at eight sizes on Transactions and Report: collapsed defaults, keyboard toggles, conversions, retry, and responsive layouts." : filtersOnly ? "Transaction filter and animation checks passed at eight sizes." : categoriesOnly ? "Inline category and receipt checks passed at eight sizes; creation, cancel, income/expense, suggestions and reload persistence verified." : receiptsOnly ? "Receipt browser checks passed: eight sizes, OCR/AI choice, missing API key, editable review, item reconciliation, one wallet charge, conflict recovery, durable retries, reload persistence and deletion." : reportsOnly
+    brandingOnly ? "Branding and bottom clearance passed on all four views at eight sizes." : balancesOnly ? "Balance checks passed at eight sizes on Transactions and Report: collapsed defaults, keyboard toggles, conversions, retry, and responsive layouts." : filtersOnly ? "Transaction filter and animation checks passed at eight sizes." : categoriesOnly ? "Inline category and receipt checks passed at eight sizes; creation, cancel, income/expense, suggestions and reload persistence verified." : receiptsOnly ? "Receipt browser checks passed: eight sizes, OCR/AI choice, missing API key, editable review, item reconciliation, one wallet charge, conflict recovery, durable retries, reload persistence and deletion." : reportsOnly
       ? "Report browser checks passed: eight sizes, conflict recovery and draft preservation, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, custom dates, daily/monthly charts, exact amounts, empty periods, currencies, and accessible controls."
       : "Responsive checks passed: eight sizes, conflict recovery and draft preservation, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, date ranges, daily/monthly reports, JSON/CSV downloads and retry, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
   );

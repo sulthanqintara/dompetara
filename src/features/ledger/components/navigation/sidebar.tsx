@@ -8,7 +8,7 @@ import { WorkspaceNavigation } from "./workspace-navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { AvatarFallback } from "@/components/ui/avatar-fallback";
 import Link from "next/link";
-import { BrandIcon } from "@/features/branding/components/brand-icon";
+import { BrandWordmark } from "@/features/branding/components/brand-wordmark";
 
 export function Sidebar({ name, tab }: { name: string; tab: string }) {
   const { isPhone } = useSidebar();
@@ -17,7 +17,7 @@ export function Sidebar({ name, tab }: { name: string; tab: string }) {
     <SidebarPanel>
       <SidebarHeader className="ledger-sidebar-header">
         <Link href="/" className="brand" aria-label="Dompetara">
-          <BrandIcon />
+          <BrandWordmark />
         </Link>
         <SidebarTrigger placement="sidebar" />
       </SidebarHeader>

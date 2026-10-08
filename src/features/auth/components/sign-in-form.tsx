@@ -5,7 +5,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
-import { BrandIcon } from "@/features/branding/components/brand-icon";
+import { BrandWordmark } from "@/features/branding/components/brand-wordmark";
 
 export function SignInForm() {
   const [error, setError] = useState("");
@@ -31,7 +31,7 @@ export function SignInForm() {
     <main className="login">
       <section className="login-story">
         <div className="brand">
-          <BrandIcon size={64} />
+          <BrandWordmark size={64} />
         </div>
         <div>
           <h1>
