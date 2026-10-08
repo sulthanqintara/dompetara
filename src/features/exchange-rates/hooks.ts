@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import type { Currency } from "../ledger/ledger";
 import type { RateSuggestion } from "./exchange-rates";
-import { fetchCachedRate } from "./api";
+import { RateCacheContext } from "./rate-cache-context";
 
 export function useCachedRate(from: Currency, to: Currency, date: string, attempt = 0) {
+  const cache = useContext(RateCacheContext);
+  if (!cache) throw new Error("Exchange rates require a workspace provider.");
   const key = `${from}:${to}:${date}:${attempt}`;
   const [state, setState] = useState<{
     key: string;
@@ -12,10 +14,10 @@ export function useCachedRate(from: Currency, to: Currency, date: string, attemp
   }>({ key: "", suggestion: null, error: "" });
   useEffect(() => {
     if (from === to) return;
-    const controller = new AbortController();
-    fetchCachedRate(from, to, date, controller.signal)
+    let active = true;
+    cache.get(from, to, date, attempt > 0)
       .then((suggestion) => {
-        if (!controller.signal.aborted)
+        if (active)
           setState({
             key,
             suggestion,
@@ -25,11 +27,12 @@ export function useCachedRate(from: Currency, to: Currency, date: string, attemp
           });
       })
       .catch((error) => {
-        if (!controller.signal.aborted)
-          setState({ key, suggestion: null, error: error.message });
+        if (active)
+          setState({ key, suggestion: null, error: error instanceof Error ? error.message : "Suggested rate unavailable." });
       });
-    return () => controller.abort();
-  }, [from, to, date, key]);
+    // A different tab may still need the same in-flight request.
+    return () => { active = false; };
+  }, [from, to, date, key, attempt, cache]);
   return state.key === key
     ? { ...state, loading: false }
     : { suggestion: null, error: "", loading: from !== to };

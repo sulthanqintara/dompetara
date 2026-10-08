@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
-import { filterTransactions, transactionFiltersSchema } from "../src/features/ledger/transaction-filters.ts";
+import { filterTransactions, readTransactionSearchParams, transactionFiltersSchema } from "../src/features/ledger/transaction-filters.ts";
 import { emptyLedger, type Entry } from "../src/features/ledger/ledger.ts";
 import { transactionPage } from "../src/features/ledger/pagination.ts";
+
+const query = readTransactionSearchParams(new URLSearchParams("search=Lunch&page=2&currency=IDR&currency=USD&__proto__=safe"));
+assert.equal(query.search, "Lunch");
+assert.equal(query.page, "2");
+assert.deepEqual(query.currency, ["IDR", "USD"]);
+assert.equal(query.__proto__, "safe");
+assert.equal(Object.getPrototypeOf(query), null);
+assert.equal(transactionFiltersSchema.parse(query).currency, "all", "Repeated filters retain the server page's validation behavior");
 
 const data = emptyLedger();
 data.wallets = [{ id: "bank", name: "Bank", currencies: ["IDR"] }, { id: "cash", name: "Cash", currencies: ["USD"] }];

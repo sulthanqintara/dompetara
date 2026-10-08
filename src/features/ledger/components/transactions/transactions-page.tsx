@@ -1,15 +1,19 @@
 "use client";
+import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { useLedgerContext } from "../../use-ledger-context";
-import { periodEntries, periodLabel } from "../../derive";
+import { periodLabel } from "../../derive";
 import { LedgerSummary } from "../shared/ledger-summary";
-import { filterTransactions, transactionFiltersSchema } from "../../transaction-filters";
+import { filterTransactions, readTransactionSearchParams, transactionFiltersSchema } from "../../transaction-filters";
 import { TransactionFilters } from "./transaction-filters";
 import { TransactionsTab } from "./transactions-tab";
 
-export function TransactionsPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
-  const { data, period, setEditor, timeZone } = useLedgerContext();
-  const filters = transactionFiltersSchema.parse(searchParams);
-  const entries = filterTransactions(periodEntries(data, period, timeZone), data, filters);
+export function TransactionsPage() {
+  const urlParams = useSearchParams();
+  const searchParams = useMemo(() => readTransactionSearchParams(urlParams), [urlParams]);
+  const { data, period, setEditor, timeZone, periodEntries: selectedEntries } = useLedgerContext();
+  const filters = useMemo(() => transactionFiltersSchema.parse(searchParams), [searchParams]);
+  const entries = useMemo(() => filterTransactions(selectedEntries, data, filters), [selectedEntries, data, filters]);
   return <>
     <LedgerSummary />
     <TransactionFilters key={JSON.stringify(filters)} data={data} filters={filters} />

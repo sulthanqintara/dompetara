@@ -126,7 +126,11 @@ async function switchView(page, name) {
     assert.equal(await page.getByRole("button", { name: "Toggle navigation", exact: true }).evaluate((el) => el === document.activeElement), true);
   }
   await page.getByRole("heading", { name, exact: true, level: 1 }).waitFor();
-  assert.equal(new URL(page.url()).pathname, name === "Transactions" ? "/transactions" : `/${name.toLowerCase()}`);
+  const path = name === "Transactions" ? "/transactions" : `/${name.toLowerCase()}`;
+  // The heading now updates immediately, before the content navigation commits.
+  await page.waitForURL((url) => url.pathname === path);
+  await page.locator("[data-ledger-loading]").waitFor({ state: "detached" });
+  assert.equal(new URL(page.url()).pathname, path);
   if (name === "Transactions" || name === "Report") await page.locator('.balance-stat[aria-busy="false"]').waitFor();
 }
 
@@ -155,7 +159,11 @@ async function checkRoutes(page, context, browser) {
     for (const [path, name] of [["transactions", "Transactions"], ["wallet", "Wallet"], ["report", "Report"], ["settings", "Settings"]]) {
       await serverPage.goto(`${origin}/${path}`);
       await serverPage.getByRole("heading", { name, exact: true, level: 1 }).waitFor();
-      if (path === "transactions") assert.ok(await serverPage.getByRole("table", { name: "Transaction history", exact: true }).count());
+      if (path === "transactions") {
+        // The shared heading arrives before streamed page HTML.
+        await serverPage.getByRole("table", { name: "Transaction history", exact: true }).waitFor({ state: "visible" });
+        assert.ok(await serverPage.getByRole("table", { name: "Transaction history", exact: true }).count());
+      }
     }
   } finally { await noJs.close(); }
   await switchView(page, "Transactions");
@@ -479,8 +487,8 @@ async function checkBalances(page, width, height) {
       await page.locator('.balance-stat[aria-busy="false"]').waitFor();
       const rates = Object.fromEntries(["IDR", "USD", "CAD"].map((source) => [source, { rate: crossRate(snapshot, source, target), rateDate: "2026-10-01", stale: false }]));
       const expected = balanceBreakdown(before.data, target, rates);
-      const money = (amount, currency) => new Intl.NumberFormat("en", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount / 100);
-      const codeMoney = (amount, currency) => new Intl.NumberFormat("en", { style: "currency", currency, currencyDisplay: "code", maximumFractionDigits: 2 }).format(amount / 100);
+      const money = (amount, currency) => new Intl.NumberFormat("en", { style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(amount / 100);
+      const codeMoney = (amount, currency) => new Intl.NumberFormat("en", { style: "currency", currency, currencyDisplay: "code", minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(amount / 100);
       assert.equal(await page.locator(".balance-stat h2").evaluate((el) => el.innerText.replace(/\s/g, "")), money(expected.total, target).replace(/\s/g, ""));
       const offsets = await page.locator(".stats > .stat").evaluateAll((cards) => cards.map((card) => card.querySelector("h2").getBoundingClientRect().top - card.getBoundingClientRect().top));
       if (width >= 640) assert.ok(Math.max(...offsets) - Math.min(...offsets) < 1, "Revealed balances stay aligned for every currency");
@@ -529,7 +537,9 @@ async function checkBalances(page, width, height) {
       await page.locator(".balance-breakdown").waitFor({ state: "hidden" });
       await page.emulateMedia({ reducedMotion: "no-preference" });
       mode = "missing";
-      await choose(page, "Currency", "IDR");
+      // A new workspace clears the intentionally retained successful rates.
+      await page.reload();
+      await page.getByRole("button", { name: "Show amounts", exact: true }).click();
       await page.getByRole("button", { name: "Retry conversion", exact: true }).waitFor();
       assert.equal(await page.locator(".balance-stat h2 .balance-amount-number").innerText(), "—", "Missing rates must not display a partial total");
       await check(page, "balance-missing-rates", width, height);
@@ -1130,6 +1140,7 @@ async function checkTransferFees(page, width, height) {
   await page.route("**/api/exchange-rates?*", (route) =>
     route.fulfill({ json: { suggestion: null } }),
   );
+  await page.reload();
   await openTransaction(page, "transfer");
   await choose(page, "Source currency", "USD");
   await choose(page, "To wallet", "GoPay");
@@ -1693,8 +1704,8 @@ async function checkDateRange(page, width, height) {
   assert.equal(await groups.count(), 3, "Custom range includes both months");
   assert.match(await groups.filter({ hasText: "Bills" }).innerText(), /100/);
   const expected = data.entries.filter((e) => e.kind === "expense" && e.currency === "IDR").reduce((n, e) => n + e.amount, 0);
-  const totalText = new Intl.NumberFormat("en", { style: "currency", currency: "IDR", maximumFractionDigits: 2 }).format(expected / 100);
-  assert.equal(await page.locator(".stats .stat").nth(1).locator("h2").innerText(), totalText);
+  const totalText = new Intl.NumberFormat("en", { style: "currency", currency: "IDR", minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(expected / 100);
+  assert.equal((await page.locator(".stats .stat").nth(1).locator("h2").innerText()).replace(/\s+/g, " "), totalText.replace(/\s+/g, " "));
   await page.getByRole("img", { name: "Daily spending chart", exact: true }).waitFor();
   const daily = page.getByRole("img", { name: "Daily spending chart", exact: true });
   assert.notEqual(await daily.getAttribute("tabindex"), "0");
@@ -1744,7 +1755,7 @@ async function checkExpenseReport(page, width, height) {
   assert.equal(await dailyRows.count(), 1);
   assert.equal(await monthlyRows.count(), 2);
   const currentExpense = data.entries.filter((e) => e.kind === "expense" && e.id !== "previous").reduce((n, e) => n + e.amount, 0);
-  const amountText = new Intl.NumberFormat("en", { style: "currency", currency: "IDR", maximumFractionDigits: 2 }).format(currentExpense / 100);
+  const amountText = new Intl.NumberFormat("en", { style: "currency", currency: "IDR", minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(currentExpense / 100);
   assert.match(await dailyRows.first().innerText(), new RegExp(date.slice(0, 10)));
   assert.ok((await dailyRows.first().innerText()).includes(amountText));
   assert.ok((await monthlyRows.last().innerText()).includes(amountText));
@@ -1919,10 +1930,10 @@ try {
       continue;
     }
     if (filtersOnly) { await checkTransactionFilters(page, width, height); await context.close(); continue; }
-    await checkReceipts(page, width, height);
+    if (!reportsOnly) await checkReceipts(page, width, height);
     if (categoriesOnly) { await checkInlineCategories(page, width, height); await context.close(); continue; }
     if (receiptsOnly) { await context.close(); continue; }
-    await checkConflicts(page, width, height);
+    if (!reportsOnly) await checkConflicts(page, width, height);
     await switchView(page, "Transactions");
     await checkNavigation(page, width, height);
     if (width === 320) await checkRoutes(page, context, browser);
@@ -2064,7 +2075,7 @@ try {
   assert.deepEqual(errors, [], "JavaScript page errors");
   console.log(
     brandingOnly ? "Branding and bottom clearance passed on all four views at eight sizes." : balancesOnly ? "Balance checks passed at eight sizes on Transactions and Report: collapsed defaults, keyboard toggles, conversions, retry, and responsive layouts." : filtersOnly ? "Transaction filter and animation checks passed at eight sizes." : categoriesOnly ? "Inline category and receipt checks passed at eight sizes; creation, cancel, income/expense, suggestions and reload persistence verified." : receiptsOnly ? "Receipt browser checks passed: eight sizes, OCR/AI choice, missing API key, editable review, item reconciliation, one wallet charge, conflict recovery, durable retries, reload persistence and deletion." : reportsOnly
-      ? "Report browser checks passed: eight sizes, conflict recovery and draft preservation, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, custom dates, daily/monthly charts, exact amounts, empty periods, currencies, and accessible controls."
+      ? "Report browser checks passed: eight sizes, route persistence and server HTML, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, custom dates, daily/monthly charts, exact amounts, empty periods, currencies, and accessible controls."
       : "Responsive checks passed: eight sizes, conflict recovery and draft preservation, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, date ranges, daily/monthly reports, JSON/CSV downloads and retry, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
   );
 } finally {

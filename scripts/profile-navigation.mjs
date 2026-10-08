@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createHmac, randomUUID } from "node:crypto";
 import { chromium } from "playwright";
 import postgres from "postgres";
+import { mkdir } from "node:fs/promises";
 
 // Run against a local server only. Uses synthetic data; always removes its account.
 const origin = process.env.LEDGER_TEST_URL ?? "http://localhost:3000";
@@ -12,6 +13,10 @@ const id = randomUUID();
 const token = randomUUID();
 const count = Number(process.env.PROFILE_ENTRIES ?? 100);
 assert.ok(Number.isInteger(count) && count >= 0 && count <= 10000);
+const repeats = Number(process.env.PROFILE_REPEATS ?? 2);
+assert.ok(Number.isInteger(repeats) && repeats >= 1 && repeats <= 20);
+const sizes = JSON.parse(process.env.PROFILE_VIEWPORTS ?? "[[390,844],[1440,900]]");
+const screenshots = process.env.PROFILE_SCREENSHOTS;
 const now = new Date().toISOString();
 const data = {
   wallets: [{ id: "profile-wallet", name: "Profile wallet", currencies: ["IDR"] }],
@@ -31,12 +36,15 @@ try {
     await tx`insert into public.ledger (user_id, data) values (${id}, ${tx.json(data)})`;
   });
   browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE });
+  if (screenshots) await mkdir(screenshots, { recursive: true });
   const signature = createHmac("sha256", process.env.BETTER_AUTH_SECRET).update(token).digest("base64");
-  for (const [width, height] of [[390, 844], [1440, 900]]) {
+  for (const [width, height] of sizes) {
     const context = await browser.newContext({ viewport: { width, height }, timezoneId: "Asia/Jakarta" });
     await context.addCookies([{ name: "better-auth.session_token", value: encodeURIComponent(`${token}.${signature}`), url: origin, httpOnly: true, sameSite: "Lax" }]);
     const page = await context.newPage();
     const errors = [];
+    let rateRequests = 0;
+    page.on("request", (request) => { if (new URL(request.url()).pathname === "/api/exchange-rates") rateRequests++; });
     page.on("pageerror", (error) => errors.push(error.message));
     await page.addInitScript(() => {
       window.profileClicks = [];
@@ -45,20 +53,46 @@ try {
       }, true);
     });
     await page.goto(`${origin}/transactions`);
-    await page.getByRole("tab", { name: "Transactions", exact: true }).waitFor();
+    await page.locator(".app-shell").waitFor();
+    if (width >= 768 && width < 1200) {
+      await page.waitForFunction(() => !document.querySelector(".ledger-desktop-sidebar"));
+      await page.getByRole("button", { name: "Toggle navigation", exact: true }).waitFor();
+    } else {
+      await page.getByRole("tab", { name: "Transactions", exact: true }).waitFor();
+    }
     await page.addStyleTag({ content: "nextjs-portal { pointer-events: none; }" });
-    await page.evaluate(() => { window.profileNavigation = document.querySelector('[aria-label="Workspace"]'); });
-    for (const pass of ["first", "repeat", "repeat"]) {
+    await page.evaluate(() => {
+      window.profileNavigation = document.querySelector('[aria-label="Workspace"]');
+      window.profileShell = document.querySelector(".app-shell");
+    });
+    for (const pass of ["first", ...Array(repeats).fill("repeat")]) {
       for (const [name, path] of sections) {
-        await page.getByRole("tab", { name, exact: true }).click();
+        const tab = page.getByRole("tab", { name, exact: true });
+        if (!(await tab.isVisible())) await page.getByRole("button", { name: "Toggle navigation", exact: true }).click();
+        await tab.click();
         await page.locator(`.route-content[aria-label="${name}"]`).waitFor({ state: "visible" });
+        const feedbackMs = await page.evaluate(async () => {
+          await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          return Math.round(performance.now() - window.profileClicks.at(-1));
+        });
+        const loadingVisible = await page.locator("[data-ledger-loading]").isVisible();
+        if (process.env.PROFILE_REQUIRE_LOADING === "1") assert.ok(loadingVisible, "Delayed page should show its content loading fallback");
+        if (screenshots && loadingVisible) {
+          assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Loading layout must not scroll horizontally");
+          await page.screenshot({ path: `${screenshots}/${width}x${height}-${name.toLowerCase()}-loading.png`, fullPage: true, animations: "disabled" });
+        }
         await page.waitForURL(`${origin}${path}`);
+        await page.waitForFunction((name) => {
+          const panel = document.querySelector(`.route-content[aria-label="${name}"]`);
+          return panel && !panel.querySelector("[data-ledger-loading]");
+        }, name);
         const timing = await page.evaluate(async () => {
           await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
           const start = window.profileClicks.at(-1);
           return {
             clickToPaintMs: Math.round(performance.now() - start),
             shellPreserved: window.profileNavigation === document.querySelector('[aria-label="Workspace"]'),
+            layoutPreserved: window.profileShell === document.querySelector(".app-shell"),
             requests: performance.getEntriesByType("resource").filter((entry) => entry.startTime >= start && new URL(entry.name).searchParams.has("_rsc")).map((entry) => ({
               path: new URL(entry.name).pathname,
               ttfbMs: Math.round(entry.responseStart - entry.requestStart),
@@ -68,7 +102,12 @@ try {
           };
         });
         assert.ok(timing.shellPreserved, "Shared navigation should stay mounted");
-        console.log(JSON.stringify({ viewport: `${width}x${height}`, entries: count, pass, path, ...timing }));
+        assert.ok(timing.layoutPreserved, "Shared layout should stay mounted");
+        console.log(JSON.stringify({ viewport: `${width}x${height}`, entries: count, pass, path, feedbackMs, loadingVisible, rateRequests, ...timing }));
+        if (screenshots && pass === "first") {
+          assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Content must not scroll horizontally");
+          await page.screenshot({ path: `${screenshots}/${width}x${height}-${name.toLowerCase()}.png`, fullPage: true, animations: "disabled" });
+        }
       }
     }
     if (errors.length) {

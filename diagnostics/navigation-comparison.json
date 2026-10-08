@@ -1,0 +1,2018 @@
+{
+  "date": "2026-10-08",
+  "environment": "Local Next.js 16.3.4 webpack production builds; synthetic accounts with 1,000 transactions, real configured database, Chromium; no CPU or network throttling. Not a deployed Vercel benchmark.",
+  "method": "Click event to destination content readiness and two animation frames; feedback timing separately measures the changed destination panel and two frames. Five repeat visits per tab after a first visit at each viewport. Frame/probe overhead is included; exchange-rate settlement and chart animation completion are not included.",
+  "changes": [
+    "Explicit currency decimal rules eliminate server/browser ICU differences. Intl formatters are reused.",
+    "Navigation-only content skeleton updates header and active tab immediately; shared layout stays mounted; first-load server HTML remains available without JavaScript.",
+    "Selected period entries and totals are memoized in the persistent provider. Report groups and spending histories are memoized.",
+    "Exchange-rate in-flight requests and successful results are shared in a workspace-scoped bounded cache for 60 seconds; Retry forces refresh; failures are evicted; unmount aborts pending requests and clears results."
+  ],
+  "summary": [
+    {
+      "viewport": "390x844",
+      "path": "/wallet",
+      "beforeMedianMs": 81,
+      "afterMedianMs": 76,
+      "improvementPercent": 6.2,
+      "samplesPerVersion": 5
+    },
+    {
+      "viewport": "390x844",
+      "path": "/report",
+      "beforeMedianMs": 244,
+      "afterMedianMs": 62,
+      "improvementPercent": 74.6,
+      "samplesPerVersion": 5
+    },
+    {
+      "viewport": "390x844",
+      "path": "/settings",
+      "beforeMedianMs": 81,
+      "afterMedianMs": 76,
+      "improvementPercent": 6.2,
+      "samplesPerVersion": 5
+    },
+    {
+      "viewport": "390x844",
+      "path": "/transactions",
+      "beforeMedianMs": 147,
+      "afterMedianMs": 65,
+      "improvementPercent": 55.8,
+      "samplesPerVersion": 5
+    },
+    {
+      "viewport": "1440x900",
+      "path": "/wallet",
+      "beforeMedianMs": 81,
+      "afterMedianMs": 64,
+      "improvementPercent": 21.0,
+      "samplesPerVersion": 5
+    },
+    {
+      "viewport": "1440x900",
+      "path": "/report",
+      "beforeMedianMs": 199,
+      "afterMedianMs": 63,
+      "improvementPercent": 68.3,
+      "samplesPerVersion": 5
+    },
+    {
+      "viewport": "1440x900",
+      "path": "/settings",
+      "beforeMedianMs": 81,
+      "afterMedianMs": 65,
+      "improvementPercent": 19.8,
+      "samplesPerVersion": 5
+    },
+    {
+      "viewport": "1440x900",
+      "path": "/transactions",
+      "beforeMedianMs": 149,
+      "afterMedianMs": 62,
+      "improvementPercent": 58.4,
+      "samplesPerVersion": 5
+    }
+  ],
+  "exchangeRateRequestsPer24Switches": {
+    "before": {
+      "390x844": 38,
+      "1440x900": 38
+    },
+    "after": {
+      "390x844": 2,
+      "1440x900": 2
+    }
+  },
+  "hydrationMismatch": {
+    "before": true,
+    "after": false
+  },
+  "delayedContentVerification": "Isolated development copy adds two seconds of page delay. Navigation-only loading placeholders appear while the shared layout remains mounted; screenshots and horizontal overflow checked at 320x568, 568x320, 768x1024 and 1440x900.",
+  "initialLoad": "Authentication and ledger database loading are unchanged; these optimizations primarily improve tab navigation and browser-side work.",
+  "runs": {
+    "before": [
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/wallet",
+        "feedbackMs": 65,
+        "loadingVisible": false,
+        "rateRequests": 4,
+        "clickToPaintMs": 96,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/report",
+        "feedbackMs": 164,
+        "loadingVisible": false,
+        "rateRequests": 6,
+        "clickToPaintMs": 195,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/settings",
+        "feedbackMs": 44,
+        "loadingVisible": false,
+        "rateRequests": 6,
+        "clickToPaintMs": 79,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/transactions",
+        "feedbackMs": 109,
+        "loadingVisible": false,
+        "rateRequests": 8,
+        "clickToPaintMs": 143,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 46,
+        "loadingVisible": false,
+        "rateRequests": 10,
+        "clickToPaintMs": 80,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 183,
+        "loadingVisible": false,
+        "rateRequests": 12,
+        "clickToPaintMs": 254,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 48,
+        "loadingVisible": false,
+        "rateRequests": 12,
+        "clickToPaintMs": 82,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 116,
+        "loadingVisible": false,
+        "rateRequests": 14,
+        "clickToPaintMs": 147,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 47,
+        "loadingVisible": false,
+        "rateRequests": 16,
+        "clickToPaintMs": 81,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 165,
+        "loadingVisible": false,
+        "rateRequests": 18,
+        "clickToPaintMs": 198,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 46,
+        "loadingVisible": false,
+        "rateRequests": 18,
+        "clickToPaintMs": 81,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 112,
+        "loadingVisible": false,
+        "rateRequests": 20,
+        "clickToPaintMs": 147,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 49,
+        "loadingVisible": false,
+        "rateRequests": 22,
+        "clickToPaintMs": 81,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 160,
+        "loadingVisible": false,
+        "rateRequests": 24,
+        "clickToPaintMs": 191,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 46,
+        "loadingVisible": false,
+        "rateRequests": 24,
+        "clickToPaintMs": 81,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 114,
+        "loadingVisible": false,
+        "rateRequests": 26,
+        "clickToPaintMs": 144,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 46,
+        "loadingVisible": false,
+        "rateRequests": 28,
+        "clickToPaintMs": 82,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 213,
+        "loadingVisible": false,
+        "rateRequests": 30,
+        "clickToPaintMs": 244,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 48,
+        "loadingVisible": false,
+        "rateRequests": 30,
+        "clickToPaintMs": 80,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 116,
+        "loadingVisible": false,
+        "rateRequests": 32,
+        "clickToPaintMs": 147,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 45,
+        "loadingVisible": false,
+        "rateRequests": 34,
+        "clickToPaintMs": 80,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 183,
+        "loadingVisible": false,
+        "rateRequests": 36,
+        "clickToPaintMs": 265,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 49,
+        "loadingVisible": false,
+        "rateRequests": 36,
+        "clickToPaintMs": 84,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 115,
+        "loadingVisible": false,
+        "rateRequests": 38,
+        "clickToPaintMs": 146,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "browserErrors": 1,
+        "hydrationMismatch": true
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/wallet",
+        "feedbackMs": 71,
+        "loadingVisible": false,
+        "rateRequests": 4,
+        "clickToPaintMs": 106,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/report",
+        "feedbackMs": 180,
+        "loadingVisible": false,
+        "rateRequests": 6,
+        "clickToPaintMs": 214,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/settings",
+        "feedbackMs": 46,
+        "loadingVisible": false,
+        "rateRequests": 6,
+        "clickToPaintMs": 81,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/transactions",
+        "feedbackMs": 115,
+        "loadingVisible": false,
+        "rateRequests": 8,
+        "clickToPaintMs": 146,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 45,
+        "loadingVisible": false,
+        "rateRequests": 10,
+        "clickToPaintMs": 80,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 163,
+        "loadingVisible": false,
+        "rateRequests": 12,
+        "clickToPaintMs": 195,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 46,
+        "loadingVisible": false,
+        "rateRequests": 12,
+        "clickToPaintMs": 81,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 115,
+        "loadingVisible": false,
+        "rateRequests": 14,
+        "clickToPaintMs": 149,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 49,
+        "loadingVisible": false,
+        "rateRequests": 16,
+        "clickToPaintMs": 81,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 164,
+        "loadingVisible": false,
+        "rateRequests": 18,
+        "clickToPaintMs": 199,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 45,
+        "loadingVisible": false,
+        "rateRequests": 18,
+        "clickToPaintMs": 80,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 114,
+        "loadingVisible": false,
+        "rateRequests": 20,
+        "clickToPaintMs": 148,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 46,
+        "loadingVisible": false,
+        "rateRequests": 22,
+        "clickToPaintMs": 81,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 163,
+        "loadingVisible": false,
+        "rateRequests": 24,
+        "clickToPaintMs": 194,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 46,
+        "loadingVisible": false,
+        "rateRequests": 24,
+        "clickToPaintMs": 81,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 112,
+        "loadingVisible": false,
+        "rateRequests": 26,
+        "clickToPaintMs": 147,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 60,
+        "loadingVisible": false,
+        "rateRequests": 28,
+        "clickToPaintMs": 95,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 428,
+        "loadingVisible": false,
+        "rateRequests": 30,
+        "clickToPaintMs": 577,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 47,
+        "loadingVisible": false,
+        "rateRequests": 30,
+        "clickToPaintMs": 81,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 263,
+        "loadingVisible": false,
+        "rateRequests": 32,
+        "clickToPaintMs": 297,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 47,
+        "loadingVisible": false,
+        "rateRequests": 34,
+        "clickToPaintMs": 79,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 245,
+        "loadingVisible": false,
+        "rateRequests": 36,
+        "clickToPaintMs": 280,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 47,
+        "loadingVisible": false,
+        "rateRequests": 36,
+        "clickToPaintMs": 78,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 164,
+        "loadingVisible": false,
+        "rateRequests": 38,
+        "clickToPaintMs": 199,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "browserErrors": 1,
+        "hydrationMismatch": true
+      }
+    ],
+    "after": [
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/wallet",
+        "feedbackMs": 32,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/report",
+        "feedbackMs": 52,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 81,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/settings",
+        "feedbackMs": 31,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/transactions",
+        "feedbackMs": 30,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 64,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 43,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 78,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 31,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 41,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 76,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 42,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 74,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 41,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 76,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 28,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 60,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 44,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 77,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 27,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 61,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 44,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 76,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 37,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 61,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 44,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 76,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 42,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 77,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 41,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 72,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 39,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 65,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 42,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 74,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 29,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 61,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 39,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 74,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 42,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 64,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 39,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 73,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "390x844",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 31,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 65,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/wallet",
+        "feedbackMs": 30,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 61,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/report",
+        "feedbackMs": 50,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 79,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/settings",
+        "feedbackMs": 29,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 63,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "first",
+        "path": "/transactions",
+        "feedbackMs": 29,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 63,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 31,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 66,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 34,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 66,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 28,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 63,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 30,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 31,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 66,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 31,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 28,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 31,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 30,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 64,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 37,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 67,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 32,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 67,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 28,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 30,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 64,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 32,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 63,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 41,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 72,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 29,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 66,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 27,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 62,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 34,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 63,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 31,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 65,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 1000,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 29,
+        "loadingVisible": false,
+        "rateRequests": 2,
+        "clickToPaintMs": 63,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": []
+      }
+    ],
+    "delayedLoading": [
+      {
+        "viewport": "320x568",
+        "entries": 100,
+        "pass": "first",
+        "path": "/wallet",
+        "feedbackMs": 68,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 4102,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 1996,
+            "durationMs": 3990,
+            "bytes": 2304
+          },
+          {
+            "path": "/wallet",
+            "ttfbMs": 11,
+            "durationMs": 2008,
+            "bytes": 5253
+          }
+        ]
+      },
+      {
+        "viewport": "320x568",
+        "entries": 100,
+        "pass": "first",
+        "path": "/report",
+        "feedbackMs": 45,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2347,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 28,
+            "durationMs": 2027,
+            "bytes": 2305
+          }
+        ]
+      },
+      {
+        "viewport": "320x568",
+        "entries": 100,
+        "pass": "first",
+        "path": "/settings",
+        "feedbackMs": 46,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2862,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 768,
+            "durationMs": 2718,
+            "bytes": 2306
+          },
+          {
+            "path": "/settings",
+            "ttfbMs": 9,
+            "durationMs": 2006,
+            "bytes": 5250
+          }
+        ]
+      },
+      {
+        "viewport": "320x568",
+        "entries": 100,
+        "pass": "first",
+        "path": "/transactions",
+        "feedbackMs": 49,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2148,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 30,
+            "durationMs": 2030,
+            "bytes": 2268
+          }
+        ]
+      },
+      {
+        "viewport": "320x568",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 47,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2095,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 16,
+            "durationMs": 2016,
+            "bytes": 2304
+          }
+        ]
+      },
+      {
+        "viewport": "320x568",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 46,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2159,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 25,
+            "durationMs": 2024,
+            "bytes": 2304
+          }
+        ]
+      },
+      {
+        "viewport": "320x568",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 45,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2096,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 20,
+            "durationMs": 2029,
+            "bytes": 2306
+          }
+        ]
+      },
+      {
+        "viewport": "320x568",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 30,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 3772,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 1692,
+            "durationMs": 3653,
+            "bytes": 2266
+          },
+          {
+            "path": "/transactions",
+            "ttfbMs": 122,
+            "durationMs": 2120,
+            "bytes": 5209
+          }
+        ]
+      },
+      {
+        "viewport": "568x320",
+        "entries": 100,
+        "pass": "first",
+        "path": "/wallet",
+        "feedbackMs": 64,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2112,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 26,
+            "durationMs": 2022,
+            "bytes": 2303
+          }
+        ]
+      },
+      {
+        "viewport": "568x320",
+        "entries": 100,
+        "pass": "first",
+        "path": "/report",
+        "feedbackMs": 52,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2346,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 19,
+            "durationMs": 2018,
+            "bytes": 2305
+          }
+        ]
+      },
+      {
+        "viewport": "568x320",
+        "entries": 100,
+        "pass": "first",
+        "path": "/settings",
+        "feedbackMs": 46,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2144,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 15,
+            "durationMs": 2017,
+            "bytes": 2308
+          }
+        ]
+      },
+      {
+        "viewport": "568x320",
+        "entries": 100,
+        "pass": "first",
+        "path": "/transactions",
+        "feedbackMs": 47,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2113,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 11,
+            "durationMs": 2011,
+            "bytes": 2268
+          }
+        ]
+      },
+      {
+        "viewport": "568x320",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 46,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2063,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 10,
+            "durationMs": 2008,
+            "bytes": 2304
+          }
+        ]
+      },
+      {
+        "viewport": "568x320",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 50,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2146,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 20,
+            "durationMs": 2014,
+            "bytes": 2305
+          }
+        ]
+      },
+      {
+        "viewport": "568x320",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 45,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2062,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 14,
+            "durationMs": 2009,
+            "bytes": 2308
+          }
+        ]
+      },
+      {
+        "viewport": "568x320",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 45,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2093,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 17,
+            "durationMs": 2014,
+            "bytes": 2268
+          }
+        ]
+      },
+      {
+        "viewport": "768x1024",
+        "entries": 100,
+        "pass": "first",
+        "path": "/wallet",
+        "feedbackMs": 47,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2095,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 13,
+            "durationMs": 2010,
+            "bytes": 2304
+          }
+        ]
+      },
+      {
+        "viewport": "768x1024",
+        "entries": 100,
+        "pass": "first",
+        "path": "/report",
+        "feedbackMs": 44,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2326,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 14,
+            "durationMs": 2011,
+            "bytes": 2304
+          }
+        ]
+      },
+      {
+        "viewport": "768x1024",
+        "entries": 100,
+        "pass": "first",
+        "path": "/settings",
+        "feedbackMs": 28,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2129,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 16,
+            "durationMs": 2010,
+            "bytes": 2307
+          }
+        ]
+      },
+      {
+        "viewport": "768x1024",
+        "entries": 100,
+        "pass": "first",
+        "path": "/transactions",
+        "feedbackMs": 48,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2113,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 12,
+            "durationMs": 2012,
+            "bytes": 2265
+          }
+        ]
+      },
+      {
+        "viewport": "768x1024",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 63,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2064,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 16,
+            "durationMs": 2010,
+            "bytes": 2304
+          }
+        ]
+      },
+      {
+        "viewport": "768x1024",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 61,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2127,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 14,
+            "durationMs": 2013,
+            "bytes": 2305
+          }
+        ]
+      },
+      {
+        "viewport": "768x1024",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 45,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2060,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 15,
+            "durationMs": 2010,
+            "bytes": 2307
+          }
+        ]
+      },
+      {
+        "viewport": "768x1024",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 45,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2111,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 13,
+            "durationMs": 2012,
+            "bytes": 2267
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "first",
+        "path": "/wallet",
+        "feedbackMs": 61,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2096,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 9,
+            "durationMs": 2008,
+            "bytes": 2304
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "first",
+        "path": "/report",
+        "feedbackMs": 34,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2330,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 11,
+            "durationMs": 2007,
+            "bytes": 2307
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "first",
+        "path": "/settings",
+        "feedbackMs": 45,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2129,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 10,
+            "durationMs": 2008,
+            "bytes": 2307
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "first",
+        "path": "/transactions",
+        "feedbackMs": 43,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2125,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 19,
+            "durationMs": 2015,
+            "bytes": 2268
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/wallet",
+        "feedbackMs": 32,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2049,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/wallet",
+            "ttfbMs": 10,
+            "durationMs": 2007,
+            "bytes": 2305
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/report",
+        "feedbackMs": 31,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2497,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/report",
+            "ttfbMs": 12,
+            "durationMs": 2383,
+            "bytes": 2306
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/settings",
+        "feedbackMs": 29,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2064,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/settings",
+            "ttfbMs": 17,
+            "durationMs": 2021,
+            "bytes": 2306
+          }
+        ]
+      },
+      {
+        "viewport": "1440x900",
+        "entries": 100,
+        "pass": "repeat",
+        "path": "/transactions",
+        "feedbackMs": 45,
+        "loadingVisible": true,
+        "rateRequests": 2,
+        "clickToPaintMs": 2128,
+        "shellPreserved": true,
+        "layoutPreserved": true,
+        "requests": [
+          {
+            "path": "/transactions",
+            "ttfbMs": 11,
+            "durationMs": 2012,
+            "bytes": 2268
+          }
+        ]
+      }
+    ]
+  },
+  "baselineCommit": "0708208"
+}

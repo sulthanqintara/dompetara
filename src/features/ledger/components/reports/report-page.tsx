@@ -1,15 +1,18 @@
 "use client";
+import { useMemo } from "react";
 import { useLedgerContext } from "../../use-ledger-context";
-import { periodEntries, periodTotals, spendByCategory, spendingHistory } from "../../derive";
+import { spendByCategory, spendingHistory } from "../../derive";
 import { LedgerSummary } from "../shared/ledger-summary";
 import { ReportTab } from "./report-tab";
 
 export function ReportPage() {
-  const { data, period, currency, timeZone } = useLedgerContext();
-  const entries = periodEntries(data, period, timeZone);
+  const { data, period, currency, timeZone, periodEntries: entries, periodTotals: totals } = useLedgerContext();
+  const groups = useMemo(() => spendByCategory(entries, currency), [entries, currency]);
+  const daily = useMemo(() => spendingHistory(entries, currency, "daily", timeZone), [entries, currency, timeZone]);
+  const monthly = useMemo(() => spendingHistory(data.entries, currency, "monthly", timeZone), [data.entries, currency, timeZone]);
   return <>
     <LedgerSummary />
-    <ReportTab groups={spendByCategory(entries, currency)} expense={periodTotals(entries, currency).expense} currency={currency} period={period}
-      daily={spendingHistory(entries, currency, "daily", timeZone)} monthly={spendingHistory(data.entries, currency, "monthly", timeZone)} />
+    <ReportTab groups={groups} expense={totals.expense} currency={currency} period={period}
+      daily={daily} monthly={monthly} />
   </>;
 }

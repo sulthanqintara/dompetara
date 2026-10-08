@@ -1,5 +1,5 @@
 "use client";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { SidebarProvider } from "@/components/ui/sidebar-provider";
 import { SidebarTrigger } from "@/components/ui/sidebar-trigger";
@@ -13,15 +13,30 @@ import { AccountMenu } from "../navigation/account-menu";
 import { LedgerActions } from "../navigation/ledger-actions";
 import { LedgerEditor } from "../editor/ledger-editor";
 import { BrandWordmark } from "@/features/branding/components/brand-wordmark";
+import { NavigationContext } from "../../navigation-context";
+import { LedgerLoading } from "../shared/ledger-loading";
 
 export function LedgerShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [previousPath, setPreviousPath] = useState(pathname);
+  // Reset locally on route commit, including back/forward navigation.
+  if (previousPath !== pathname) {
+    setPreviousPath(pathname);
+    setPendingHref(null);
+  }
+  useEffect(() => {
+    const cancel = () => setPendingHref(null);
+    window.addEventListener("popstate", cancel);
+    return () => window.removeEventListener("popstate", cancel);
+  }, []);
+  const loading = pendingHref !== null && pendingHref !== pathname;
   const section =
-    ledgerSections.find((item) => item.href === pathname) ?? ledgerSections[0];
+    ledgerSections.find((item) => item.href === (loading ? pendingHref : pathname)) ?? ledgerSections[0];
   const tab = section.name;
   const { name, editor } = useLedgerContext();
   return (
-    <SidebarProvider>
+    <NavigationContext.Provider value={setPendingHref}><SidebarProvider>
       <WorkspaceTabs className="app-shell" value={tab}>
         <Sidebar name={name} tab={tab} />
         <main
@@ -43,18 +58,18 @@ export function LedgerShell({ children }: { children: ReactNode }) {
             </div>
             {!editor && <LedgerError />}
             <TabsContent
-              key={pathname}
+              key={section.href}
               value={tab}
               aria-label={tab}
               className="route-content"
             >
-              {children}
+              {loading ? <LedgerLoading /> : children}
             </TabsContent>
           </div>
           <footer className="workspace-footer"><BrandWordmark size={32} /></footer>
         </main>
         <LedgerEditor />
       </WorkspaceTabs>
-    </SidebarProvider>
+    </SidebarProvider></NavigationContext.Provider>
   );
 }

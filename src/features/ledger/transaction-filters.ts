@@ -11,6 +11,15 @@ export const transactionFiltersSchema = z.object({
 });
 export type TransactionFilters = z.infer<typeof transactionFiltersSchema>;
 
+export function readTransactionSearchParams(params: Pick<URLSearchParams, "forEach">) {
+  const result: Record<string, string | string[] | undefined> = Object.create(null);
+  params.forEach((value, key) => {
+    const saved = result[key];
+    result[key] = saved === undefined ? value : Array.isArray(saved) ? [...saved, value] : [saved, value];
+  });
+  return result;
+}
+
 export function filterTransactions(entries: Entry[], data: Ledger, filters: TransactionFilters) {
   const search = filters.search.trim().toLocaleLowerCase();
   return entries.filter((entry) =>
