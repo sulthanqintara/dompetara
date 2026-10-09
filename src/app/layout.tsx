@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
+import { ThemeProvider } from "@/features/theme/components/theme-provider";
+import { themeCss } from "@/features/branding/design-system";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,10 +45,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang={locale}
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head><style>{themeCss}</style></head>
       <body className="min-h-full flex flex-col">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider><ThemeProvider>{children}</ThemeProvider></NextIntlClientProvider>
         <SpeedInsights />
       </body>
     </html>

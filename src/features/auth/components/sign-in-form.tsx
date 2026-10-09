@@ -8,6 +8,7 @@ import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { BrandWordmark } from "@/features/branding/components/brand-wordmark";
+import { ThemeToggle } from "@/features/theme/components/theme-toggle";
 
 export function SignInForm() {
   const errorMessage = useErrorMessage();
@@ -33,6 +34,7 @@ export function SignInForm() {
   }
   return (
     <main className="login">
+      <div className="login-theme-toggle"><ThemeToggle /></div>
       <section className="login-story">
         <div className="brand">
           <BrandWordmark size={64} />

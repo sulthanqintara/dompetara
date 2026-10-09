@@ -25,6 +25,22 @@ Design requirement: mobile first, then tablet, then desktop. Every feature must 
 - [x] Version checks reject conflicting saves instead of overwriting another tab's changes.
 - [x] Database migrations, public API table permissions, ledger RLS, and a runnable live database check.
 
+## Design system preview
+
+- [x] Development-only `/style-guide` with shared light/dark semantic palettes, Geist typography, spacing, accessibility guidance, and existing shadcn control specimens.
+- [x] English and Indonesian translations using the existing locale flow.
+- [x] Six fixed 100–900 shade scales with 54 swatches, base-shade labels, HEX/HSL references, and shared light/dark role mappings. Verified shade ordering, luminance progression, HSL conversion, selected role contrast, translated labels, and renders in both languages at phone, tablet, desktop, and short viewport sizes on 2026-10-09.
+- [x] Replaced the repeated theme role lists with one nine-row light/dark mapping table. Kept all internal roles. Verified translations, palette tests, TypeScript, targeted lint, accessible table headers, and both-language Chromium renders without horizontal overflow at phone, tablet, desktop, and short viewport sizes on 2026-10-09.
+- [x] Refined the proposal against the supplied Refactoring UI color, hierarchy, and spacing chapters: richer dark accents, deep brand green with white button text, a fixed hover shade, explicit hierarchy guidance, and grouped label/input spacing. Rechecked contrast (including hover), i18n, TypeScript, targeted lint, and both languages at phone, tablet, desktop, and short viewport sizes on 2026-10-09.
+- [x] Verified on 2026-10-09: `pnpm test:i18n`, `pnpm test:design-system`, TypeScript, targeted ESLint, and diff whitespace checks. Contrast checks cover text, semantic colors, input boundaries, and focus indicators; route and metadata guards are exercised in development, production, and test environments with framework dependencies stubbed.
+- [x] Chromium render checks in both languages at 320×568, 390×844, 768×1024, 1440×900, and 568×320; no page-wide horizontal overflow. Checked 44px enabled control targets, 16px input text, long input content, keyboard focus, and browser errors.
+- [x] Applied the palette throughout the app, shadcn controls, charts, sign-in, and icon gallery; added the header toggle and Light, Dark, and System preferences saved per browser/device.
+- [x] Theme verification on 2026-10-09: `pnpm test`, `pnpm test:theme:browser`, i18n, TypeScript, full ESLint, and production build passed. Both themes and languages fit all five viewports across pages and editors, with long fixture content, keyboard toggle, system changes, saved preferences, reload, cross-tab sync, and readable chart axis labels.
+- [x] Production build and HTTP verification on 2026-10-09: `/style-guide` returns 404; persisted dark appearance is applied before hydration.
+- [x] Theme toggle shows the current sun/moon state and animates switching with a brief gold/blue glow; reduced motion uses a color pulse. Verified initial stillness, color reset, keyboard interaction, translations, responsive targets, TypeScript, lint, and dedicated browser checks on 2026-10-09.
+- [x] Balanced the icon animation at 1.35s total, with movement settling before a smooth color fade, with an explicit foreground endpoint for both icons. Browser regression checks verify an intermediate color before settling in both themes/locales and reduced-motion mode on 2026-10-09.
+- [ ] Safari and real-device rendering.
+
 ## Remaining original requirements
 
 ### 0. Mobile-first layout

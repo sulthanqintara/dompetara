@@ -42,6 +42,10 @@ Dompetara supports English and Bahasa Indonesia. It starts in Indonesian when th
 
 Your saved choice takes precedence over browser detection. Wallet names, custom categories, transaction titles, notes, and text printed on receipts stay as you entered them.
 
+## Appearance
+
+Dompetara follows your device’s light or dark appearance by default. Use the sun or moon button in the header to switch themes, or choose **Light theme**, **Dark theme**, or **System setting** in **Settings → Appearance**. Your theme choice is saved in this browser on this device.
+
 ## Your records
 
 Your ledger is tied to your Google account. Transactions use your device's timezone, and you can download your records as JSON or CSV from Settings, including notes and saved receipt details.

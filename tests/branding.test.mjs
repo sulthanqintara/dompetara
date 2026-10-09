@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import sharp from "sharp";
+import { colorScales } from "../src/features/branding/design-system.ts";
 
 const root = new URL("../", import.meta.url);
 const manifestSource = await readFile(new URL("src/app/manifest.ts", root), "utf8");
 const manifest = JSON.parse(manifestSource.slice(manifestSource.indexOf("return ") + 7, manifestSource.lastIndexOf("};") + 1)
-  .replace(/t\("trackYourIncomeAndExpensesAllInOnePlace"\)/, '"localized description"').replace(/await getLocale\(\)/, '"en"'));
+  .replace(/t\("trackYourIncomeAndExpensesAllInOnePlace"\)/, '"localized description"').replace(/await getLocale\(\)/, '"en"')
+  .replace(/colorScales.neutral\[100\]/, JSON.stringify(colorScales.neutral[100])).replace(/colorScales.brand\[500\]/, JSON.stringify(colorScales.brand[500])));
 assert.equal(manifest.name, "Dompetara");
 assert(manifest.icons.some(icon => icon.purpose === "maskable"));
 for (const icon of manifest.icons) {

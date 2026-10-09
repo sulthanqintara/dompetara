@@ -2,6 +2,22 @@
 
 Setup, testing, and maintenance guidance for contributors. Coding rules live in [AGENTS.md](../AGENTS.md); implementation status and verification history live in [FEATURE_CHECKLIST.md](../FEATURE_CHECKLIST.md). Deployment records below describe the setup verified on their stated dates.
 
+## Visual style guide
+
+With `pnpm dev` running, open `/style-guide` to review the Dompetara design system: light/dark colors, Geist typography, spacing, semantic colors, and shadcn control specimens. It uses the existing saved-language/browser preference flow for English and Indonesian. The same palette powers the app; specimens retain their individual light/dark appearance. The route and its metadata render only when `NODE_ENV` is `development`; production and test environments invoke `notFound()`.
+
+Palette values live in `src/features/branding/design-system.ts`. Run `pnpm test:design-system` to check text/control contrast and the route's environment guard. Contrast targets follow [WCAG text contrast](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) and [non-text contrast](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html); labels and icons accompany semantic colors per [Use of Color](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html). The root layout emits palette CSS variables from this source, so the guide and runtime theme share one set of values.
+
+`colorScales` defines nine fixed shades (100–900) for neutrals, brand green, income green, red, blue, and amber. `colorRoles` maps light/dark semantic roles to references such as `brand.500`; `shadeColor` resolves them for previews and runtime CSS. White is a separate endpoint. The guide displays exact HEX and rounded HSL values alongside shade numbers and marks 500 as the base. Tests verify ordered shade keys, progressively decreasing luminance, HSL conversion, translated family labels, role resolution, and contrast for the actual theme pairings. A shade's position alone does not guarantee accessible text contrast.
+
+`next-themes` applies a `light`/`dark` class before hydration, follows the system appearance by default, and stores explicit choices in browser local storage under `dompetara-theme`. The header toggle shows the current theme (sun for light, moon for dark) and chooses the other theme; Settings also offers System. After interaction, the incoming icon spins/bounces with a brief gold/blue glow. Reduced motion retains only the color pulse; initial load stays still. Controls wait for hydration before reading the resolved theme. Shared app styles, shadcn primitives, charts, and the monochrome brand mark use the palette roles. Source icon illustrations retain their artwork colors.
+
+With the dev server and test database configured, run `pnpm test:theme:browser` for both themes/locales at phone, tablet, desktop, and short viewport sizes, including editors, keyboard activation, system changes, reload persistence, and cross-tab synchronization. It creates and removes its own temporary account. Set `THEME_SCREENSHOTS` to save renders and `LEDGER_TEST_URL` to target another running server.
+
+Run `pnpm test:theme-toggle:browser` with a running server to check icon meaning, temporary color and reset, reduced motion, keyboard activation, and touch targets in both locales without database fixtures.
+
+The design reference is *Refactoring UI*: Working with Color (fixed shades and saturation, printed pages 129–138), Hierarchy is Everything (action hierarchy, pages 52–54), and Layout and Spacing (restricted spacing scales and grouped fields, pages 60–64 and 83–86). The guide uses these principles with Dompetara's own values: a deep brand fill shared between themes, separate readable semantic text shades, an explicit hover shade, and tighter spacing within a field than between groups. PDF assets remain outside the repository.
+
 ## Setup
 
 1. Copy `.env.example` to `.env` if you do not already have one. In Supabase's Connect dialog, choose Direct, then Session pooler, and copy its Postgres connection string into `DATABASE_URL`. Replace the password placeholder, URL-encode special characters in the password, and add `?sslmode=require`. Copy the actual pooler host from the dialog. Set a random `BETTER_AUTH_SECRET` and your app origin as `BETTER_AUTH_URL`.

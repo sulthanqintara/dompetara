@@ -52,7 +52,7 @@ export function ExpenseCategoryChart({
               dataKey="amount"
               nameKey="category"
               outerRadius="85%"
-              stroke="white"
+              stroke="var(--card)"
               strokeWidth={2}
               rootTabIndex={-1}
               isAnimationActive={false}

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
+import { colorScales } from "@/features/branding/design-system";
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const t = await getTranslations("UI");
@@ -12,8 +13,8 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
-    "background_color": "#f7f8fa",
-    "theme_color": "#186653",
+    "background_color": colorScales.neutral[100],
+    "theme_color": colorScales.brand[500],
     "icons": [
       {
         "src": "/icons/icon-192.png",

@@ -16,6 +16,7 @@ import { LedgerEditor } from "../editor/ledger-editor";
 import { BrandWordmark } from "@/features/branding/components/brand-wordmark";
 import { NavigationContext } from "../../navigation-context";
 import { LedgerLoading } from "../shared/ledger-loading";
+import { ThemeToggle } from "@/features/theme/components/theme-toggle";
 
 export function LedgerShell({ children }: { children: ReactNode }) {
   const t = useTranslations("UI");
@@ -49,7 +50,7 @@ export function LedgerShell({ children }: { children: ReactNode }) {
               <SidebarTrigger />
               <h1 className="mobile-page-title">{t(section.key)}</h1>
             </div>
-            <AccountMenu />
+            <div className="topbar-actions"><ThemeToggle /><AccountMenu /></div>
           </header>
           <div className="page-content">
             <div className="page-heading">
