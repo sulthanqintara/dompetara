@@ -1,19 +1,19 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import { attachDatabasePool } from "@vercel/functions";
+import { logServerError } from "../log-server-error";
+import { databasePoolConfig } from "./pool-config";
 import * as schema from "./schema";
 
 const globalDb = globalThis as typeof globalThis & {
-  ledgerSql?: ReturnType<typeof postgres>;
+  ledgerPool?: Pool;
 };
-const sql =
-  globalDb.ledgerSql ??
-  postgres(process.env.DATABASE_URL!, {
-    prepare: false,
-    max: 2,
-    idle_timeout: 20,
-    connect_timeout: 10,
-    connection: { application_name: "dompetara" },
-  });
-if (process.env.NODE_ENV !== "production") globalDb.ledgerSql = sql;
+const pool = globalDb.ledgerPool ?? new Pool(databasePoolConfig(process.env.DATABASE_URL, process.env.VERCEL === "1"));
+if (!globalDb.ledgerPool) {
+  attachDatabasePool(pool);
+  pool.on("error", (error) => logServerError({ provider: "postgres", stage: "pool.idle-client", status: 500 }, error));
+  globalDb.ledgerPool = pool;
+}
 
-export const db = drizzle(sql, { schema });
+// Drizzle uses unnamed queries; named prepared statements are incompatible with Supavisor transaction mode.
+export const db = drizzle(pool, { schema });

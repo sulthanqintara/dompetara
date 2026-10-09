@@ -1,8 +1,10 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { db } from "./db";
+import { logAuthError } from "./log-auth-error";
 
 export const auth = betterAuth({
+  logger: { log: logAuthError },
   database: drizzleAdapter(db, {
     provider: "pg",
   }),

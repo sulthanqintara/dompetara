@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { logServerError } from "../src/lib/log-server-error.ts";
 import { withApiErrorLogging } from "../src/lib/with-api-error-logging.ts";
+import { logAuthError } from "../src/lib/log-auth-error.ts";
 
 const original = console.error;
 const logs: { method?: string; path?: string; status?: number; message: string; stack?: string }[] = [];
@@ -41,6 +42,13 @@ try {
   assert.match(logs.at(-1)?.message ?? "", /Connection refused/);
   logServerError({ stage: "parse" }, new SyntaxError('Unexpected token, "private-ledger-body" is not valid JSON'));
   assert.equal(logs.at(-1)?.message, "Invalid JSON or syntax.");
+  const poolFailure = new Error("Failed query\nparams: private-session-token", { cause: new Error("EMAXCONNSESSION pool_size: 15") });
+  logAuthError("error", "INTERNAL_SERVER_ERROR", poolFailure, { token: "private-session-token" });
+  assert.match(logs.at(-1)?.message ?? "", /EMAXCONNSESSION/);
+  assert.doesNotMatch(JSON.stringify(logs.at(-1)), /private-session-token/);
+  const authCount = logs.length;
+  logAuthError("info", "Ignored diagnostic", { token: "private-session-token" });
+  assert.equal(logs.length, authCount);
   assert.doesNotMatch(JSON.stringify(logs), /private-query|private-header|private-ledger-body|private-ledger-values|test-secret-openai-key|private-token/);
 } finally {
   console.error = original;
