@@ -1,5 +1,5 @@
-import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { relations, sql } from "drizzle-orm";
+import { pgTable, text, timestamp, boolean, index, check } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -12,7 +12,7 @@ export const user = pgTable("user", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-});
+}, (table) => [check("user_no_profile_image", sql`${table.image} is null`)]);
 
 export const session = pgTable(
   "session",
@@ -20,6 +20,7 @@ export const session = pgTable(
     id: text("id").primaryKey(),
     expiresAt: timestamp("expires_at").notNull(),
     token: text("token").notNull().unique(),
+    tokenHash: text("token_hash").notNull().unique(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .$onUpdate(() => /* @__PURE__ */ new Date())
@@ -30,7 +31,10 @@ export const session = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (table) => [index("session_userId_idx").on(table.userId)],
+  (table) => [
+    index("session_userId_idx").on(table.userId),
+    check("session_private_storage", sql`${table.token} like 'dompetara-session-v1:%' and ${table.tokenHash} ~ '^[0-9a-f]{64}$' and ${table.ipAddress} is null and ${table.userAgent} is null`),
+  ],
 );
 
 export const account = pgTable(
@@ -54,7 +58,10 @@ export const account = pgTable(
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
-  (table) => [index("account_userId_idx").on(table.userId)],
+  (table) => [
+    index("account_userId_idx").on(table.userId),
+    check("account_no_provider_credentials", sql`${table.accessToken} is null and ${table.refreshToken} is null and ${table.idToken} is null and ${table.accessTokenExpiresAt} is null and ${table.refreshTokenExpiresAt} is null and ${table.scope} is null`),
+  ],
 );
 
 export const verification = pgTable(

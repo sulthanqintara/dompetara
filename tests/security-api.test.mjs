@@ -1,3 +1,4 @@
+import { createSessionTokenCodec } from "../src/lib/auth-privacy/create-session-token-codec.ts";
 import assert from "node:assert/strict";
 import { createHmac, randomUUID } from "node:crypto";
 import { Pool } from "pg";
@@ -35,7 +36,8 @@ async function limitResponse(response, status) {
 }
 try {
   await pool.query('INSERT INTO "user" (id,name,email) VALUES ($1,$2,$3)', [account, "Security API fixture", `${account}@example.invalid`]);
-  await pool.query("INSERT INTO session (id,user_id,token,expires_at,updated_at) VALUES ($1,$2,$3,$4,now())", [randomUUID(), account, token, new Date(Date.now()+3_600_000)]);
+  const codec = createSessionTokenCodec(process.env.BETTER_AUTH_SECRET);
+  await pool.query("INSERT INTO session (id,user_id,token,token_hash,expires_at,updated_at) VALUES ($1,$2,$3,$4,$5,now())", [randomUUID(), account, await codec.encrypt(token), codec.hash(token), new Date(Date.now()+3_600_000)]);
   assert.equal((await fetch(`${origin}/api/ledger`)).status, 401);
   let state = await (await fetch(`${origin}/api/ledger`, { headers })).json();
   let response = await fetch(`${origin}/api/ledger`, { method: "POST", headers, body: JSON.stringify({ action: "wallet", name: "Isolated wallet", currency: "IDR", amount: "10", version: state.version }) });

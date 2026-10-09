@@ -50,6 +50,20 @@
       "when": 1791529983047,
       "tag": "0006_security_controls",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791546110189,
+      "tag": "0007_auth_privacy",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791546923653,
+      "tag": "0008_auth_privacy_guards",
+      "breakpoints": true
     }
   ]
 }

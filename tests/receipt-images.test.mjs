@@ -1,3 +1,4 @@
+import { createSessionTokenCodec } from "../src/lib/auth-privacy/create-session-token-codec.ts";
 import "dotenv/config";
 import assert from "node:assert/strict";
 import { createHmac, randomUUID, randomBytes } from "node:crypto";
@@ -164,7 +165,7 @@ try {
   for (let actor = 0; actor < 2; actor++) {
     await sql`insert into public."user" (id, name, email) values (${ids[actor]}, 'Receipt image test', ${ids[actor] + "@example.invalid"})`;
     await sql`insert into public.user_preferences(user_id,locale,language_prompt_shown_at) values(${ids[actor]},'en',now())`;
-    await sql`insert into public.session (id, user_id, token, expires_at, updated_at) values (${randomUUID()}, ${ids[actor]}, ${tokens[actor]}, ${new Date(Date.now() + 3600000)}, ${new Date()})`;
+    await sql`insert into public.session (id, user_id, token, token_hash, expires_at, updated_at) values (${randomUUID()}, ${ids[actor]}, ${await createSessionTokenCodec(process.env.BETTER_AUTH_SECRET).encrypt(tokens[actor])}, ${createSessionTokenCodec(process.env.BETTER_AUTH_SECRET).hash(tokens[actor])}, ${new Date(Date.now() + 3600000)}, ${new Date()})`;
     await sql`insert into public.ledger (user_id, data) values (${ids[actor]}, ${sql.json({ wallets: [{ id: "bank", name: "Bank", currencies: ["IDR"] }], categories: [{ id: "food", name: "Food", kind: "expense" }], entries: [] })})`;
   }
   const baselineObjects = await objects();

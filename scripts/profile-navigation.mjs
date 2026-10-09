@@ -1,3 +1,4 @@
+import { createSessionTokenCodec } from "../src/lib/auth-privacy/create-session-token-codec.ts";
 import "dotenv/config";
 import assert from "node:assert/strict";
 import { createHmac, randomUUID } from "node:crypto";
@@ -32,7 +33,7 @@ let browser;
 try {
   await sql.begin(async (tx) => {
     await tx`insert into public."user" (id, name, email) values (${id}, 'Navigation profile', ${id + "@example.invalid"})`;
-    await tx`insert into public.session (id, user_id, token, expires_at, updated_at) values (${randomUUID()}, ${id}, ${token}, ${new Date(Date.now() + 3600000)}, ${new Date()})`;
+    await tx`insert into public.session (id, user_id, token, token_hash, expires_at, updated_at) values (${randomUUID()}, ${id}, ${await createSessionTokenCodec(process.env.BETTER_AUTH_SECRET).encrypt(token)}, ${createSessionTokenCodec(process.env.BETTER_AUTH_SECRET).hash(token)}, ${new Date(Date.now() + 3600000)}, ${new Date()})`;
     await tx`insert into public.ledger (user_id, data) values (${id}, ${tx.json(data)})`;
   });
   browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE });

@@ -3,8 +3,11 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { db } from "./db";
 import { logAuthError } from "./log-auth-error";
 import { authRateStorage } from "./security/auth-rate-storage";
+import { authPrivacyOptions } from "./auth-privacy/auth-privacy";
+import { protectSessionAdapter } from "./auth-privacy/protect-session-adapter";
 
 export const auth = betterAuth({
+  ...authPrivacyOptions,
   logger: { log: logAuthError },
   rateLimit: { enabled: true, customStorage: authRateStorage },
   advanced: {
@@ -14,13 +17,15 @@ export const auth = betterAuth({
       ipAddressHeaders: ["x-vercel-forwarded-for"],
     },
   },
-  database: drizzleAdapter(db, {
+  database: protectSessionAdapter(drizzleAdapter(db, {
     provider: "pg",
-  }),
+    transaction: true,
+  })),
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+      includeGrantedScopes: false,
     },
   },
 });

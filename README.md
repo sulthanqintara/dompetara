@@ -50,4 +50,8 @@ Dompetara follows your device’s light or dark appearance by default. Use the s
 
 Your ledger is tied to your Google account. Transactions use your device's timezone, and you can download your records as JSON or CSV from Settings, including notes and saved receipt details.
 
+For Google sign-in, Dompetara retains your name and email, verification status, and the account identifiers needed to reconnect you to your ledger. It does not retain your Google profile photo or Google access, refresh, or ID tokens. Login sessions do not retain IP addresses or browser details, and their credentials are encrypted in the database.
+
+Your records are protected from other users, but they are not end-to-end encrypted: the service operator can access account details and ledger contents. Hosting providers may retain request logs separately from Dompetara's database.
+
 Receipt images are sent to an external OCR or AI service for processing. Images are temporary unless you choose **Save receipt image** during review. A saved image is private to your account and can be viewed or removed later; removing it keeps the transaction and its receipt details.

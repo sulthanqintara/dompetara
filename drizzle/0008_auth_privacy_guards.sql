@@ -1,0 +1,3 @@
+ALTER TABLE "account" ADD CONSTRAINT "account_no_provider_credentials" CHECK ("account"."access_token" is null and "account"."refresh_token" is null and "account"."id_token" is null and "account"."access_token_expires_at" is null and "account"."refresh_token_expires_at" is null and "account"."scope" is null);--> statement-breakpoint
+ALTER TABLE "session" ADD CONSTRAINT "session_private_storage" CHECK ("session"."token" like 'dompetara-session-v1:%' and "session"."token_hash" ~ '^[0-9a-f]{64}$' and "session"."ip_address" is null and "session"."user_agent" is null);--> statement-breakpoint
+ALTER TABLE "user" ADD CONSTRAINT "user_no_profile_image" CHECK ("user"."image" is null);
