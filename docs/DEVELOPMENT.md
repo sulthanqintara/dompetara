@@ -136,6 +136,21 @@ With the app running and the same `.env` database/auth configuration, run `pnpm 
 
 ## Deployment notes (recorded 2026-10-03)
 
+### Speed Insights
+
+`@vercel/speed-insights/next` is mounted once in `src/app/layout.tsx`, covering every page and tracking route changes. The component has no visible UI. On Vercel, it loads `/_vercel/speed-insights/script.js`; a plain local production server does not provide that endpoint. Deploy the integration before expecting real visitor metrics.
+
+View results in the project's [Speed Insights dashboard](https://vercel.com/msulthanqs-projects/personal-ledger/speed-insights). To check production data from the CLI without a local project link:
+
+```sh
+pnpx vercel metrics schema vercel.speed_insights --scope msulthanqs-projects
+pnpx vercel metrics vercel.speed_insights.lcp_ms --aggregation p75 --group-by route --since 7d --project personal-ledger --scope msulthanqs-projects --prod
+```
+
+An empty response means there are no collected samples for that query; it is not a performance score. Use `inp_ms` and `cls` in place of `lcp_ms` for the other Core Web Vitals. Real Experience Score is available in the dashboard. See [Vercel's metrics guide](https://vercel.com/docs/speed-insights/accessing-metrics-with-vercel-cli).
+
+### Production configuration
+
 Production: https://personal-ledger-inky-alpha.vercel.app (project `personal-ledger`, scope `msulthanqs-projects`, owned by `sulthanqintara@gmail.com`, Node.js 24).
 
 Production environment variables are configured on Vercel: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ZAI_API_KEY`, and `ENABLE_EXPERIMENTAL_COREPACK=1` to use the pinned pnpm version. Local credentials stay in local environment files. `.vercelignore` explicitly excludes environment files, local receipt samples and `.claude` worktrees from CLI uploads.

@@ -209,6 +209,8 @@ These extend the original request and are optional.
 
 ## Production deployment (2026-10-03)
 
+Speed Insights verification (2026-10-09): installed `@vercel/speed-insights` 2.0.0 and mounted the Next.js integration once in the root layout. Production build (including i18n), lint and TypeScript passed. Browser verification confirmed the SDK script is injected with `/sign-in` route tracking; its Vercel-hosted endpoint is unavailable on the plain local production server. The existing Vercel project reports `speedInsights.hasData: false`, and the production LCP sample query over seven days returns empty data. These workspace changes have not been deployed; live collection remains unverified.
+
 - [x] Create and link `personal-ledger`; transferred from the work account to personal account `sulthanqintara@gmail.com` (scope `msulthanqs-projects`) on 2026-10-03, preserving production URL: https://personal-ledger-inky-alpha.vercel.app.
 - [x] Configure production credentials and authentication origin; enable the pinned pnpm version with Corepack.
 - [x] Verify deployment uploads exclude environment files, personal receipt images and local worktrees.
