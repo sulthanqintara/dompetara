@@ -16,11 +16,24 @@ const geistMono = Geist_Mono({
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("UI");
+  const description = t("trackYourIncomeAndExpensesAllInOnePlace");
   return {
+    metadataBase: new URL("https://personal-ledger-inky-alpha.vercel.app"),
     title: "Dompetara",
     applicationName: "Dompetara",
     appleWebApp: { capable: true, title: "Dompetara", statusBarStyle: "default" },
-    description: t("trackYourIncomeAndExpensesAllInOnePlace"),
+    description,
+    openGraph: {
+      title: "Dompetara",
+      description,
+      siteName: "Dompetara",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Dompetara",
+      description,
+    },
   };
 }
 
