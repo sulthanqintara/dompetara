@@ -29,7 +29,6 @@ export function WorkspaceNavigation({ tab }: { tab: string }) {
           }}>
           {isPhone ? <span className="mobile-nav-icon" aria-hidden="true"><Icon size={18} /></span> : <Icon size={18} />}
           <span className="nav-text">{t(isPhone ? label : key)}</span>
-          {!isPhone && tab === name && <span className="active-dot" />}
         </TabsTrigger>
       ); })}
       {isPhone && <TabsIndicator className="mobile-nav-indicator" />}
