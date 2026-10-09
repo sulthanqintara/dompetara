@@ -435,6 +435,14 @@
     "receiptImageSaveExpired": "Penyimpanan gambar struk kedaluwarsa. Silakan coba lagi.",
     "receiptImageNotFound": "Gambar struk tidak ditemukan.",
     "privateReceiptStorageNotConfigured": "Penyimpanan struk pribadi belum tersedia. Coba simpan tanpa gambar.",
-    "couldNotSaveReceiptImage": "Tidak dapat menyimpan gambar struk. Silakan coba lagi, atau simpan tanpa gambar."
+    "couldNotSaveReceiptImage": "Tidak dapat menyimpan gambar struk. Silakan coba lagi, atau simpan tanpa gambar.",
+    "walletLimitReached": "Batas dompet tercapai. Hapus satu dompet sebelum menambahkan dompet lain.",
+    "categoryLimitReached": "Batas kategori tercapai. Hapus satu kategori sebelum menambahkan kategori lain.",
+    "transactionLimitReached": "Batas transaksi tercapai. Hapus satu transaksi sebelum menambahkan transaksi lain.",
+    "receiptImportLimitReached": "Batas impor struk tercapai. Simpan transaksi ini secara manual.",
+    "ledgerStorageLimitReached": "Batas penyimpanan buku kas tercapai. Hapus detail transaksi sebelum menambahkan data lagi.",
+    "tooManyRequests": "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.",
+    "requestProtectionUnavailable": "Perlindungan permintaan sementara tidak tersedia. Coba lagi nanti.",
+    "authTooManyRequests": "Terlalu banyak permintaan. Coba lagi nanti."
   }
 }

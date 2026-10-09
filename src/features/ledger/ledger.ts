@@ -1,4 +1,5 @@
 import { money } from "./money.ts";
+import { assertLedgerGrowth, assertLedgerLimits } from "./ledger-limits.ts";
 export { money } from "./money.ts";
 import {
   receiptSchema,
@@ -77,6 +78,36 @@ export function balance(
   }
   return total;
 }
+
+export function ledgerBalances(data: Ledger) {
+  const totals = new Map(
+    data.wallets.map((wallet) => [
+      wallet.id,
+      new Map<Currency, number>(wallet.currencies.map((currency) => [currency, 0])),
+    ]),
+  );
+  for (const entry of data.entries) {
+    const source = totals.get(entry.wallet);
+    const destination = entry.kind === "transfer" ? totals.get(entry.toWallet!) : undefined;
+    if (source?.has(entry.currency)) {
+      let total = source.get(entry.currency)! +
+        (entry.kind === "expense" || entry.kind === "transfer" ? -entry.amount : entry.amount);
+      if (destination === source && entry.toCurrency === entry.currency)
+        total += entry.received!;
+      if (!Number.isSafeInteger(total)) throw new Error("Balance exceeds supported amount.");
+      source.set(entry.currency, total);
+    }
+    if (
+      destination?.has(entry.toCurrency!) &&
+      !(destination === source && entry.toCurrency === entry.currency)
+    ) {
+      const total = destination.get(entry.toCurrency!)! + entry.received!;
+      if (!Number.isSafeInteger(total)) throw new Error("Balance exceeds supported amount.");
+      destination.set(entry.toCurrency!, total);
+    }
+  }
+  return totals;
+}
 function text(value: unknown, label: string, optional = false) {
   if (
     typeof value !== "string" ||
@@ -95,6 +126,7 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
     const entry = data.entries.find((entry) => entry.id === p.id);
     if (!entry?.receipt) throw new Error("Receipt not found.");
     delete entry.receipt.imageId;
+    assertLedgerLimits(previous, data);
     return data;
   }
   if (p.action === "receipt") {
@@ -107,6 +139,7 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
       )
     )
       return structuredClone(previous);
+    assertLedgerGrowth(previous, "receiptImports", 1);
     const result = mutateLedger(previous, {
       ...p,
       action: "entry",
@@ -121,8 +154,16 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
         entryId: result.entries.at(-1)!.id,
       },
     ];
+    assertLedgerLimits(previous, result);
     return result;
   }
+  // Reject obvious count growth before copying or scanning a large saved ledger.
+  if (p.action === "wallet" && !p.id) {
+    assertLedgerGrowth(previous, "wallets", 1);
+    assertLedgerGrowth(previous, "entries", 1);
+  }
+  if (p.action === "category") assertLedgerGrowth(previous, "categories", 1);
+  if (p.action === "entry" && !p.id) assertLedgerGrowth(previous, "entries", 1);
   const data = structuredClone(previous);
   const currency = (v: unknown): Currency => {
     if (!currencies.includes(v as Currency))
@@ -148,6 +189,7 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
     const c = currency(p.currency);
     const target = money(p.amount);
     const delta = target - balance(data, w.id, c);
+    if (!Number.isSafeInteger(delta)) throw new Error("Balance exceeds supported amount.");
     const opening = !w.currencies.includes(c);
     if (opening) w.currencies.push(c);
     if (delta || opening)
@@ -220,6 +262,10 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
         if (e.kind !== "expense")
           throw new Error("A receipt must be saved as an expense.");
         e.receipt = receiptSchema.parse({ ...(p.receipt ?? existing?.receipt) as Receipt, ...(e.details ?? {}) });
+        // Keep byte validation aligned with the image references the server saves.
+        delete e.receipt.imageId;
+        if (existing?.receipt?.imageId && p.removeReceiptImage !== true)
+          e.receipt.imageId = existing.receipt.imageId;
         validateReceipt(e.receipt, e.amount);
         if (
           !existing &&
@@ -326,7 +372,7 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
         .concat(fee ? [e, fee] : [e]);
     }
   } else throw new Error("Unknown action.");
-  for (const w of data.wallets)
-    for (const c of w.currencies) balance(data, w.id, c);
+  assertLedgerLimits(previous, data);
+  ledgerBalances(data);
   return data;
 }

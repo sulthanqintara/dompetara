@@ -9,6 +9,7 @@ import { eq } from "drizzle-orm";
 import { withApiErrorLogging } from "@/lib/with-api-error-logging";
 import { logServerError } from "@/lib/log-server-error";
 import { saveLedgerImages } from "@/features/receipts/save-ledger-images";
+import { enforceUserLimit } from "@/lib/security/enforce-user-limit";
 
 export const GET = withApiErrorLogging(async (request: Request) => {
   const session = await auth.api.getSession({ headers: request.headers });
@@ -27,6 +28,7 @@ export const POST = withApiErrorLogging(async (request: Request) => {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session)
     return Response.json({ error: "Please sign in." }, { status: 401 });
+  await enforceUserLimit(session.user.id, "ledger-write");
   let payload;
   let image: File | undefined;
   try {

@@ -8,6 +8,8 @@ import { LedgerProvider } from "@/features/ledger/components/layout/ledger-provi
 import { LedgerShell } from "@/features/ledger/components/layout/ledger-shell";
 import { randomUUID } from "node:crypto";
 import { measureServerStage } from "@/lib/measure-server-stage";
+import { RequestLimitError } from "@/lib/security/request-limit-error";
+import { LedgerRequestLimit } from "@/features/ledger/components/shared/ledger-request-limit";
 
 export default async function LedgerLayout({ children }: { children: React.ReactNode }) {
   const requestHeaders = await headers();
@@ -24,7 +26,14 @@ export default async function LedgerLayout({ children }: { children: React.React
       const saved = (await cookies()).get("ledger-timezone")?.value;
       if (saved) { const zone = decodeURIComponent(saved); new Intl.DateTimeFormat("en", { timeZone: zone }); timeZone = zone; }
     } catch { /* An invalid timezone cookie falls back to UTC until hydration. */ }
-    return <LedgerProvider initialState={await readLedger(session.user.id, context)} name={session.user.name} email={session.user.email}
+    let initialState;
+    try {
+      initialState = await readLedger(session.user.id, context);
+    } catch (error) {
+      if (!(error instanceof RequestLimitError)) throw error;
+      return <LedgerRequestLimit unavailable={error.status === 503} />;
+    }
+    return <LedgerProvider initialState={initialState} name={session.user.name} email={session.user.email}
       initialTimeZone={timeZone} initialMonth={localDate(new Date(), timeZone).slice(0, 7)}>
       <LedgerShell>{children}</LedgerShell>
       <LanguagePrompt shouldShow={!preferences?.languagePromptShownAt} />

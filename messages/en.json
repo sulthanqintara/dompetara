@@ -435,6 +435,14 @@
     "receiptImageSaveExpired": "Receipt image save expired. Please retry.",
     "receiptImageNotFound": "Receipt image not found.",
     "privateReceiptStorageNotConfigured": "Private receipt storage is not configured. Try saving without the image.",
-    "couldNotSaveReceiptImage": "Could not save the receipt image. Please retry, or save without the image."
+    "couldNotSaveReceiptImage": "Could not save the receipt image. Please retry, or save without the image.",
+    "walletLimitReached": "Wallet limit reached. Remove a wallet before adding another.",
+    "categoryLimitReached": "Category limit reached. Remove a category before adding another.",
+    "transactionLimitReached": "Transaction limit reached. Remove a transaction before adding another.",
+    "receiptImportLimitReached": "Receipt import limit reached. Save this transaction manually.",
+    "ledgerStorageLimitReached": "Ledger storage limit reached. Remove transaction details before adding more data.",
+    "tooManyRequests": "Too many requests. Please wait a moment and try again.",
+    "requestProtectionUnavailable": "Request protection is temporarily unavailable. Please try again later.",
+    "authTooManyRequests": "Too many requests. Please try again later."
   }
 }

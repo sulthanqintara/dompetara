@@ -5,12 +5,14 @@ import { userPreferences } from "@/lib/db/schema";
 import { readLimitedBody } from "@/lib/read-limited-body";
 import { logServerError } from "@/lib/log-server-error";
 import { preferenceSchema } from "./i18n";
+import { enforceUserLimit } from "@/lib/security/enforce-user-limit";
 
 export async function savePreferences(request: Request) {
   if (request.headers.get("origin") !== new URL(process.env.BETTER_AUTH_URL || request.url).origin)
     return Response.json({ error: "Invalid origin." }, { status: 403 });
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session) return Response.json({ error: "Please sign in." }, { status: 401 });
+  await enforceUserLimit(session.user.id, "preferences");
   let input;
   try {
     input = preferenceSchema.parse(JSON.parse((await readLimitedBody(request.body, 1024)).toString("utf8")));

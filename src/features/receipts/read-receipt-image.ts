@@ -7,6 +7,7 @@ import { receiptImages } from "@/lib/db/schema";
 import { readLedger } from "@/features/ledger/read-ledger";
 import { receiptImageStorage } from "./receipt-image-storage";
 import { logServerError } from "@/lib/log-server-error";
+import { enforceUserLimit } from "@/lib/security/enforce-user-limit";
 
 export async function readReceiptImage(request: Request) {
   const headers = {
@@ -20,6 +21,7 @@ export async function readReceiptImage(request: Request) {
       { error: "Please sign in." },
       { status: 401, headers },
     );
+  await enforceUserLimit(session.user.id, "receipt-image");
   const parsed = z
     .uuid()
     .safeParse(new URL(request.url).searchParams.get("id"));

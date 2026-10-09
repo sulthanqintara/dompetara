@@ -7,6 +7,7 @@ import { normalizeReceiptImage } from "./normalize-receipt-image";
 import { receiptImageStorage } from "./receipt-image-storage";
 import { cleanupReceiptImages } from "./cleanup-receipt-images";
 import { logServerError } from "@/lib/log-server-error";
+import { assertLedgerLimits } from "@/features/ledger/ledger-limits";
 
 export async function saveLedgerImages(
   userId: string,
@@ -37,6 +38,7 @@ export async function saveLedgerImages(
       entry.receipt.imageId = trusted;
   }
   let imageId: string | undefined;
+  assertLedgerLimits(previous, data);
   try {
     if (file) {
       const entry =
@@ -53,13 +55,14 @@ export async function saveLedgerImages(
         throw new Error("Save images only with a receipt transaction.");
       const bytes = await normalizeReceiptImage(file);
       imageId = crypto.randomUUID();
+      entry.receipt.imageId = imageId;
+      assertLedgerLimits(previous, data);
       // Persist the cleanup record BEFORE upload, so a timeout or process crash
       // cannot leave an untracked object. Staged objects expire after one hour.
       await db
         .insert(receiptImages)
         .values({ id: imageId, userId, state: "staged" });
       await receiptImageStorage("POST", imageId, bytes);
-      entry.receipt.imageId = imageId;
     }
     const retained = new Set(
       data.entries.flatMap((entry) =>

@@ -1,4 +1,5 @@
 export * from "./schema/auth";
+export * from "./schema/security";
 
 import {
   pgTable,

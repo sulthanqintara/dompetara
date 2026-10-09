@@ -4,12 +4,9 @@ import { readLimitedBody } from "@/lib/read-limited-body";
 import { auth } from "@/lib/auth";
 import { extractReceipt } from "./extract";
 import { logServerError } from "@/lib/log-server-error";
-
-// ponytail: process-local limits; use a shared limiter before running multiple instances.
-const attempts = new Map<
-  string,
-  { since: number; count: number; busy: boolean }
->();
+import { enforceUserLimit } from "@/lib/security/enforce-user-limit";
+import { acquireReceiptAdmission } from "@/lib/security/acquire-receipt-admission";
+import { RequestLimitError } from "@/lib/security/request-limit-error";
 export async function extractRequest(request: Request) {
   if (
     request.headers.get("origin") !==
@@ -19,22 +16,8 @@ export async function extractRequest(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session)
     return Response.json({ error: "Please sign in." }, { status: 401 });
-  const now = Date.now();
-  for (const [id, attempt] of attempts)
-    if (!attempt.busy && now - attempt.since > 60000) attempts.delete(id);
-  const attempt = attempts.get(session.user.id) ?? {
-    since: now,
-    count: 0,
-    busy: false,
-  };
-  if (attempt.busy || attempt.count >= 5)
-    return Response.json(
-      { error: "Please wait before reading another receipt." },
-      { status: 429 },
-    );
-  attempts.set(session.user.id, attempt);
-  attempt.count++;
-  attempt.busy = true;
+  await enforceUserLimit(session.user.id, "receipt-intake");
+  let release: (() => Promise<void>) | undefined;
   try {
     const body = await readLimitedBody(request.body, 4_100_000);
     const form = await new Request(request.url, {
@@ -46,6 +29,8 @@ export async function extractRequest(request: Request) {
       method = form.get("method");
     if (!(file instanceof File) || (method !== "ocr" && method !== "ai"))
       throw new Error("Choose an image and OCR or AI.");
+    if (!file.size || file.size > 4_000_000)
+      throw new Error("Upload an image smaller than 4 MB.");
     const locale = localeSchema.parse(form.get("locale") ?? "en");
     const key = process.env.ZAI_API_KEY;
     const openaiKey = process.env.OPENAI_API_KEY;
@@ -60,6 +45,15 @@ export async function extractRequest(request: Request) {
         { status: 503 },
       );
     const { data } = await readLedger(session.user.id);
+    try {
+      const admission = await acquireReceiptAdmission(session.user.id);
+      if (!admission.allowed) throw new RequestLimitError(429, admission.retryAfterSeconds);
+      release = admission.release;
+    } catch (error) {
+      if (error instanceof RequestLimitError) throw error;
+      logServerError({ method: "POST", path: "/api/receipts/extract", stage: "receipt admission", status: 503 }, error);
+      throw new RequestLimitError(503, 60);
+    }
     const categories = data.categories
       .filter((category) => category.kind === "expense")
       .map((category) => category.name);
@@ -68,6 +62,7 @@ export async function extractRequest(request: Request) {
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
+    if (error instanceof RequestLimitError) throw error;
     logServerError({ method: "POST", path: "/api/receipts/extract", stage: "extract receipt" }, error);
     return Response.json(
       {
@@ -80,6 +75,12 @@ export async function extractRequest(request: Request) {
       { status: 400 },
     );
   } finally {
-    attempt.busy = false;
+    if (release) {
+      try {
+        await release();
+      } catch (error) {
+        logServerError({ method: "POST", path: "/api/receipts/extract", stage: "release receipt admission" }, error);
+      }
+    }
   }
 }

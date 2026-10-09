@@ -31,6 +31,26 @@ for (const namespace of Object.keys(messages.en)) {
     }
   }
 }
+const securityErrorMessages = [
+  "Wallet limit reached. Remove a wallet before adding another.",
+  "Category limit reached. Remove a category before adding another.",
+  "Transaction limit reached. Remove a transaction before adding another.",
+  "Receipt import limit reached. Save this transaction manually.",
+  "Ledger storage limit reached. Remove transaction details before adding more data.",
+  "Too many requests. Please wait a moment and try again.",
+  "Request protection is temporarily unavailable. Please try again later.",
+];
+const errorKeys = new Map(Object.entries(messages.en.Errors).map(([key, value]) => [value, key]));
+for (const message of securityErrorMessages) {
+  const key = errorKeys.get(message);
+  assert.ok(key, `Security error must map through useErrorMessage: ${message}`);
+  for (const locale of ["en", "id"]) {
+    const translateError = createTranslator({ locale, messages: messages[locale], namespace: "Errors", onError: (error) => { throw error; } });
+    assert.equal(translateError(key), messages[locale].Errors[key]);
+    assert.notEqual(key, "somethingWentWrongPleaseTryAgain", "Known security errors retain their actionable translation");
+  }
+  assert.notEqual(messages.id.Errors[key], message, `${key} must have Indonesian copy`);
+}
 const t = createTranslator({ locale: "id", messages: messages.id, namespace: "UI" });
 assert.equal(categoryLabel({ categories: [{ id: "Bills", name: "Bills", kind: "expense" }], entries: [] }, "Bills", t), "Tagihan");
 assert.equal(categoryLabel({ categories: [{ id: "custom", name: "Bills", kind: "expense" }], entries: [] }, "Bills", t), "Bills", "Custom names must not be translated");
