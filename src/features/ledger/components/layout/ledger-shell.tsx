@@ -36,11 +36,11 @@ export function LedgerShell({ children }: { children: ReactNode }) {
   const section =
     ledgerSections.find((item) => item.href === (loading ? pendingHref : pathname)) ?? ledgerSections[0];
   const tab = section.name;
-  const { name, editor } = useLedgerContext();
+  const { editor } = useLedgerContext();
   return (
     <NavigationContext.Provider value={setPendingHref}><SidebarProvider>
       <WorkspaceTabs className="app-shell" value={tab}>
-        <Sidebar name={name} tab={tab} />
+        <Sidebar tab={tab} />
         <main
           className={`workspace${tab === "Transactions" || tab === "Wallet" ? " workspace-with-action" : ""}`}
         >

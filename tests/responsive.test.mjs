@@ -612,7 +612,7 @@ async function checkNavigation(page, width, height) {
     assert.equal(await sheet.getAttribute("aria-modal"), "true");
     assert.equal(await toggle.getAttribute("aria-expanded"), "true");
     assert.equal(await sheet.getByRole("tab").count(), 4);
-    assert.equal(await sheet.locator(".profile strong").count(), 1);
+    assert.equal(await sheet.locator(".profile").count(), 0);
     await check(page, "navigation-sheet", width, height);
     await sheet.getByRole("button", { name: "Close", exact: true }).focus();
     await page.keyboard.press("Tab");
