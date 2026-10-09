@@ -70,3 +70,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - Recommend a library when it meaningfully simplifies implementation or improves correctness; do not hesitate to explain the benefit and tradeoffs. Prefer existing dependencies and native APIs for simple tasks.
 - Use Zod for structured external input validation and infer TypeScript types from schemas instead of duplicating validators and type definitions. Keep business rules and money calculations explicit.
+
+## Database schema: direct synchronization
+
+- Use `src/lib/db/schema.ts` and its exports as the source of truth. Use `pnpm db:push` for schema updates; do not generate or apply new migration files. Existing `drizzle/` files are historical records and legacy-cutover test fixtures.
+- Before changing a shared database, fetch the latest repository state and inspect its actual schema. Reconcile missing code from other checkouts before proposing database changes; preserve session encryption, privacy constraints, permissions, and existing ledger data.
+- Keep `drizzle.config.ts` restricted to the app's tables in the `public` schema. Update its table allowlist and `scripts/database-security.sql` when adding a table. Never manage Supabase-owned schemas or unrelated tables.
+- Review the SQL printed by the strict push command before accepting it. Never use `--force`, reset a populated database, or accept data loss without explicit user approval. Renames and data transformations need a reviewed one-time SQL operation; do not treat them as drop-and-create changes.
+- Run the full `pnpm db:push` command so table permissions are secured after synchronization, then run `pnpm test:db`. Do not synchronize schema automatically during app startup, builds, or deployments. Keep setup/operations details in `docs/DEVELOPMENT.md`.

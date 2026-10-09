@@ -392,7 +392,10 @@
     "appearance": "Tampilan",
     "colorTheme": "Tema warna",
     "systemTheme": "Pengaturan sistem",
-    "themeSavedOnThisDevice": "Pilihan tema disimpan di perangkat ini. Sistem mengikuti pengaturan terang atau gelap perangkat Anda."
+    "themeSavedOnThisDevice": "Pilihan tema disimpan di perangkat ini. Sistem mengikuti pengaturan terang atau gelap perangkat Anda.",
+    "deleteAccount": "Hapus akun",
+    "deleteAccountQuestion": "Hapus akun Anda?",
+    "deleteAccountDescription": "Akun, dompet, transaksi, kategori, dan preferensi bahasa Anda akan dihapus secara permanen. Gambar struk yang tersimpan tidak lagi dapat diakses dan akan dijadwalkan untuk dihapus. Ekspor catatan Anda terlebih dahulu jika ingin menyimpan salinannya. Tindakan ini tidak dapat dibatalkan."
   },
   "Errors": {
     "aReceiptMustBeSavedAsAnExpense": "Struk harus disimpan sebagai pengeluaran.",
@@ -508,6 +511,8 @@
     "ledgerStorageLimitReached": "Batas penyimpanan buku kas tercapai. Hapus detail transaksi sebelum menambahkan data lagi.",
     "tooManyRequests": "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.",
     "requestProtectionUnavailable": "Perlindungan permintaan sementara tidak tersedia. Coba lagi nanti.",
-    "authTooManyRequests": "Terlalu banyak permintaan. Coba lagi nanti."
+    "authTooManyRequests": "Terlalu banyak permintaan. Coba lagi nanti.",
+    "couldNotDeleteYourAccountPleaseTryAgain": "Akun Anda tidak dapat dihapus. Silakan coba lagi.",
+    "pleaseSignOutAndSignInAgainBeforeDeletingYourAccount": "Silakan keluar dan masuk kembali sebelum menghapus akun Anda."
   }
 }

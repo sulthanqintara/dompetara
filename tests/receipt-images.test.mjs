@@ -521,7 +521,11 @@ try {
   );
   assert.ok(!(await objects()).includes(deleted.entry.receipt.imageId));
   const accountImage = await savedImage();
-  await sql`delete from public."user" where id = ${ids[0]}`;
+  assert.equal((await request("/api/auth/delete-user", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  })).status, 200);
   const [orphan] =
     await sql`select user_id from public.receipt_images where id = ${accountImage.entry.receipt.imageId}`;
   assert.equal(

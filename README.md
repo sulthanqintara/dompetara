@@ -54,4 +54,6 @@ For Google sign-in, Dompetara retains your name and email, verification status, 
 
 Your records are protected from other users, but they are not end-to-end encrypted: the service operator can access account details and ledger contents. Hosting providers may retain request logs separately from Dompetara's database.
 
+Choose **Settings → Your account → Delete account** to permanently delete your account, wallets, transactions, categories, and language preference. Export your records first if you want a copy. You may need to sign out and sign in again before deleting. Saved receipt images become inaccessible immediately and are queued for storage cleanup. This cannot be undone; signing in again creates a new account.
+
 Receipt images are sent to an external OCR or AI service for processing. Images are temporary unless you choose **Save receipt image** during review. A saved image is private to your account and can be viewed or removed later; removing it keeps the transaction and its receipt details.

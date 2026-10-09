@@ -392,7 +392,10 @@
     "appearance": "Appearance",
     "colorTheme": "Color theme",
     "systemTheme": "System setting",
-    "themeSavedOnThisDevice": "Your theme choice is saved on this device. System follows your device’s light or dark setting."
+    "themeSavedOnThisDevice": "Your theme choice is saved on this device. System follows your device’s light or dark setting.",
+    "deleteAccount": "Delete account",
+    "deleteAccountQuestion": "Delete your account?",
+    "deleteAccountDescription": "Your account, wallets, transactions, categories, and saved language preference will be permanently deleted. Saved receipt images will become inaccessible and be queued for deletion. Export your records first if you want a copy. This cannot be undone."
   },
   "Errors": {
     "aReceiptMustBeSavedAsAnExpense": "A receipt must be saved as an expense.",
@@ -508,6 +511,8 @@
     "ledgerStorageLimitReached": "Ledger storage limit reached. Remove transaction details before adding more data.",
     "tooManyRequests": "Too many requests. Please wait a moment and try again.",
     "requestProtectionUnavailable": "Request protection is temporarily unavailable. Please try again later.",
-    "authTooManyRequests": "Too many requests. Please try again later."
+    "authTooManyRequests": "Too many requests. Please try again later.",
+    "couldNotDeleteYourAccountPleaseTryAgain": "Could not delete your account. Please try again.",
+    "pleaseSignOutAndSignInAgainBeforeDeletingYourAccount": "Please sign out and sign in again before deleting your account."
   }
 }

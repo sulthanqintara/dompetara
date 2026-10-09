@@ -9,6 +9,7 @@ import { protectSessionAdapter } from "./auth-privacy/protect-session-adapter";
 export const auth = betterAuth({
   ...authPrivacyOptions,
   logger: { log: logAuthError },
+  user: { deleteUser: { enabled: true } },
   rateLimit: { enabled: true, customStorage: authRateStorage },
   advanced: {
     ipAddress: {
