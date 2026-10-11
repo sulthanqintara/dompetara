@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { getLocale, getTranslations } from "next-intl/server";
-import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Wallet } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,10 +23,16 @@ export async function ThemePreview({ mode }: { mode: "light" | "dark" }) {
         <span style={{ color: "var(--destructive)" }}><ArrowUpRight aria-hidden="true" />{t("styleGuideExpense")}</span>
         <span style={{ color: "var(--transfer)" }}><ArrowLeftRight aria-hidden="true" />{t("styleGuideTransfer")}</span>
       </div>
+      <div className={styles.selection}>
+        <Button type="button" variant="secondary" aria-pressed="true" className={styles.selectedControl}>
+          <Wallet aria-hidden="true" />{t("styleGuideSelectedExample")}
+        </Button>
+        <Card className={styles.elevated}>{t("styleGuideElevatedExample")}</Card>
+      </div>
       <div className={styles.controls}>
         <Button type="button">{t("styleGuidePrimaryAction")}</Button>
         <Button type="button" variant="secondary">{t("styleGuideSecondaryAction")}</Button>
-        <Button type="button" disabled>{t("styleGuideDisabled")}</Button>
+        <Button type="button" variant="secondary" disabled>{t("styleGuideDisabled")}</Button>
       </div>
       <div className={styles.field}>
         <Label htmlFor={`${mode}-sample-input`}>{t("styleGuideInputLabel")}</Label>

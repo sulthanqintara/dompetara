@@ -23,6 +23,13 @@ for (const [family, shades] of Object.entries(colorScales)) {
   }
   for (const [shade, hex] of Object.entries(shades)) assert.ok(themeCss.includes(`--${family}-${shade}:${hex};`));
 }
+for (const hex of Object.values(colorScales.neutral)) {
+  assert.equal(hex.slice(1, 3), hex.slice(3, 5), "Neutral shades must have no color tint");
+  assert.equal(hex.slice(3, 5), hex.slice(5, 7), "Neutral shades must have no color tint");
+}
+assert.equal(designColors.find((role) => role.token === "background")!.dark, "#000000");
+assert.equal(designColors.find((role) => role.token === "card")!.dark, "#111111");
+assert.equal(designColors.find((role) => role.token === "elevated")!.dark, "#1A1A1A");
 assert.equal(colorHsl("#FFFFFF"), "hsl(0 0% 100%)");
 assert.equal(colorHsl("#000000"), "hsl(0 0% 0%)");
 assert.equal(colorHsl("#FF0000"), "hsl(0 100% 50%)");
@@ -34,9 +41,10 @@ for (const mode of ["light", "dark"] as const) {
   const pairs: [string, string, number][] = [
     ["primary-foreground", "primary", 4.5], ["secondary-foreground", "secondary", 4.5],
     ["primary-foreground", "primary-hover", 4.5],
-    ...["background", "card", "muted"].flatMap((surface): [string, string, number][] => [
+    ["selected-foreground", "selected", 4.5],
+    ...["background", "card", "muted", "elevated", "selected"].flatMap((surface): [string, string, number][] => [
       ...["foreground", "muted-foreground", "income", "destructive", "transfer", "warning"].map((text): [string, string, number] => [text, surface, 4.5]),
-      ["input", surface, 3], ["ring", surface, 3],
+      ["input", surface, 3], ["ring", surface, 3], ["brand-accent", surface, 3],
     ]),
   ];
   for (const [foreground, background, minimum] of pairs) {

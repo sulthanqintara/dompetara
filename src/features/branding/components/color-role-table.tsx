@@ -10,7 +10,6 @@ import styles from "./style-guide.module.css";
 
 export async function ColorRoleTable() {
   const t = await getTranslations("UI");
-  const roles = colorRoles.filter((role) => ["background", "card", "foreground", "muted-foreground", "primary", "income", "destructive", "transfer", "warning"].includes(role.token));
   return <section className={styles.roleSummary} aria-labelledby="color-role-heading">
     <h2 id="color-role-heading">{t("styleGuidePalette")}</h2>
     <Table className={styles.roleTable} aria-labelledby="color-role-heading">
@@ -19,7 +18,7 @@ export async function ColorRoleTable() {
         <TableHead scope="col">{t("styleGuideLight")}</TableHead>
         <TableHead scope="col">{t("styleGuideDark")}</TableHead>
       </TableRow></TableHeader>
-      <TableBody>{roles.map((role) => <TableRow key={role.token}>
+      <TableBody>{colorRoles.map((role) => <TableRow key={role.token}>
         <TableHead scope="row">{t(role.label)}</TableHead>
         <TableCell><code>{role.light}</code></TableCell>
         <TableCell><code>{role.dark}</code></TableCell>

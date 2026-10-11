@@ -68,23 +68,18 @@
 .dark {
   --font-sans: var(--font-geist-sans);
   --radius: 0.625rem;
-  --popover: var(--card);
+  --popover: var(--elevated);
   --popover-foreground: var(--card-foreground);
-  --accent: var(--secondary);
-  --accent-foreground: var(--secondary-foreground);
+  --accent: var(--selected);
+  --accent-foreground: var(--selected-foreground);
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: var(--secondary);
-  --sidebar-accent-foreground: var(--secondary-foreground);
+  --sidebar-accent: var(--selected);
+  --sidebar-accent-foreground: var(--selected-foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
-  --chart-1: var(--ring);
-  --chart-2: var(--transfer);
-  --chart-3: var(--warning);
-  --chart-4: var(--destructive);
-  --chart-5: var(--income);
   --income-muted: var(--income-100);
   --expense-muted: var(--red-100);
   --transfer-muted: var(--blue-100);
@@ -240,8 +235,8 @@ a:focus-visible {
   background: var(--muted);
 }
 .nav-item.active {
-  background: var(--secondary);
-  color: var(--secondary-foreground);
+  background: var(--selected);
+  color: var(--selected-foreground);
   font-weight: 600;
 }
 .sidebar-bottom {
@@ -1957,7 +1952,7 @@ button.summary-period-trigger { flex: 1; min-width: 0; padding: 8px; gap: 4px; }
 button.theme-toggle { width: 44px; height: 44px; min-width: 44px; padding: 10px; }
 .theme-toggle svg { width: 20px; height: 20px; }
 .login-theme-toggle { position: absolute; top: 24px; right: 24px; z-index: 1; }
-.brand-icon { display: inline-block; flex-shrink: 0; background: var(--ring); mask: url('/icons/dompetara-mark-mono.svg') center / contain no-repeat; }
+.brand-icon { display: inline-block; flex-shrink: 0; background: var(--brand-accent); mask: url('/icons/dompetara-mark-mono.svg') center / contain no-repeat; }
 .entry-icon.expense { color: var(--destructive); }
 button[data-slot="button"].bg-primary:hover { background: var(--primary-hover); }
 

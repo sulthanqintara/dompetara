@@ -29,7 +29,7 @@
 .rule { min-width: 0; padding: 20px; gap: 12px; }
 .rule h2 { font-size: 18px; }
 .guide .note { margin-top: 24px; }
-.scales { display: grid; gap: 16px; margin-bottom: 32px; }
+.scales { display: grid; gap: 16px; margin-block: 32px; }
 .scaleCard { min-width: 0; padding: 16px; gap: 16px; }
 .scaleCard h3 { margin: 0; }
 .shades { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 12px; margin: 0; padding: 0; list-style: none; }
@@ -48,3 +48,8 @@
   .shades { grid-template-columns: repeat(9, minmax(0, 1fr)); }
   .scaleCard { padding: 24px; }
 }
+
+.selection { display: grid; gap: 12px; min-width: 0; }
+.selectedControl[data-slot="button"] { justify-content: flex-start; min-height: 44px; padding: 10px 16px; white-space: normal; background: var(--selected); color: var(--selected-foreground); border-inline-start: 3px solid var(--brand-accent); }
+.selectedControl svg { color: var(--brand-accent); }
+.elevated { padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--elevated); color: var(--foreground); font-size: 14px; line-height: 1.6; }

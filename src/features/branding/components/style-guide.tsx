@@ -15,12 +15,12 @@ export async function StyleGuide() {
       <h1>{t("styleGuideTitle")}</h1>
       <p>{t("styleGuideIntroduction")}</p>
     </header>
-    <ColorScales />
     <div className={styles.themes}>
       <ThemePreview mode="light" />
       <ThemePreview mode="dark" />
     </div>
     <ColorRoleTable />
+    <ColorScales />
     <section className={styles.rules} aria-label={t("styleGuideRules")}>
       {(["Color", "Hierarchy", "Typography", "Spacing", "Meaning", "Accessibility"] as const).map((rule) => <Card key={rule} className={styles.rule}>
         <h2>{t(`styleGuide${rule}`)}</h2>
