@@ -17,6 +17,8 @@
     "test:receipts:live": "node --conditions=react-server --experimental-strip-types tests/receipt-live.test.ts",
     "profile:navigation": "node scripts/profile-navigation.mjs",
     "test:db": "node --experimental-strip-types tests/database.test.ts",
+    "test:modal-history": "node tests/modal-history.test.mjs",
+    "test:modal-back:browser": "node --experimental-strip-types tests/modal-back-browser.test.mjs",
     "test:responsive": "node tests/responsive.test.mjs",
     "test:receipt-images": "node tests/receipt-images.test.mjs",
     "test:i18n": "node --experimental-strip-types tests/i18n.test.mjs",
