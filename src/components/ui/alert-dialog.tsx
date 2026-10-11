@@ -1,9 +1,9 @@
 "use client";
 
 import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog";
+import { useModalHistory } from "@/lib/modal-history/use-modal-history";
 
-function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
-  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
+export function AlertDialog(props: AlertDialogPrimitive.Root.Props) {
+  const history = useModalHistory(props);
+  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} {...history} />;
 }
-
-export { AlertDialog };

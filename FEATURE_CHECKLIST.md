@@ -6,6 +6,8 @@ Design requirement: mobile first, then tablet, then desktop. Every feature must 
 
 ## Already working
 
+- [x] Phone/browser Back closes the topmost open dialog, confirmation, or sheet without changing the URL. Ordinary dismissal removes temporary history entries and preserves pending-save guards. Verified with isolated browser regressions and the real app in English/Indonesian at phone, tablet, desktop, and short viewport sizes, including nested confirmation, X/Cancel/Escape/Save cleanup, pending-save dismissal, and focus restoration.
+
 - [x] English/Indonesian translations with unchanged URLs, browser language detection, a first-time account language prompt, and a saved language setting. Matching dictionaries and UI-copy coverage are checked automatically; both languages were rendered at phone, tablet, desktop, and short viewport sizes using an isolated local database. Apply the new preferences migration before deployment.
 
 - [x] Google sign-in through Better Auth, with Supabase Postgres persistence. Login and persistence confirmed by the user.
