@@ -7,10 +7,6 @@ import {
 } from "@/features/receipts/receipts";
 import { ReceiptUpload } from "@/features/receipts/components/receipt-upload";
 import { ReceiptPreview } from "@/features/receipts/components/receipt-preview";
-import { ReceiptImageOption } from "@/features/receipts/components/receipt-image-option";
-import { SavedReceiptImage } from "@/features/receipts/components/saved-receipt-image";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
 import { useRef, useState, type FormEvent } from "react";
 import { localDate } from "../../format";
@@ -78,10 +74,7 @@ export function EditorForm({
     image: File;
   }>();
   const extraction = imported?.extraction ?? initialExtraction;
-  const [attachedImage, setAttachedImage] = useState<File>();
-  const [keepImage, setKeepImage] = useState(false);
-  const [removeImage, setRemoveImage] = useState(false);
-  const image = attachedImage ?? imported?.image ?? initialImage;
+  const image = imported?.image ?? initialImage;
   const [formError, setFormError] = useState("");
   const entry = editor.type === "entry" ? editor.entry : undefined;
   const wallet = editor.type === "wallet" ? editor.wallet : undefined;
@@ -103,9 +96,6 @@ export function EditorForm({
             method: extraction.method,
             documentKind: extraction.draft.documentKind,
             merchant: String(values.title),
-            paymentConfirmed:
-              values.paymentConfirmed === "true" ||
-              entry?.receipt?.paymentConfirmed === true,
             ...details,
           }
         : entry?.receipt
@@ -121,8 +111,6 @@ export function EditorForm({
         action: extraction && !entry ? "receipt" : editor.type,
         ...(details ? { details: receipt ? undefined : details } : {}),
         ...(receipt ? { receipt } : {}),
-        ...(keepImage && image ? { receiptImage: image } : {}),
-        ...(removeImage ? { removeReceiptImage: true } : {}),
         id: entry?.id ?? wallet?.id,
         ...(editor.type === "entry"
           ? {
@@ -209,7 +197,7 @@ export function EditorForm({
                     onClick={() => {
                       setImporting(true);
                       requestAnimationFrame(() =>
-                        document.getElementById("receipt-image")?.focus(),
+                        document.getElementById("receipt-file-button")?.focus(),
                       );
                     }}
                   >
@@ -219,13 +207,6 @@ export function EditorForm({
                 </div>
               )}
             {image && <ReceiptPreview file={image} />}
-            {entry?.receipt?.imageId ? <div className="receipt-image-option">
-              <SavedReceiptImage imageId={entry.receipt.imageId} />
-              <Label htmlFor="remove-saved-receipt-image" className="receipt-image-choice min-h-11 cursor-pointer">
-                <Checkbox id="remove-saved-receipt-image" checked={removeImage} onCheckedChange={setRemoveImage} disabled={pending} />{t("removeSavedReceiptImage")}
-              </Label>
-              <p>{t("receiptImageRemovedOnSave")}</p>
-            </div> : (extraction || entry?.receipt) && <ReceiptImageOption image={image} checked={keepImage} pending={pending} onCheckedChange={setKeepImage} onImageChange={setAttachedImage} />}
             {editor.type === "wallet" ? (
               <WalletFields
                 wallet={wallet}

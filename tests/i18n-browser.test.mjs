@@ -10,6 +10,7 @@ import { format } from "../src/features/ledger/format.ts";
 const origin = process.env.LEDGER_TEST_URL ?? "http://localhost:3000";
 const sql = postgres(process.env.DATABASE_URL, { prepare: false, max: 1 });
 const screenshots = process.env.I18N_SCREENSHOTS;
+const receiptsOnly = process.env.I18N_SCOPE === "receipts";
 const account = randomUUID(), token = randomUUID();
 const date = new Date().toISOString();
 const data = {
@@ -93,7 +94,7 @@ try {
       const [saved] = await sql`select locale from public.user_preferences where user_id = ${account}`;
       assert.equal(saved.locale, language);
       assert.equal((await context.cookies()).find((cookie) => cookie.name === "locale").value, language);
-      for (const route of ["transactions", "wallet", "report", "settings", "icon-preview", "missing-page"]) {
+      for (const route of receiptsOnly ? ["transactions"] : ["transactions", "wallet", "report", "settings", "icon-preview", "missing-page"]) {
         await page.goto(`${origin}/${route}`);
         assert.equal(await page.locator("html").getAttribute("lang"), language);
         await check(page, `${language}-${route}`, width, height);
@@ -127,7 +128,7 @@ try {
           await page.getByRole("alertdialog").getByRole("button", { name: language === "id" ? "Batal" : "Cancel", exact: true }).click();
           await page.keyboard.press("Escape");
           await page.getByRole("dialog").waitFor({ state: "detached" });
-          for (const kind of ["income", "transfer", "receipt"]) {
+          for (const kind of receiptsOnly ? ["receipt"] : ["income", "transfer", "receipt"]) {
             await page.getByRole("button", { name: language === "id" ? "Tambah transaksi" : "Add transaction", exact: true }).click();
             const name = kind === "income" ? (language === "id" ? "Pemasukan" : "Income") : kind === "transfer" ? "Transfer" : (language === "id" ? "Impor struk" : "Import receipt");
             await page.getByRole("menuitem", { name, exact: true }).click();
@@ -141,6 +142,38 @@ try {
               await page.getByRole("alert").filter({ hasText: language === "id" ? "Layanan pembaca struk sedang sibuk" : "Receipt service is busy" }).waitFor();
               await check(page, `${language}-receipt-error`, width, height);
               await page.unroute("**/api/receipts/extract");
+            }
+            if (kind === "receipt") {
+              const title = `Payment review ${language} ${width}`;
+              await page.route("**/api/receipts/extract", (route) => route.fulfill({ json: {
+                importId: randomUUID(), fingerprint: randomUUID().replaceAll("-", "").repeat(2), method: "ai",
+                draft: { documentKind: "payment", merchant: title, date: new Date().toISOString().slice(0, 10), time: "11:44", currency: "IDR", receiptNumber: null, total: "148680", items: [], adjustments: [], warnings: [], paymentSource: "BCA", suggestedWallet: { walletId: "bank", reason: "BCA" }, suggestedCategory: { name: "Bills", reason: "Bills" } },
+              } }));
+              await page.getByLabel(language === "id" ? "Gambar struk" : "Receipt image", { exact: true }).setInputFiles("tests/fixtures/receipt.png");
+              await page.getByRole("button", { name: language === "id" ? "Baca struk" : "Read receipt", exact: true }).click();
+              const dialog = page.getByRole("dialog");
+              await dialog.getByRole("heading", { name: language === "id" ? "Periksa struk" : "Review receipt", exact: true }).waitFor();
+              assert.equal(await dialog.locator('[name="paymentConfirmed"], #save-receipt-image, #saved-receipt-file').count(), 0);
+              await check(page, `${language}-payment-review`, width, height);
+              const saved = page.waitForResponse((response) => response.url().endsWith("/api/ledger") && response.request().method() === "POST");
+              await dialog.getByRole("button", { name: language === "id" ? "Simpan" : "Save", exact: true }).click();
+              const response = await saved;
+              assert.ok(response.ok(), await response.text());
+              assert.ok(response.request().headers()["content-type"].includes("application/json"));
+              const entry = (await response.json()).data.entries.at(-1);
+              assert.equal(entry.amount, 14868000);
+              assert.equal(entry.receipt.imageId, undefined);
+              assert.equal(entry.receipt.paymentConfirmed, undefined);
+              await dialog.waitFor({ state: "detached" });
+              await page.goto(`${origin}/transactions?search=${encodeURIComponent(title)}`);
+              await page.getByRole("button", { name: `${language === "id" ? "Ubah" : "Edit"} ${title}`, exact: true }).click();
+              assert.equal(await dialog.locator('input[type="file"], [name="paymentConfirmed"]').count(), 0);
+              await check(page, `${language}-payment-edit`, width, height);
+              await page.keyboard.press("Escape");
+              await dialog.waitFor({ state: "detached" });
+              assert.equal(await page.getByRole("button", { name: `${language === "id" ? "Ubah" : "Edit"} ${title}`, exact: true }).evaluate((el) => el === document.activeElement), true);
+              await page.unroute("**/api/receipts/extract");
+              continue;
             }
             await page.keyboard.press("Escape");
             await page.getByRole("dialog").waitFor({ state: "detached" });
@@ -193,7 +226,9 @@ try {
     }
   }
   assert.deepEqual(errors, [], "No missing translations, hydration failures or other browser errors");
-  console.log("i18n browser checks passed: both languages at five sizes; sign-in, first prompt, every route/editor/calendar, account persistence, Settings, API validation and manifest.");
+  console.log(receiptsOnly
+    ? "Receipt i18n browser checks passed: both languages at five sizes; upload, payment review/save/edit, JSON persistence without images, keyboard focus and layout."
+    : "i18n browser checks passed: both languages at five sizes; sign-in, first prompt, every route/editor/calendar, account persistence, Settings, API validation and manifest.");
 } finally {
   await browser?.close();
   await sql`delete from public."user" where id = ${account}`;

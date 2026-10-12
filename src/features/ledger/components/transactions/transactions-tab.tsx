@@ -25,7 +25,6 @@ import { receivedAfterFee } from "../../transfer";
 import type { Entry, Ledger } from "../../ledger";
 import { transactionPage } from "../../pagination";
 import { TransactionPagination } from "./transaction-pagination";
-import { ReceiptImageDialog } from "@/features/receipts/components/receipt-image-dialog";
 
 export function TransactionsTab({
   data,
@@ -190,7 +189,6 @@ export function TransactionsTab({
                     {format(e.amount, e.currency, locale)}
                   </TableCell>
                   <TableCell role="cell" className="transaction-actions">
-                    {e.receipt?.imageId && <ReceiptImageDialog entry={e} />}
                     {e.kind !== "correction" && (
                       <Button
                         variant="ghost"

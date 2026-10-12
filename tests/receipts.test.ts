@@ -22,7 +22,6 @@ const receipt = receiptSchema.parse({
   merchant: "Solaria",
   receiptNumber: "437RC1092026/03626",
   keepItems: true,
-  paymentConfirmed: false,
   items: [45455, 45455, 18182, 47273, 9092, 8183].map((value, index) => ({
     name: `Item ${index}`,
     quantity: index === 2 ? 2 : 1,
@@ -52,25 +51,10 @@ assert.throws(
     ),
   /line total/,
 );
-assert.throws(
-  () =>
-    validateReceipt(
-      {
-        ...receipt,
-        documentKind: "payment",
-        keepItems: false,
-        items: [],
-        adjustments: [],
-      },
-      10200000,
-    ),
-  /Confirm/,
-);
 validateReceipt(
   {
     ...receipt,
     documentKind: "payment",
-    paymentConfirmed: true,
     keepItems: false,
     items: [],
     adjustments: [],

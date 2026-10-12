@@ -61,13 +61,3 @@ export async function prepareReceiptImage(file: File): Promise<Blob> {
     );
   return blob;
 }
-
-export async function fetchReceiptImage(id: string): Promise<Blob> {
-  const response = await fetch(
-    `/api/receipts/image?id=${encodeURIComponent(id)}`,
-    { cache: "no-store" },
-  );
-  if (!response.ok)
-    throw new Error("Could not load this receipt image. Please retry.");
-  return response.blob();
-}

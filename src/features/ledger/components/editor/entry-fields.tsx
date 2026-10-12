@@ -68,25 +68,6 @@ export function EntryFields({
   return (
     <>
       <input type="hidden" name="kind" value={kind} />
-      {draft?.documentKind !== undefined &&
-        draft.documentKind !== "receipt" && (
-          <LedgerSelect
-            label={t("thisPaymentRepresents")}
-            name="paymentConfirmed"
-            defaultValue={entry?.receipt?.paymentConfirmed ? "true" : "false"}
-            options={[
-              {
-                value: "false",
-                label: t("chooseAfterCheckingThePayment"),
-              },
-              { value: "true", label: t("spendingSaveAsAnExpense") },
-              {
-                value: "transfer",
-                label: t("myOwnWalletsUseAddTransactionTransfer"),
-              },
-            ]}
-          />
-        )}
       <DateTimeField
         defaultValue={defaultDate}
         onDateChange={(date) => setRateDate(date.slice(0, 10))}

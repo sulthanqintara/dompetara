@@ -106,7 +106,7 @@ try {
   assert.equal(repairCalls, 2);
   assert.deepEqual(repaired.draft.items, food.items);
   assert.deepEqual(repaired.draft.adjustments, food.adjustments);
-  validateReceipt({...repaired, ...repaired.draft, keepItems: true, paymentConfirmed: false}, 4360000);
+  validateReceipt({...repaired, ...repaired.draft, keepItems: true}, 4360000);
   repairCalls = 0;
   repairDraft = {...food, total: "43600.00"};
   assert.deepEqual((await extractReceipt(file, "ocr", "test-only-key")).draft.items, food.items, "Equivalent decimal formatting preserves the final charge");
@@ -118,7 +118,7 @@ try {
   repairCalls = 0;
   repairDraft = misread;
   const unresolved = await extractReceipt(file, "ocr", "test-only-key");
-  assert.throws(() => validateReceipt({...unresolved, ...unresolved.draft, keepItems: true, paymentConfirmed: false}, 4360000), /equal/, "Unresolved extraction cannot bypass exact reconciliation");
+  assert.throws(() => validateReceipt({...unresolved, ...unresolved.draft, keepItems: true}, 4360000), /equal/, "Unresolved extraction cannot bypass exact reconciliation");
   repairCalls = 0;
   repairDraft = {...food, items: []};
   assert.deepEqual((await extractReceipt(file, "ocr", "test-only-key")).draft.items, misread.items, "Recheck cannot discard items and force total-only mode");

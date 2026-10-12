@@ -8,7 +8,6 @@ const limits = {
   "ledger-write": [30, 300],
   preferences: [30, 300],
   "exchange-rates": [120, 1_200],
-  "receipt-image": [60, 600],
   "receipt-intake": [10, 200],
 } as const;
 

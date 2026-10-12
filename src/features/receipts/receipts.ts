@@ -73,6 +73,7 @@ export const transactionDetailsSchema = z.object({
 });
 export type TransactionDetails = z.infer<typeof transactionDetailsSchema>;
 export const receiptSchema = z.object({
+  // Read legacy records for cleanup; the save service strips this field.
   imageId: z.uuid().optional(),
   importId: z.uuid(),
   fingerprint: z.string().regex(/^[a-f0-9]{64}$/),
@@ -81,7 +82,6 @@ export const receiptSchema = z.object({
   merchant: text.nullable(),
   receiptNumber: text.nullable(),
   keepItems: z.boolean(),
-  paymentConfirmed: z.boolean(),
   items: z.array(itemSchema).max(200),
   adjustments: z.array(adjustmentSchema).max(30),
 });
@@ -114,10 +114,6 @@ export function suggestReceiptWallet(draft: Draft, wallets: Wallet[]) {
 }
 
 export function validateReceipt(receipt: Receipt, total: number) {
-  if (receipt.documentKind !== "receipt" && !receipt.paymentConfirmed)
-    throw new Error(
-      "Confirm this payment is spending. Use a transfer for money moved between your own wallets.",
-    );
   validateTransactionDetails(receipt, total);
 }
 

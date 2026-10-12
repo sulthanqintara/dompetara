@@ -1,6 +1,5 @@
 import { ledgerExport, type ExportFormat } from "./export";
 import type { Ledger } from "./ledger";
-import { prepareReceiptImage } from "../receipts/api";
 
 export type LedgerState = { data: Ledger; version: number; notice?: string };
 
@@ -16,19 +15,10 @@ export async function saveLedger(
   payload: Record<string, unknown>,
   version: number,
 ): Promise<LedgerState> {
-  const { receiptImage, ...values } = payload;
-  let body: FormData | string;
-  if (receiptImage instanceof File) {
-    body = new FormData();
-    body.set("payload", JSON.stringify({ ...values, version }));
-    body.set("image", await prepareReceiptImage(receiptImage), "receipt.jpg");
-  } else body = JSON.stringify({ ...values, version });
   const response = await fetch("/api/ledger", {
     method: "POST",
-    ...(typeof body === "string"
-      ? { headers: { "Content-Type": "application/json" } }
-      : {}),
-    body,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...payload, version }),
   });
   const result = await response.json();
   if (!response.ok)

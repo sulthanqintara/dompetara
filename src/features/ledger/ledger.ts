@@ -121,14 +121,6 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
   if (!raw || typeof raw !== "object" || Array.isArray(raw))
     throw new Error("Invalid request.");
   const p = raw as Record<string, unknown>;
-  if (p.action === "removeReceiptImage") {
-    const data = structuredClone(previous);
-    const entry = data.entries.find((entry) => entry.id === p.id);
-    if (!entry?.receipt) throw new Error("Receipt not found.");
-    delete entry.receipt.imageId;
-    assertLedgerLimits(previous, data);
-    return data;
-  }
   if (p.action === "receipt") {
     const receipt = receiptSchema.parse(p.receipt);
     if (
@@ -262,10 +254,8 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
         if (e.kind !== "expense")
           throw new Error("A receipt must be saved as an expense.");
         e.receipt = receiptSchema.parse({ ...(p.receipt ?? existing?.receipt) as Receipt, ...(e.details ?? {}) });
-        // Keep byte validation aligned with the image references the server saves.
+        // Legacy image references must not be restored by an edit.
         delete e.receipt.imageId;
-        if (existing?.receipt?.imageId && p.removeReceiptImage !== true)
-          e.receipt.imageId = existing.receipt.imageId;
         validateReceipt(e.receipt, e.amount);
         if (
           !existing &&

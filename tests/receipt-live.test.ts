@@ -36,7 +36,7 @@ for (const sample of selected) {
       let items = "not applicable";
       if (draft.documentKind === "receipt" && draft.items.length) {
         try {
-          validateReceipt({ ...result, ...draft, keepItems: true, paymentConfirmed: false }, money(sample.total));
+          validateReceipt({ ...result, ...draft, keepItems: true }, money(sample.total));
           items = "reconciled";
         } catch { items = "needs correction"; }
       }

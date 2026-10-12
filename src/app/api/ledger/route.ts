@@ -8,7 +8,7 @@ import { readLedger } from "@/features/ledger/read-ledger";
 import { eq } from "drizzle-orm";
 import { withApiErrorLogging } from "@/lib/with-api-error-logging";
 import { logServerError } from "@/lib/log-server-error";
-import { saveLedgerImages } from "@/features/receipts/save-ledger-images";
+import { saveLedger } from "@/features/ledger/save-ledger";
 import { enforceUserLimit } from "@/lib/security/enforce-user-limit";
 
 export const GET = withApiErrorLogging(async (request: Request) => {
@@ -30,31 +30,9 @@ export const POST = withApiErrorLogging(async (request: Request) => {
     return Response.json({ error: "Please sign in." }, { status: 401 });
   await enforceUserLimit(session.user.id, "ledger-write");
   let payload;
-  let image: File | undefined;
   try {
-    if (
-      request.headers.get("content-type")?.startsWith("multipart/form-data")
-    ) {
-      const body = await readLimitedBody(request.body, 4_400_000);
-      const form = await new Request(request.url, {
-        method: "POST",
-        headers: { "Content-Type": request.headers.get("content-type")! },
-        body: new Uint8Array(body),
-      }).formData();
-      const json = form.get("payload");
-      const file = form.get("image");
-      if (
-        typeof json !== "string" ||
-        Buffer.byteLength(json) > 300000 ||
-        !(file instanceof File)
-      )
-        throw new Error("Invalid upload.");
-      payload = JSON.parse(json);
-      image = file;
-    } else {
-      const body = await readLimitedBody(request.body, 300000);
-      payload = JSON.parse(body.toString("utf8"));
-    }
+    const body = await readLimitedBody(request.body, 300000);
+    payload = JSON.parse(body.toString("utf8"));
   } catch (error) {
     logServerError(
       { method: "POST", path: "/api/ledger", stage: "parse request" },
@@ -110,27 +88,20 @@ export const POST = withApiErrorLogging(async (request: Request) => {
   }
   let saved;
   try {
-    saved = await saveLedgerImages(
+    saved = await saveLedger(
       session.user.id,
       row.data,
       data,
       row.version,
-      payload,
-      image,
     );
   } catch (error) {
     logServerError(
-      { method: "POST", path: "/api/ledger", stage: "save receipt image" },
+      { method: "POST", path: "/api/ledger", stage: "save ledger" },
       error,
     );
-    const invalidImage = error instanceof Error && error.cause === 400;
     return Response.json(
-      {
-        error: invalidImage
-          ? error.message
-          : "Could not save the receipt image. Please retry, or save without the image.",
-      },
-      { status: invalidImage ? 400 : 503 },
+      { error: "Could not save. Please try again." },
+      { status: 503 },
     );
   }
   if (!saved)

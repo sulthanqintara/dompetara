@@ -28,7 +28,6 @@ singleDate.setUTCMonth(singleDate.getUTCMonth() - 1);
 const errors = [];
 let expectedExportFailure = false;
 let expectedLedgerFailure = false;
-let expectedPaymentValidationFailure = false;
 const sizes = [
   [320, 568],
   [390, 844],
@@ -1571,16 +1570,9 @@ async function checkReceipts(page, width, height) {
   const unconfirmed = await (await page.request.get(`${origin}/api/ledger`)).json();
   assert.equal(unconfirmed.data.categories.some((category) => category.name === `Gifts ${width}`), false, "A suggested category is never created automatically");
   await check(page, "receipt-new-category-note", width, height);
-  expectedPaymentValidationFailure = true;
-  const rejectedPayment = page.waitForResponse(response => response.url().endsWith("/api/ledger") && response.request().method() === "POST");
-  await dialog.getByRole("button", { name: "Save", exact: true }).click();
-  assert.equal((await rejectedPayment).status(), 400, "Unconfirmed payments must be rejected");
-  await dialog.getByRole("alert").filter({ hasText: "Confirm this payment" }).waitFor();
-  expectedPaymentValidationFailure = false;
-  await choose(page, "This payment represents", "My own wallets — use Add transaction → Transfer");
-  await check(page, "receipt-payment-transfer", width, height);
-  await choose(page, "This payment represents", "Spending — save as an expense");
-  await check(page, "receipt-payment-confirmed", width, height);
+  assert.equal(await dialog.locator('[name="paymentConfirmed"]').count(), 0);
+  assert.equal(await dialog.locator('#save-receipt-image, #saved-receipt-file').count(), 0);
+  await check(page, "receipt-payment-review", width, height);
   const paymentSaved = page.waitForResponse((response) => response.url().endsWith("/api/ledger") && response.request().method() === "POST");
   await dialog.getByRole("button", { name: "Save", exact: true }).click();
   const paymentResponse = await paymentSaved; assert.ok(paymentResponse.ok());
@@ -1865,7 +1857,7 @@ try {
     const page = await context.newPage();
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => {
-      if (message.type() === "error" && !(expectedLedgerFailure && /(?:409|503)/.test(message.text())) && !(expectedPaymentValidationFailure && message.text().includes("400 (Bad Request)")) && !(expectedExportFailure && message.text().includes("net::ERR_FAILED"))) errors.push(message.text());
+      if (message.type() === "error" && !(expectedLedgerFailure && /(?:409|503)/.test(message.text())) && !(expectedExportFailure && message.text().includes("net::ERR_FAILED"))) errors.push(message.text());
     });
     await page.goto(`${origin}/sign-in`);
     await page.getByRole("button", { name: /Google/ }).waitFor();

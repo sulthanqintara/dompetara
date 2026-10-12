@@ -5,11 +5,10 @@ import { EditorFooter } from "@/features/ledger/components/editor/editor-footer"
 import { Alert } from "@/components/ui/alert";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { LedgerSelect } from "@/features/ledger/components/shared/ledger-select";
 import { readReceipt } from "../api";
 import type { Extraction } from "../receipts";
+import { ReceiptFileField } from "./receipt-file-field";
 
 export function ReceiptUpload({
   onRead,
@@ -75,18 +74,11 @@ export function ReceiptUpload({
             { value: "ai", label: t("aIImageRecognition") },
           ]}
         />
-        <div className="form-field">
-          <Label htmlFor="receipt-image">{t("receiptImage")}</Label>
-          <Input
-            id="receipt-image"
-            name="image"
-            type="file"
-            accept="image/jpeg,image/png"
-            required
-            disabled={busy}
-          />
-          <p>{t("jPEGOrPNGUpTo16MB")}</p>
-        </div>
+        <ReceiptFileField
+          disabled={busy}
+          onChange={() => setError("")}
+          onInvalid={() => setError("Choose a receipt image.")}
+        />
         {error && (
           <Alert variant="destructive" className="error">
             {errorMessage(error)}
