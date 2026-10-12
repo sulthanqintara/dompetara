@@ -29,6 +29,8 @@ Design requirement: mobile first, then tablet, then desktop. Every feature must 
 
 ## Design system preview
 
+- [x] Category action visibility on 2026-10-11: outlined shadcn buttons and plus icons distinguish manual/suggested category creation from the modal surface. Verified i18n, TypeScript, targeted ESLint, and both-language/light-dark editor renders at 320×568, 390×844, 568×320, 768×1024, and 1440×900, including 44px targets, keyboard activation, new-category input focus, and return to existing categories.
+
 - [x] Monochrome foundation on 2026-10-11: grayscale neutrals, pure black dark canvas, near-black cards/sidebar, charcoal secondary and elevated surfaces, separate selection and brand-accent roles, and explicit chart roles. Expanded the style guide with selection/elevation specimens and the complete role table; updated English/Indonesian guidance and development documentation. Verified contrast, shade ordering, i18n, TypeScript, targeted ESLint, and both-language style-guide renders at phone, tablet, desktop, and short viewport sizes, with keyboard focus and no browser console errors. Full theme browser checks also passed for both languages/themes across pages and editors, including system changes, saved preferences, reload, and cross-tab synchronization.
 
 - [x] Development-only `/style-guide` with shared light/dark semantic palettes, Geist typography, spacing, accessibility guidance, and existing shadcn control specimens.

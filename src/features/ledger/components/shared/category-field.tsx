@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import { useId, useState } from "react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,13 +29,14 @@ export function CategoryField({
       {suggestion && !match && !creating && (
         <Button
           type="button"
-          variant="secondary"
+          variant="outline"
           className="mb-3 h-auto min-h-11 whitespace-normal break-words text-left"
           onClick={() => {
             setName(suggestion.name);
             setCreating(true);
           }}
         >
+          <Plus aria-hidden="true" />
           {t("addSuggestedCategory", { name: suggestion.name })}
         </Button>
       )}
@@ -69,7 +71,13 @@ export function CategoryField({
             onValueChange={setSelected}
             options={categories}
           />
-          <Button type="button" variant="secondary" onClick={() => setCreating(true)}>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-auto min-h-11 max-w-full whitespace-normal text-left"
+            onClick={() => setCreating(true)}
+          >
+            <Plus aria-hidden="true" />
             {t("addCategory")}
           </Button>
         </>
