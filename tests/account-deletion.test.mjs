@@ -10,15 +10,14 @@ const origin = process.env.LEDGER_TEST_URL ?? "http://localhost:3000";
 assert.ok(["localhost", "127.0.0.1"].includes(new URL(origin).hostname), "Run only against a local app.");
 const sql = postgres(process.env.DATABASE_URL, { prepare: false, max: 1 });
 const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE });
-const ids = [], images = [];
+const ids = [];
 const codec = createSessionTokenCodec(process.env.BETTER_AUTH_SECRET);
 const directory = process.env.ACCOUNT_DELETION_SCREENSHOTS;
 if (directory) await mkdir(directory, { recursive: true });
 
 async function fixture(stale = false) {
-  const id = randomUUID(), token = randomUUID(), image = randomUUID();
+  const id = randomUUID(), token = randomUUID();
   ids.push(id);
-  images.push(image);
   await sql.begin(async (tx) => {
     await tx`insert into "user" (id, name, email) values (${id}, ${"Long account name ".repeat(8)}, ${id + "@example.invalid"})`;
     await tx`insert into account (id, account_id, provider_id, user_id, updated_at) values (${randomUUID()}, ${id}, 'google', ${id}, now())`;
@@ -27,11 +26,9 @@ async function fixture(stale = false) {
     }
     await tx`insert into ledger (user_id, data) values (${id}, ${tx.json({ wallets: [], entries: [], categories: [] })})`;
     await tx`insert into user_preferences (user_id, locale, language_prompt_shown_at) values (${id}, null, now())`;
-    // No real storage object: this row verifies deletion queues orphan cleanup.
-    await tx`insert into receipt_images (id, user_id, state) values (${image}, ${id}, 'active')`;
   });
   const signature = createHmac("sha256", process.env.BETTER_AUTH_SECRET).update(token).digest("base64");
-  return { id, image, cookie: encodeURIComponent(`${token}.${signature}`) };
+  return { id, cookie: encodeURIComponent(`${token}.${signature}`) };
 }
 
 try {
@@ -100,7 +97,6 @@ try {
       const field = table === "user" ? "id" : "user_id";
       assert.equal((await sql`select * from ${sql(table)} where ${sql(field)} = ${current.id}`).length, 0, `${table} removed`);
     }
-    assert.equal((await sql`select user_id from receipt_images where id = ${current.image}`)[0].user_id, null);
     assert.equal((await sql`select id from "user" where id = ${untouched.id}`).length, 1, "Another user's account is preserved");
     assert.equal((await page.request.get(`${origin}/api/ledger`)).status(), 401);
     assert.deepEqual(errors, []);
@@ -114,9 +110,8 @@ try {
   const csrf = await fetch(`${origin}/api/auth/delete-user`, { method: "POST", headers: { Origin: "https://invalid.example", "Content-Type": "application/json", Cookie: `better-auth.session_token=${untouched.cookie}` }, body: "{}" });
   assert.equal(csrf.status, 403);
   assert.equal((await sql`select id from "user" where id = ${untouched.id}`).length, 1);
-  console.log("Account deletion passed: both locales, responsive dialog, touch targets, focus restoration, cancel, safe errors, deletion/cascades, queued images, cross-user isolation, stale sessions, unauthenticated access and CSRF.");
+  console.log("Account deletion passed: both locales, responsive dialog, touch targets, focus restoration, cancel, safe errors, deletion/cascades, cross-user isolation, stale sessions, unauthenticated access and CSRF.");
 } finally {
-  if (images.length) await sql`delete from receipt_images where id in ${sql(images)}`;
   if (ids.length) await sql`delete from "user" where id in ${sql(ids)}`;
   await sql.end();
   await browser.close();

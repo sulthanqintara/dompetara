@@ -20,7 +20,7 @@ try {
       has_table_privilege('anon', c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') as anon_access,
       has_table_privilege('authenticated', c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') as authenticated_access
     from pg_class c join pg_namespace n on n.oid = c.relnamespace
-    where n.nspname = 'public' and c.relname in ('account', 'exchange_rate_cache', 'ledger', 'receipt_images', 'security_admission_leases', 'security_limit_buckets', 'session', 'user', 'user_preferences', 'verification')
+    where n.nspname = 'public' and c.relname in ('account', 'exchange_rate_cache', 'ledger', 'security_admission_leases', 'security_limit_buckets', 'session', 'user', 'user_preferences', 'verification')
     order by c.relname
   `;
   assert.deepEqual(
@@ -29,7 +29,6 @@ try {
       "account",
       "exchange_rate_cache",
       "ledger",
-      "receipt_images",
       "security_admission_leases",
       "security_limit_buckets",
       "session",
@@ -50,9 +49,10 @@ try {
       `${table.name} must deny Supabase Auth API access.`,
     );
   }
-  for (const name of ["ledger", "exchange_rate_cache", "receipt_images", "user_preferences", "security_limit_buckets", "security_admission_leases"]) {
+  for (const name of ["ledger", "exchange_rate_cache", "user_preferences", "security_limit_buckets", "security_admission_leases"]) {
     assert.equal(tables.find((t) => t.name === name)?.rls, true, `${name} requires RLS`);
   }
+  assert.equal((await sql`select to_regclass('public.receipt_images') as table_name`)[0].table_name, null, "Legacy image table must be retired.");
   const columns = await sql`
     select column_name from information_schema.columns
     where table_schema = 'public' and table_name = 'session' order by column_name
