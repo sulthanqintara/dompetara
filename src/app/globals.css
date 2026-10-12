@@ -530,7 +530,6 @@ p {
 }
 .balance-stat {
   grid-column: 1 / -1;
-  background: var(--secondary);
   border-color: var(--border);
 }
 .balance-stat h2 {
