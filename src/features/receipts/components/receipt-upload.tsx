@@ -5,7 +5,6 @@ import { EditorFooter } from "@/features/ledger/components/editor/editor-footer"
 import { Alert } from "@/components/ui/alert";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { LedgerSelect } from "@/features/ledger/components/shared/ledger-select";
 import { readReceipt } from "../api";
 import type { Extraction } from "../receipts";
 import { ReceiptFileField } from "./receipt-file-field";
@@ -22,8 +21,7 @@ export function ReceiptUpload({
   const locale = useLocale();
   const errorMessage = useErrorMessage();
   const t = useTranslations("UI");
-  const [method, setMethod] = useState("ocr"),
-    [busy, setBusy] = useState(false),
+  const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const controller = useRef<AbortController | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
@@ -41,7 +39,6 @@ export function ReceiptUpload({
       onRead(
         await readReceipt(
           file,
-          method as "ocr" | "ai",
           controller.current.signal,
           locale === "id" ? "id" : "en",
         ),
@@ -64,16 +61,6 @@ export function ReceiptUpload({
     >
       <EditorBody>
         <p>{t("receiptImageProcessing")}</p>
-        <LedgerSelect
-          label={t("readWith")}
-          value={method}
-          onValueChange={setMethod}
-          disabled={busy}
-          options={[
-            { value: "ocr", label: t("oCRTextRecognition") },
-            { value: "ai", label: t("aIImageRecognition") },
-          ]}
-        />
         <ReceiptFileField
           disabled={busy}
           onChange={() => setError("")}

@@ -25,22 +25,17 @@ export async function extractRequest(request: Request) {
       headers: { "Content-Type": request.headers.get("content-type") ?? "" },
       body: new Uint8Array(body),
     }).formData();
-    const file = form.get("image"),
-      method = form.get("method");
-    if (!(file instanceof File) || (method !== "ocr" && method !== "ai"))
-      throw new Error("Choose an image and OCR or AI.");
+    const file = form.get("image");
+    if (!(file instanceof File)) throw new Error("Choose a receipt image.");
     if (!file.size || file.size > 4_000_000)
       throw new Error("Upload an image smaller than 4 MB.");
     const locale = localeSchema.parse(form.get("locale") ?? "en");
     const key = process.env.ZAI_API_KEY;
     const openaiKey = process.env.OPENAI_API_KEY;
-    if ((method === "ocr" && !key) || (method === "ai" && !key && !openaiKey))
+    if (!key && !openaiKey)
       return Response.json(
         {
-          error:
-            method === "ocr"
-              ? "Receipt OCR needs ZAI_API_KEY on the server. Add it and restart the app."
-              : "AI receipt reading needs ZAI_API_KEY or OPENAI_API_KEY on the server.",
+          error: "AI receipt reading needs ZAI_API_KEY or OPENAI_API_KEY on the server.",
         },
         { status: 503 },
       );
@@ -58,7 +53,7 @@ export async function extractRequest(request: Request) {
       .filter((category) => category.kind === "expense")
       .map((category) => category.name);
     return Response.json(
-      await extractReceipt(file, method, key, categories, data.wallets, openaiKey, locale),
+      await extractReceipt(file, "ai", key, categories, data.wallets, openaiKey, locale),
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
