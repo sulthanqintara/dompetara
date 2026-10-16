@@ -70,12 +70,11 @@ try {
   const { extractReceipt } = await import("../src/features/receipts/extract.ts");
   const source = await sharp({ create: { width: 1, height: 1, channels: 3, background: "white" } }).png().toBuffer();
   await extractReceipt(new File([source], "synthetic.png"), "ocr", "synthetic-zai-key", categories, wallets, "synthetic-openai-key");
-  assert.equal(calls.length, 3, "Initial provider, fallback and optional image recheck are all checked");
+  assert.equal(calls.length, 2, "AI provider and fallback both use bounded context");
   assert.ok(calls[0].url.includes("api.z.ai"));
   assert.ok(calls[1].url.includes("api.openai.com"));
-  assert.ok(calls[2].url.includes("api.openai.com"));
 } finally {
   console.error = priorLog;
   globalThis.fetch = async () => { throw new Error("Network access remains blocked after offline tests."); };
 }
-console.log("Receipt context checks passed: finite counts, exact names, Unicode/JSON UTF-8 byte limits, and bounded initial/fallback/recheck provider prompts. No external requests sent.");
+console.log("Receipt context checks passed: finite counts, exact names, Unicode/JSON UTF-8 byte limits, and bounded initial/fallback provider prompts. No external requests sent.");

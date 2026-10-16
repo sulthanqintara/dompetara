@@ -1,3 +1,4 @@
+import { seedLedger } from "../tests/support/seed-ledger.mjs";
 import { createSessionTokenCodec } from "../src/lib/auth-privacy/create-session-token-codec.ts";
 import "dotenv/config";
 import assert from "node:assert/strict";
@@ -34,7 +35,8 @@ try {
   await sql.begin(async (tx) => {
     await tx`insert into public."user" (id, name, email) values (${id}, 'Navigation profile', ${id + "@example.invalid"})`;
     await tx`insert into public.session (id, user_id, token, token_hash, expires_at, updated_at) values (${randomUUID()}, ${id}, ${await createSessionTokenCodec(process.env.BETTER_AUTH_SECRET).encrypt(token)}, ${createSessionTokenCodec(process.env.BETTER_AUTH_SECRET).hash(token)}, ${new Date(Date.now() + 3600000)}, ${new Date()})`;
-    await tx`insert into public.ledger (user_id, data) values (${id}, ${tx.json(data)})`;
+    await seedLedger(tx, id, data);
+    await tx`insert into public.user_preferences (user_id, locale, language_prompt_shown_at) values (${id}, 'en', ${new Date()})`;
   });
   browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE });
   if (screenshots) await mkdir(screenshots, { recursive: true });
@@ -76,7 +78,7 @@ try {
           await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
           return Math.round(performance.now() - window.profileClicks.at(-1));
         });
-        const loadingVisible = await page.locator("[data-ledger-loading]").isVisible();
+        const loadingVisible = await page.locator("[data-ledger-loading]").evaluateAll((nodes) => nodes.some((node) => node.getBoundingClientRect().height > 0));
         if (process.env.PROFILE_REQUIRE_LOADING === "1") assert.ok(loadingVisible, "Delayed page should show its content loading fallback");
         if (screenshots && loadingVisible) {
           assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Loading layout must not scroll horizontally");

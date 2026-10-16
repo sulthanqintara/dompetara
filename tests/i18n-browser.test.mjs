@@ -1,3 +1,5 @@
+import { seedLedger } from "./support/seed-ledger.mjs";
+import { resetTestLimits } from "./support/reset-test-limits.mjs";
 import { createSessionTokenCodec } from "../src/lib/auth-privacy/create-session-token-codec.ts";
 import "dotenv/config";
 import assert from "node:assert/strict";
@@ -25,6 +27,8 @@ const errors = [];
 let browser;
 async function check(page, name, width, height) {
   await page.evaluate(() => document.fonts.ready);
+  await page.waitForFunction(() => [...document.querySelectorAll('[role="dialog"]')].every((dialog) =>
+    !dialog.hasAttribute("data-starting-style") && !dialog.hasAttribute("data-ending-style")));
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false, `${name} must fit ${width}×${height}`);
   await page.getByRole("dialog").evaluateAll((dialogs) => Promise.all(dialogs.flatMap((dialog) => dialog.getAnimations({ subtree: true }).filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity).map((animation) => animation.finished.catch(() => {})))));
   for (const dialog of await page.getByRole("dialog").all()) {
@@ -46,7 +50,7 @@ try {
   browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE });
   await sql`insert into public."user" (id, name, email) values (${account}, 'Language test', ${account + "@example.invalid"})`;
   await sql`insert into public.session (id, user_id, token, token_hash, expires_at, updated_at) values (${randomUUID()}, ${account}, ${await createSessionTokenCodec(process.env.BETTER_AUTH_SECRET).encrypt(token)}, ${createSessionTokenCodec(process.env.BETTER_AUTH_SECRET).hash(token)}, ${new Date(Date.now() + 3600000)}, ${new Date()})`;
-  await sql`insert into public.ledger (user_id, data) values (${account}, ${sql.json(data)})`;
+  await seedLedger(sql, account, data);
   const [permissions] = await sql`select c.relrowsecurity as rls,
     has_table_privilege('anon', c.oid, 'SELECT, INSERT, UPDATE, DELETE') as anon_access,
     has_table_privilege('authenticated', c.oid, 'SELECT, INSERT, UPDATE, DELETE') as authenticated_access
@@ -56,6 +60,7 @@ try {
   assert.equal(permissions.authenticated_access, false);
   for (const [width, height] of [[320, 568], [390, 844], [568, 320], [768, 1024], [1440, 900]]) {
     for (const language of ["en", "id"]) {
+      await resetTestLimits(sql, account);
       await sql`delete from public.user_preferences where user_id = ${account}`;
       const context = await browser.newContext({ viewport: { width, height }, locale: language === "id" ? "id-ID" : "en-US", timezoneId: "Asia/Jakarta" });
       const page = await context.newPage();
@@ -160,7 +165,7 @@ try {
               const response = await saved;
               assert.ok(response.ok(), await response.text());
               assert.ok(response.request().headers()["content-type"].includes("application/json"));
-              const entry = (await response.json()).data.entries.at(-1);
+              const entry = (await (await page.request.get(`${origin}/api/ledger/export`)).json()).data.entries.find((entry) => entry.title === title);
               assert.equal(entry.amount, 14868000);
               assert.equal(entry.receipt.imageId, undefined);
               assert.equal(entry.receipt.paymentConfirmed, undefined);
@@ -194,11 +199,11 @@ try {
         }
         if (route === "settings") {
           if (width === 320) {
-            await page.route("**/api/ledger", (route) => route.abort());
+            await page.route("**/api/ledger/export", (route) => route.abort());
             await page.getByRole("button", { name: language === "id" ? "Unduh cadangan JSON" : "Download JSON backup", exact: true }).click();
             await page.getByRole("alert").filter({ hasText: language === "id" ? "Buku keuangan tidak dapat diekspor" : "Could not export your ledger" }).waitFor();
             await check(page, `${language}-export-error`, width, height);
-            await page.unroute("**/api/ledger");
+            await page.unroute("**/api/ledger/export");
           }
           const response = await page.request.post(`${origin}/api/preferences`, { headers: { Origin: origin }, data: { locale: "fr" } });
           assert.equal(response.status(), 400);

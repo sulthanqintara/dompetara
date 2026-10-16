@@ -3,7 +3,7 @@ import type { Currency } from "../ledger/ledger";
 import type { RateSuggestion } from "./exchange-rates";
 import { RateCacheContext } from "./rate-cache-context";
 
-export function useCachedRate(from: Currency, to: Currency, date: string, attempt = 0) {
+export function useCachedRate(from: Currency, to: Currency, date: string, attempt = 0, enabled = true) {
   const cache = useContext(RateCacheContext);
   if (!cache) throw new Error("Exchange rates require a workspace provider.");
   const key = `${from}:${to}:${date}:${attempt}`;
@@ -13,7 +13,7 @@ export function useCachedRate(from: Currency, to: Currency, date: string, attemp
     error: string;
   }>({ key: "", suggestion: null, error: "" });
   useEffect(() => {
-    if (from === to) return;
+    if (!enabled || from === to) return;
     let active = true;
     cache.get(from, to, date, attempt > 0)
       .then((suggestion) => {
@@ -32,7 +32,8 @@ export function useCachedRate(from: Currency, to: Currency, date: string, attemp
       });
     // A different tab may still need the same in-flight request.
     return () => { active = false; };
-  }, [from, to, date, key, attempt, cache]);
+  }, [from, to, date, key, attempt, cache, enabled]);
+  if (!enabled) return { suggestion: null, error: "", loading: false };
   return state.key === key
     ? { ...state, loading: false }
     : { suggestion: null, error: "", loading: from !== to };

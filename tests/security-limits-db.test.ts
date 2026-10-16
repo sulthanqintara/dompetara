@@ -17,7 +17,7 @@ const schema = `security_test_${randomUUID().replaceAll("-", "")}`;
 const control = new Pool({ connectionString, max: 1 });
 const pools = Array.from({ length: 3 }, () => new Pool({ connectionString, max: 2, options: `-c search_path=${schema}` }));
 const secret = `isolated-security-tests-${randomUUID()}`;
-const limiters = pools.map((pool) => createSecurityLimiter(createDatabaseSecurityStore(drizzle(pool)), secret));
+const limiters = pools.map((pool) => createSecurityLimiter(createDatabaseSecurityStore(drizzle(pool), schema), secret));
 const config = { globalDailyLimit: 100, globalConcurrency: 3 };
 
 try {
@@ -27,6 +27,8 @@ try {
   // the production migration's exact revoke is covered by the policy test.
   const fixtureDdl = migration.replace(/REVOKE ALL PRIVILEGES ON TABLE public\.security_limit_buckets, public\.security_admission_leases FROM anon, authenticated;/, "REVOKE ALL PRIVILEGES ON TABLE security_limit_buckets, security_admission_leases FROM PUBLIC;");
   await pools[0].query(fixtureDdl);
+  const admissionSql = await readFile(new URL("../scripts/security-admission.sql", import.meta.url), "utf8");
+  await pools[0].query(admissionSql.replaceAll("public.", `"${schema}".`).replaceAll(", anon, authenticated", ""));
   const rls = await control.query("SELECT relname, relrowsecurity FROM pg_class WHERE relnamespace = $1::regnamespace AND relkind = 'r'", [schema]);
   assert.equal(rls.rows.length, 2);
   assert.ok(rls.rows.every((row) => row.relrowsecurity));
@@ -111,6 +113,7 @@ try {
       await held.query("BEGIN");
       const locked = await held.query("SELECT key_hash FROM security_limit_buckets ORDER BY expires_at LIMIT 1 FOR UPDATE");
       const decision = await limiters[0].consumeLimits([{ key: "cleanup", windowMs: 86_400_000, max: 5 }]);
+      await pools[0].query(`SELECT "${schema}".cleanup_security_limits()`);
       assert.ok(decision.allowed, "Cleanup skips an expired bucket locked by another transaction");
       assert.equal((await pools[0].query("SELECT count(*)::integer AS total FROM security_limit_buckets")).rows[0].total, 17, "Cleanup removes at most 64 expired buckets");
       assert.equal((await pools[0].query("SELECT count(*)::integer AS total FROM security_admission_leases")).rows[0].total, 16, "Cleanup removes at most 64 expired lease rows");
@@ -120,6 +123,7 @@ try {
       held.release();
     }
     await limiters[1].consumeLimits([{ key: "cleanup", windowMs: 86_400_000, max: 5 }]);
+    await pools[0].query(`SELECT "${schema}".cleanup_security_limits()`);
     assert.equal((await pools[0].query("SELECT count(*)::integer AS total FROM security_limit_buckets")).rows[0].total, 1);
     assert.equal((await pools[0].query("SELECT count(*)::integer AS total FROM security_admission_leases")).rows[0].total, 0);
   }

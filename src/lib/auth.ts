@@ -12,6 +12,7 @@ export const auth = betterAuth({
   user: { deleteUser: { enabled: true } },
   rateLimit: { enabled: true, customStorage: authRateStorage },
   advanced: {
+    database: { joins: true },
     ipAddress: {
       // Vercel overwrites this header at its trusted ingress. Local development
       // uses Better Auth's localhost fallback rather than arbitrary forwarded IPs.

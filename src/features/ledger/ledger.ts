@@ -29,6 +29,7 @@ export type Entry = {
   amount: number;
   title: string;
   category: string;
+  categoryId?: string;
   description: string;
   toWallet?: string;
   toCurrency?: Currency;
@@ -43,6 +44,9 @@ export type Ledger = {
   categories: Category[];
   entries: Entry[];
   receiptImports?: { importId: string; fingerprint: string; entryId: string }[];
+  // Read-only SQL aggregates and archived category labels on the lightweight client view.
+  balanceTotals?: Record<string, Partial<Record<Currency, number>>>;
+  historicalCategories?: Category[];
 };
 export function emptyLedger(): Ledger {
   return {
@@ -62,6 +66,7 @@ export function balance(
   wallet: string,
   currency: Currency,
 ): number {
+  if (data.balanceTotals) return data.balanceTotals[wallet]?.[currency] ?? 0;
   let total = 0;
   for (const e of data.entries) {
     if (e.wallet === wallet && e.currency === currency)
@@ -333,6 +338,7 @@ export function mutateLedger(previous: Ledger, raw: unknown): Ledger {
       } else {
         e.title = text(p.title, "Title");
         e.category = text(p.category, "Category");
+        if (existing?.kind === e.kind && existing.category === e.category && existing.categoryId) e.categoryId = existing.categoryId;
         if (p.newCategory === true) {
           if (e.kind !== "income" && e.kind !== "expense")
             throw new Error("Categories must belong to income or expense.");

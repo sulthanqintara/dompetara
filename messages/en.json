@@ -387,7 +387,8 @@
     "styleGuideChartFour": "Chart series 4",
     "styleGuideChartFive": "Chart series 5",
     "chooseFile": "Choose file",
-    "noFileChosen": "No file selected"
+    "noFileChosen": "No file selected",
+    "updatingLedgerData": "Updating data…"
   },
   "Errors": {
     "aReceiptMustBeSavedAsAnExpense": "A receipt must be saved as an expense.",
@@ -490,6 +491,8 @@
     "requestProtectionUnavailable": "Request protection is temporarily unavailable. Please try again later.",
     "authTooManyRequests": "Too many requests. Please try again later.",
     "couldNotDeleteYourAccountPleaseTryAgain": "Could not delete your account. Please try again.",
-    "pleaseSignOutAndSignInAgainBeforeDeletingYourAccount": "Please sign out and sign in again before deleting your account."
+    "pleaseSignOutAndSignInAgainBeforeDeletingYourAccount": "Please sign out and sign in again before deleting your account.",
+    "invalidLedgerQuery": "Invalid ledger query.",
+    "ledgerStorageUpgradeRequired": "Ledger storage upgrade is required. Please try again later."
   }
 }

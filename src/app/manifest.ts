@@ -10,7 +10,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     "short_name": "Dompetara",
     "description": t("trackYourIncomeAndExpensesAllInOnePlace"),
     "lang": await getLocale(),
-    "start_url": "/",
+    "start_url": "/transactions",
     "scope": "/",
     "display": "standalone",
     "background_color": colorScales.neutral[100],

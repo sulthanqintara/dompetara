@@ -10,9 +10,15 @@ try {
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
+    const response = await page.request.get(`${origin}/sign-in`);
+    const markup = await response.text();
+    const button = markup.match(/<button\b[^>]*class="[^"]*theme-toggle[^"]*"[^>]*>/)?.[0];
+    assert.ok(button);
+    assert.match(button, /aria-disabled="true"/, "Server gates the toggle until hydration");
+    assert.doesNotMatch(button, /\sdisabled(?:=|\s|>)/, "No native disabled attribute for composite controls to remove before hydration");
     await page.goto(`${origin}/sign-in`);
     const toggle = page.locator("button.theme-toggle");
-    await page.waitForFunction(() => !document.querySelector("button.theme-toggle")?.disabled);
+    await page.waitForFunction(() => document.querySelector("button.theme-toggle svg[data-theme]") !== null);
     assert.equal(await toggle.locator("svg").getAttribute("data-theme"), "light", "Sun indicates the current light theme");
     assert.ok(await toggle.locator("svg").evaluate((icon) => icon.classList.contains("lucide-sun")));
     assert.equal(await toggle.locator("svg").evaluate((icon) => icon.getAnimations().length), 0, "No animation on initial load");

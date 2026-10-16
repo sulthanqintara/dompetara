@@ -1,3 +1,4 @@
+import { seedLedger } from "./support/seed-ledger.mjs";
 import { createSessionTokenCodec } from "../src/lib/auth-privacy/create-session-token-codec.ts";
 import "dotenv/config";
 import assert from "node:assert/strict";
@@ -36,7 +37,7 @@ try {
   browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE });
   await sql`insert into public."user" (id, name, email) values (${account}, 'Theme test', ${account + "@example.invalid"})`;
   await sql`insert into public.session (id, user_id, token, token_hash, expires_at, updated_at) values (${randomUUID()}, ${account}, ${await createSessionTokenCodec(process.env.BETTER_AUTH_SECRET).encrypt(token)}, ${createSessionTokenCodec(process.env.BETTER_AUTH_SECRET).hash(token)}, ${new Date(Date.now() + 3600000)}, ${new Date()})`;
-  await sql`insert into public.ledger (user_id, data) values (${account}, ${sql.json(data)})`;
+  await seedLedger(sql, account, data);
   await sql`insert into public.user_preferences (user_id, language_prompt_shown_at) values (${account}, ${new Date()})`;
   for (const language of ["en", "id"]) {
     const context = await browser.newContext({ colorScheme: "dark", locale: language === "id" ? "id-ID" : "en-US" });
@@ -64,10 +65,11 @@ try {
       for (const theme of ["dark", "light"]) {
         for (const route of ["transactions", "wallet", "report", "settings", "icon-preview", "missing-page"]) {
           await page.goto(`${origin}/${route}`);
+          if (route === "transactions") await page.reload();
           if (route !== "missing-page") {
             const toggle = page.locator("button.theme-toggle");
             await toggle.waitFor();
-            await page.waitForFunction(() => !document.querySelector("button.theme-toggle")?.disabled);
+            await page.waitForFunction(() => document.querySelector("button.theme-toggle svg[data-theme]") !== null);
             if ((await toggle.getAttribute("aria-pressed")) !== String(theme === "dark")) await toggle.click();
             await page.waitForFunction((dark) => document.documentElement.classList.contains("dark") === dark, theme === "dark");
             const box = await toggle.boundingBox();
@@ -109,7 +111,7 @@ try {
       }
     }
     await page.goto(`${origin}/settings`);
-    await page.waitForFunction(() => !document.querySelector("button.theme-toggle")?.disabled);
+    await page.waitForFunction(() => document.querySelector("button.theme-toggle svg[data-theme]") !== null);
     await page.getByRole("button", { name: darkLabel }).focus();
     await page.keyboard.press("Enter");
     await page.getByRole("button", { name: lightLabel }).waitFor();

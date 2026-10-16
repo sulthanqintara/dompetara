@@ -9,6 +9,7 @@ import { authClient } from "@/lib/auth-client";
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { BrandWordmark } from "@/features/branding/components/brand-wordmark";
 import { ThemeToggle } from "@/features/theme/components/theme-toggle";
+import { saveBrowserTimeZone } from "@/features/ledger/save-browser-timezone";
 
 export function SignInForm() {
   const errorMessage = useErrorMessage();
@@ -19,9 +20,10 @@ export function SignInForm() {
     setPending(true);
     setError("");
     try {
+      saveBrowserTimeZone();
       const result = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: "/transactions",
       });
       if (result.error)
         throw new Error(result.error.message || "Unable to sign in.");

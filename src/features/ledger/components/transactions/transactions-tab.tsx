@@ -23,7 +23,7 @@ import { walletName } from "../../derive";
 import { format } from "../../format";
 import { receivedAfterFee } from "../../transfer";
 import type { Entry, Ledger } from "../../ledger";
-import { transactionPage } from "../../pagination";
+import type { TransactionResult } from "../../query";
 import { TransactionPagination } from "./transaction-pagination";
 
 export function TransactionsTab({
@@ -32,7 +32,7 @@ export function TransactionsTab({
   periodLabel,
   onEditEntry,
   onAddWallet,
-  page,
+  pagination,
   timeZone,
 }: {
   data: Ledger;
@@ -40,18 +40,17 @@ export function TransactionsTab({
   periodLabel: string;
   onEditEntry: (entry: Entry) => void;
   onAddWallet: () => void;
-  page: unknown;
+  pagination: TransactionResult;
   timeZone: string;
 }) {
   const locale = useLocale();
   const t = useTranslations("UI");
-  const pagination = transactionPage(entries, page);
   return (
     <Card className="panel">
       <div className="panel-heading">
         <h3>
           {t("transactionHistory")}{" "}
-          <Badge variant="secondary">{entries.length}</Badge>
+          <Badge variant="secondary">{pagination.total}</Badge>
         </h3>
         <span>{periodLabel}</span>
       </div>

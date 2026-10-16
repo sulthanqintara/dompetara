@@ -1,7 +1,6 @@
 import { useTranslations } from "next-intl";
 import { categoryLabel } from "@/features/i18n/format";
 import { useId, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Form from "next/form";
 import { Search, SlidersHorizontal, X } from "lucide-react";
@@ -21,7 +20,6 @@ export function MobileTransactionFilters({ data, filters }: { data: Ledger; filt
   const t = useTranslations("UI");
   const { isPhone } = useSidebar();
   const id = useId();
-  const router = useRouter();
   const trigger = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState(filters.search);
@@ -70,7 +68,7 @@ export function MobileTransactionFilters({ data, filters }: { data: Ledger; filt
           for (const [key, value] of Object.entries({ ...draft, search })) {
             if (value && (key === "search" || value !== "all")) params.set(key, value);
           }
-          router.push(`/transactions${params.size ? `?${params}` : ""}`, { scroll: false });
+          window.history.pushState(null, "", `/transactions${params.size ? `?${params}` : ""}`);
           setOpen(false);
         }}>
           <div className="mobile-filter-sheet-body">

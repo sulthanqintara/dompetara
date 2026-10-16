@@ -13,7 +13,7 @@ import { BalanceVisibilityToggle } from "./balance-visibility-toggle";
 import { useCachedRate } from "@/features/exchange-rates/hooks";
 import { balanceBreakdown } from "../../balances";
 import { format, localDate } from "../../format";
-import type { Currency, Ledger } from "../../ledger";
+import { balance, type Currency, type Ledger } from "../../ledger";
 
 export function CurrentBalanceCard({ data, currency }: { data: Ledger; currency: Currency }) {
   const locale = useLocale();
@@ -21,9 +21,11 @@ export function CurrentBalanceCard({ data, currency }: { data: Ledger; currency:
   const [attempt, setAttempt] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const date = localDate().slice(0, 10);
-  const idr = useCachedRate("IDR", currency, date, attempt);
-  const usd = useCachedRate("USD", currency, date, attempt);
-  const cad = useCachedRate("CAD", currency, date, attempt);
+  const needsRate = (from: Currency) => from !== currency && data.wallets.some((wallet) => wallet.currencies.includes(from)) &&
+    data.wallets.reduce((total, wallet) => total + balance(data, wallet.id, from), 0) !== 0;
+  const idr = useCachedRate("IDR", currency, date, attempt, needsRate("IDR"));
+  const usd = useCachedRate("USD", currency, date, attempt, needsRate("USD"));
+  const cad = useCachedRate("CAD", currency, date, attempt, needsRate("CAD"));
   const states = { IDR: idr, USD: usd, CAD: cad };
   const result = balanceBreakdown(data, currency, { IDR: idr.suggestion, USD: usd.suggestion, CAD: cad.suggestion });
   const loading = result.rows.some((row) => row.currency !== currency && row.amount !== 0 && states[row.currency].loading);

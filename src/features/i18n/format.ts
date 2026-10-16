@@ -5,8 +5,8 @@ const defaultCategories: Record<string, string> = {
   Transport: "transport", Entertainment: "entertainment", Shopping: "shopping", Bills: "bills",
 };
 
-export function categoryLabel(data: Pick<Ledger, "categories" | "entries">, name: string, t: (key: string) => string) {
-  const category = data.categories.find((category) => category.name === name);
+export function categoryLabel(data: Pick<Ledger, "categories" | "entries" | "historicalCategories">, name: string, t: (key: string) => string) {
+  const category = [...data.categories, ...(data.historicalCategories ?? [])].find((category) => category.name === name);
   const isFee = category?.system === "adminFees" || (name === "Admin fees" && data.entries.some((entry) => entry.transferId && entry.category === name));
   const key = isFee ? "adminFees"
     : category?.id === name ? defaultCategories[name] : undefined;

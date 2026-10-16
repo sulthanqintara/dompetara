@@ -1,3 +1,4 @@
+import { seedLedger } from "./support/seed-ledger.mjs";
 import "dotenv/config";
 import assert from "node:assert/strict";
 import { createHmac, randomUUID } from "node:crypto";
@@ -33,7 +34,7 @@ try {
   const codec = createSessionTokenCodec(process.env.BETTER_AUTH_SECRET);
   await sql`insert into public."user" (id, name, email) values (${account}, 'Receipt picker test', ${account + '@example.invalid'})`;
   await sql`insert into public.session (id,user_id,token,token_hash,expires_at,updated_at) values (${randomUUID()},${account},${await codec.encrypt(token)},${codec.hash(token)},${new Date(Date.now()+3600000)},${new Date()})`;
-  await sql`insert into public.ledger (user_id,data) values (${account},${sql.json({ wallets: [{id:'bank',name:'BCA',currencies:['IDR','USD']}], categories: [], entries: [] })})`;
+  await seedLedger(sql, account, { wallets: [{id:'bank',name:'BCA',currencies:['IDR','USD']}], categories: [], entries: [] });
   await sql`insert into public.user_preferences (user_id,language_prompt_shown_at) values (${account},${new Date()})`;
   const signature = createHmac('sha256',process.env.BETTER_AUTH_SECRET).update(token).digest('base64');
   for (const language of ['en','id']) {

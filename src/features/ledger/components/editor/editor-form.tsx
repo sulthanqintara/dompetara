@@ -34,7 +34,7 @@ export type Editor = (
   | { type: "entry"; entry?: Entry; kind?: "income" | "expense" | "transfer" }
   | { type: "receipt" }
   | { type: "wallet"; wallet?: Wallet; currency?: Currency }
-) & { restoreFocus?: HTMLElement | null };
+) & { restoreFocus?: HTMLElement | null; relatedEntries?: Entry[] };
 
 export function EditorForm({
   editor,

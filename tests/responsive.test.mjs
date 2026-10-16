@@ -1,3 +1,4 @@
+import { seedLedger } from "./support/seed-ledger.mjs";
 import { createSessionTokenCodec } from "../src/lib/auth-privacy/create-session-token-codec.ts";
 import "dotenv/config";
 import assert from "node:assert/strict";
@@ -129,7 +130,7 @@ async function switchView(page, name) {
   const path = name === "Transactions" ? "/transactions" : `/${name.toLowerCase()}`;
   // The heading now updates immediately, before the content navigation commits.
   await page.waitForURL((url) => url.pathname === path);
-  await page.locator("[data-ledger-loading]").waitFor({ state: "detached" });
+  await page.waitForFunction(() => !document.querySelector("[data-ledger-loading]"));
   assert.equal(new URL(page.url()).pathname, path);
   if (name === "Transactions" || name === "Report") await page.locator('.balance-stat[aria-busy="false"]').waitFor();
 }
@@ -170,9 +171,9 @@ async function checkRoutes(page, context, browser) {
 }
 
 async function checkPagination(page, width, height) {
-  const before = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const before = await (await page.request.get(`${origin}/api/ledger/export`)).json();
   const extra = Array.from({ length: 41 }, (_, index) => ({ id: `pagination-${index}`, kind: "expense", wallet: "bank", currency: "IDR", amount: 1, date, title: `Pagination transaction ${String(index).padStart(2, "0")}`, category: "Food & drink", description: "Pagination verification" }));
-  await sql`update public.ledger set data = ${sql.json({ ...before.data, entries: [...extra, ...before.data.entries] })} where user_id = ${id}`;
+  await seedLedger(sql, id, { ...before.data, entries: [...extra, ...before.data.entries] }, before.version);
   try {
     if (filtersOnly) {
       await page.goto(`${origin}/transactions?search=Pagination&type=expense`);
@@ -217,7 +218,7 @@ async function checkPagination(page, width, height) {
     await page.waitForURL((url) => !url.searchParams.has("page"));
     assert.equal(new URL(page.url()).searchParams.has("page"), false, "Changing the period resets pagination");
   } finally {
-    await sql`update public.ledger set data = ${sql.json(before.data)}, version = ${before.version} where user_id = ${id}`;
+    await seedLedger(sql, id, before.data, before.version);
     await page.goto(`${origin}/transactions`);
   }
 }
@@ -245,6 +246,7 @@ async function checkMobileFilters(page, width, height) {
   await page.getByLabel("End date", { exact: true }).and(page.locator("input:visible")).fill(singleDay);
   await page.getByRole("button", { name: "Apply period", exact: true }).click();
   await page.getByRole("dialog").waitFor({ state: "detached" });
+  await page.getByRole("button", { name: "Edit Previous month bill", exact: true }).waitFor();
   assert.equal(await page.getByRole("button", { name: "Edit Previous month bill", exact: true }).count(), 1);
   await check(page, "mobile-custom-period", width, height);
   await switchView(page, "Report");
@@ -390,7 +392,7 @@ async function checkTransactionFilters(page, width, height) {
 }
 
 async function checkBalances(page, width, height) {
-  const before = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const before = await (await page.request.get(`${origin}/api/ledger/export`)).json();
   const cacheBefore = await sql`select rate_date, rates, last_checked_at from public.exchange_rate_cache order by rate_date`;
   const snapshot = { IDR: "17800", CAD: "1.38" };
   let mode = "ok";
@@ -552,7 +554,7 @@ async function checkBalances(page, width, height) {
       await page.getByText(/cached rates may be outdated/).waitFor();
       await check(page, "balance-stale-rates", width, height);
     }
-    assert.deepEqual(await (await page.request.get(`${origin}/api/ledger`)).json(), before, "Conversions must not change the ledger or its version");
+    assert.deepEqual(await (await page.request.get(`${origin}/api/ledger/export`)).json(), before, "Conversions must not change the ledger or its version");
     assert.deepEqual(await sql`select rate_date, rates, last_checked_at from public.exchange_rate_cache order by rate_date`, cacheBefore, "Balance reads must not refresh shared rates");
   } finally {
     await page.unroute("**/api/exchange-rates?*", handler);
@@ -947,9 +949,8 @@ async function saveEditor(page) {
     .click();
   const response = await saved;
   assert.ok(response.ok(), await response.text());
-  const result = await response.json();
   await page.getByRole("dialog").waitFor({ state: "detached" });
-  return result.data;
+  return (await (await page.request.get(`${origin}/api/ledger/export`)).json()).data;
 }
 
 async function removeFeeTransfer(page) {
@@ -972,7 +973,7 @@ async function removeFeeTransfer(page) {
 
 async function checkTransferFees(page, width, height) {
   await switchView(page, "Transactions");
-  const before = (await (await page.request.get(`${origin}/api/ledger`)).json())
+  const before = (await (await page.request.get(`${origin}/api/ledger/export`)).json())
     .data;
   const cacheBefore =
     await sql`select rate_date, last_checked_at from public.exchange_rate_cache order by rate_date`;
@@ -1046,7 +1047,7 @@ async function checkTransferFees(page, width, height) {
   await check(page, "admin-fee-report", width, height);
   await switchView(page, "Transactions");
   await removeFeeTransfer(page);
-  let restored = (await (await page.request.get(`${origin}/api/ledger`)).json())
+  let restored = (await (await page.request.get(`${origin}/api/ledger/export`)).json())
     .data;
   assert.deepEqual(
     restored.entries,
@@ -1133,7 +1134,7 @@ async function checkTransferFees(page, width, height) {
   await check(page, "saved-transfer-rate", width, height);
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await removeFeeTransfer(page);
-  restored = (await (await page.request.get(`${origin}/api/ledger`)).json())
+  restored = (await (await page.request.get(`${origin}/api/ledger/export`)).json())
     .data;
   assert.deepEqual(restored.entries, before.entries);
 
@@ -1227,7 +1228,7 @@ async function checkTransferFees(page, width, height) {
   saved = await saveEditor(page);
   assert.equal(saved.entries.find((e) => e.id === cad.id).received, 200000000);
   await removeFeeTransfer(page);
-  restored = (await (await page.request.get(`${origin}/api/ledger`)).json())
+  restored = (await (await page.request.get(`${origin}/api/ledger/export`)).json())
     .data;
   assert.deepEqual(restored.entries, before.entries);
   const cacheAfter =
@@ -1288,9 +1289,9 @@ async function checkCategories(page, width, height) {
 }
 
 async function checkConflicts(page, width, height) {
-  const initial = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const initial = await (await page.request.get(`${origin}/api/ledger/export`)).json();
   const bump = async () => {
-    const latest = await (await page.request.get(`${origin}/api/ledger`)).json();
+    const latest = await (await page.request.get(`${origin}/api/ledger/export`)).json();
     const response = await page.request.post(`${origin}/api/ledger`, {
       headers: { origin },
       data: { action: "category", kind: "expense", name: `Other tab ${latest.version}`, version: latest.version },
@@ -1334,7 +1335,7 @@ async function checkConflicts(page, width, height) {
   await dialog.getByRole("status").filter({ hasText: "Latest ledger loaded" }).waitFor();
   assert.equal(await save.isEnabled(), true);
   assert.deepEqual(await snapshot(dialog.locator("form:visible")), draft);
-  assert.deepEqual(await (await page.request.get(`${origin}/api/ledger`)).json(), latest, "Reload must not save the draft");
+  assert.deepEqual(await (await page.request.get(`${origin}/api/ledger/export`)).json(), latest, "Reload must not save the draft");
   await check(page, "conflict-draft-kept", width, height);
   latest = await bump();
   await submit(save, 409);
@@ -1342,7 +1343,7 @@ async function checkConflicts(page, width, height) {
   await dialog.getByRole("status").filter({ hasText: "Latest ledger loaded" }).waitFor();
   await submit(save, 200);
   await dialog.waitFor({ state: "detached" });
-  const saved = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const saved = await (await page.request.get(`${origin}/api/ledger/export`)).json();
   assert.equal(saved.version, latest.version + 1);
   assert.deepEqual(saved.data.categories, latest.data.categories, "Retry preserves the other tab's changes");
   assert.equal(saved.data.entries.find((e) => e.id === "lunch").amount, 20000000);
@@ -1398,14 +1399,15 @@ async function checkConflicts(page, width, height) {
   await confirmation.getByRole("status").filter({ hasText: "Latest ledger loaded" }).waitFor();
   await confirmation.getByRole("button", { name: "Cancel", exact: true }).click();
   assert.equal(await page.getByRole("button", { name: "Remove Food & drink", exact: true }).count(), 1);
-  await sql`update public.ledger set data = ${sql.json(initial.data)}, version = version + 1 where user_id = ${id}`;
+  const [currentVersion] = await sql`select version from public.ledger where user_id = ${id}`;
+  await seedLedger(sql, id, initial.data, currentVersion.version + 1);
   await page.reload();
   expectedLedgerFailure = false;
 }
 
 async function checkInlineCategories(page, width, height) {
   await switchView(page, "Transactions");
-  const before = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const before = await (await page.request.get(`${origin}/api/ledger/export`)).json();
   await openTransaction(page);
   const dialog = page.getByRole("dialog");
   await choose(page, "Category", "Food & drink");
@@ -1416,7 +1418,7 @@ async function checkInlineCategories(page, width, height) {
   await dialog.getByRole("button", { name: "Choose an existing category", exact: true }).click();
   assert.equal(await dialog.getByRole("combobox", { name: "Category", exact: true }).innerText(), "Food & drink");
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
-  assert.deepEqual(await (await page.request.get(`${origin}/api/ledger`)).json(), before);
+  assert.deepEqual(await (await page.request.get(`${origin}/api/ledger/export`)).json(), before);
   for (const kind of ["expense", "income"]) {
     await openTransaction(page, kind);
     await choose(page, "Wallet", "BCA Main Account");
@@ -1428,7 +1430,7 @@ async function checkInlineCategories(page, width, height) {
     await dialog.getByRole("button", { name: "Save", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
     await page.reload();
-    const saved = await (await page.request.get(`${origin}/api/ledger`)).json();
+    const saved = await (await page.request.get(`${origin}/api/ledger/export`)).json();
     assert.ok(saved.data.categories.some((c) => c.name === `Inline ${kind} category ${width}` && c.kind === kind));
     const entry = saved.data.entries.find((e) => e.title === `Inline ${kind} ${width}`);
     assert.equal(entry.category, `Inline ${kind} category ${width}`);
@@ -1482,7 +1484,7 @@ async function checkReceipts(page, width, height) {
   });
   await choose(page, "Read with", "AI — image recognition");
   await dialog.getByLabel("Receipt image").setInputFiles(image);
-  const before = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const before = await (await page.request.get(`${origin}/api/ledger/export`)).json();
   await dialog.getByRole("button", { name: "Read receipt", exact: true }).click();
   await page.getByRole("heading", { name: "Review receipt", exact: true }).waitFor();
   await dialog.locator(".editor-body:visible").evaluate((body) => body.scrollTop = 0);
@@ -1491,7 +1493,7 @@ async function checkReceipts(page, width, height) {
   assert.equal(await dialog.getByLabel("Line total", { exact: true }).count(), 0, "Item correction is optional");
   assert.equal(await dialog.getByText(fixture.draft.warnings[0], { exact: true }).count(), 0, "Scan warnings do not clutter the review");
   assert.equal(await dialog.getByText(fixture.draft.suggestedCategory.reason, { exact: true }).count(), 0, "Category explanations do not clutter the review");
-  assert.equal((await (await page.request.get(`${origin}/api/ledger`)).json()).version, before.version, "Extraction never writes the ledger");
+  assert.equal((await (await page.request.get(`${origin}/api/ledger/export`)).json()).version, before.version, "Extraction never writes the ledger");
   assert.equal(await dialog.getByRole("combobox", { name: "Category", exact: true }).innerText(), "Food & drink");
   assert.equal(await dialog.getByRole("combobox", { name: "Wallet", exact: true }).innerText(), "BCA Main Account");
   await choose(page, "Wallet", "GoPay");
@@ -1507,7 +1509,7 @@ async function checkReceipts(page, width, height) {
   await dialog.getByRole("textbox", { name: "Amount", exact: true }).fill("191004");
   await dialog.getByRole("button", { name: "Save", exact: true }).click();
   await dialog.getByRole("alert").filter({ hasText: "equal the final total" }).waitFor();
-  assert.equal((await (await page.request.get(`${origin}/api/ledger`)).json()).version, before.version);
+  assert.equal((await (await page.request.get(`${origin}/api/ledger/export`)).json()).version, before.version);
   await dialog.getByRole("textbox", { name: "Amount", exact: true }).fill("191000");
   if (width === 320) {
     await sql`update public.ledger set version = version + 1 where user_id = ${id}`;
@@ -1567,7 +1569,7 @@ async function checkReceipts(page, width, height) {
   await dialog.getByRole("button", { name: `Add category: Gifts ${width}`, exact: true }).click();
   await dialog.getByLabel("New category name", { exact: true }).fill(`Gifts ${width}`);
   await dialog.getByRole("textbox", { name: /Note/ }).fill("Birthday gift for a friend");
-  const unconfirmed = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const unconfirmed = await (await page.request.get(`${origin}/api/ledger/export`)).json();
   assert.equal(unconfirmed.data.categories.some((category) => category.name === `Gifts ${width}`), false, "A suggested category is never created automatically");
   await check(page, "receipt-new-category-note", width, height);
   assert.equal(await dialog.locator('[name="paymentConfirmed"]').count(), 0);
@@ -1591,7 +1593,7 @@ async function checkReceipts(page, width, height) {
   await dialog.getByRole("button", { name: "Delete", exact: true }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Delete transaction", exact: true }).click();
   assert.ok((await paymentDeleted).ok()); await dialog.waitFor({ state: "detached" });
-  const cleanupState = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const cleanupState = await (await page.request.get(`${origin}/api/ledger/export`)).json();
   const createdCategory = cleanupState.data.categories.find((category) => category.name === `Gifts ${width}`);
   assert.ok((await page.request.post(`${origin}/api/ledger`, { headers: { Origin: origin }, data: { action: "deleteCategory", id: createdCategory.id, version: cleanupState.version } })).ok());
   await page.reload();
@@ -1616,7 +1618,7 @@ async function checkReceipts(page, width, height) {
 }
 
 async function checkExports(page, width, height) {
-  const initial = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const initial = await (await page.request.get(`${origin}/api/ledger/export`)).json();
   const beforeBalance = initial.data.wallets.reduce((total, wallet) => total + balance(initial.data, wallet.id, "IDR"), 0);
   const jsonButton = page.getByRole("button", { name: "Download JSON backup", exact: true });
   const csvButton = page.getByRole("button", { name: "Download CSV", exact: true });
@@ -1638,7 +1640,7 @@ async function checkExports(page, width, height) {
   latest.data.entries[1].title = '=SUM(1,2)';
   latest.data.entries[1].description = 'Fresh saved change, with "quotes"\nSecond line';
   let reads = 0;
-  await page.route("**/api/ledger", (route) => {
+  await page.route("**/api/ledger/export", (route) => {
     reads += 1;
     return route.fulfill({ json: latest });
   });
@@ -1653,27 +1655,27 @@ async function checkExports(page, width, height) {
   assert.ok(csv.includes('"transfer"'), "Export includes transfers");
   assert.ok(csv.includes('"opening"'), "Export includes balance movements");
   assert.equal(reads, 2, "Each export fetches the latest authenticated ledger once");
-  await page.unroute("**/api/ledger");
+  await page.unroute("**/api/ledger/export");
   await check(page, "csv-export", width, height);
   if (width === 320) {
     const downloadEvents = [];
     const onDownload = (download) => downloadEvents.push(download);
     page.on("download", onDownload);
     expectedExportFailure = true;
-    await page.route("**/api/ledger", (route) => route.abort("failed"));
+    await page.route("**/api/ledger/export", (route) => route.abort("failed"));
     await jsonButton.click();
     await page.getByRole("alert").filter({ hasText: "Could not export your ledger" }).waitFor();
     assert.equal(downloadEvents.length, 0, "A failed fetch must not produce a partial backup");
     assert.equal(await jsonButton.isEnabled(), true);
     assert.equal(await csvButton.isEnabled(), true);
     await check(page, "export-error", width, height);
-    await page.unroute("**/api/ledger");
+    await page.unroute("**/api/ledger/export");
     await downloadContent(jsonButton, "json");
     page.off("download", onDownload);
     expectedExportFailure = false;
     assert.equal(await page.getByRole("alert").filter({ hasText: "Could not export your ledger" }).count(), 0);
   }
-  const after = await (await page.request.get(`${origin}/api/ledger`)).json();
+  const after = await (await page.request.get(`${origin}/api/ledger/export`)).json();
   assert.deepEqual(after, initial, "Downloading must not mutate or increment the ledger version");
   assert.equal(after.data.wallets.reduce((total, wallet) => total + balance(after.data, wallet.id, "IDR"), 0), beforeBalance);
 }
@@ -1685,6 +1687,7 @@ async function checkDateRange(page, width, height) {
   const applyDates = async () => {
     await page.getByRole("button", { name: mobile ? "Apply period" : "Apply dates", exact: true }).click();
     if (mobile) await page.getByRole("dialog").waitFor({ state: "detached" });
+    await page.waitForFunction(() => !document.querySelector("[data-ledger-loading]"));
   };
   const currentBalance = await page.locator(".balance-stat h2").evaluate((el) => el.innerText.replace(/\n/g, ""));
   assert.match(await page.locator(".balance-stat").innerText(), /Current balance/);
@@ -1705,6 +1708,7 @@ async function checkDateRange(page, width, height) {
   assert.equal(await page.locator(".spending-history").first().locator(".report-row").count(), 2);
   await check(page, "report-custom-range", width, height);
   await switchView(page, "Transactions");
+  await page.getByRole("button", { name: "Edit Previous month bill", exact: true }).waitFor();
   assert.equal(await page.getByRole("button", { name: "Edit Previous month bill", exact: true }).count(), 1);
   if (mobile) await page.getByRole("button", { name: /^Change period:/ }).click();
   assert.equal(await page.getByLabel("Start date", { exact: true }).and(page.locator("input:visible")).inputValue(), singleDate.toISOString().slice(0, 10));
@@ -1841,12 +1845,13 @@ try {
   await sql.begin(async (tx) => {
     await tx`insert into public."user" (id, name, email) values (${id}, 'Responsive check', ${id + "@example.invalid"})`;
     await tx`insert into public.session (id, user_id, token, token_hash, expires_at, updated_at) values (${randomUUID()}, ${id}, ${await createSessionTokenCodec(process.env.BETTER_AUTH_SECRET).encrypt(token)}, ${createSessionTokenCodec(process.env.BETTER_AUTH_SECRET).hash(token)}, ${new Date(Date.now() + 3600000)}, ${new Date()})`;
-    await tx`insert into public.ledger (user_id, data) values (${id}, ${tx.json(data)})`;
+    await seedLedger(tx, id, data);
   });
   const signature = createHmac("sha256", process.env.BETTER_AUTH_SECRET)
     .update(token)
     .digest("base64");
-  for (const [width, height] of sizes) {
+  const selectedSizes = sizes.filter(([width]) => !process.env.RESPONSIVE_WIDTH || width === Number(process.env.RESPONSIVE_WIDTH));
+  for (const [width, height] of selectedSizes) {
     const context = await browser.newContext({
       viewport: { width, height },
       timezoneId: "Asia/Jakarta",
@@ -1855,7 +1860,7 @@ try {
       hasTouch: width < 1024,
     });
     const page = await context.newPage();
-    page.on("pageerror", (error) => errors.push(error.message));
+    page.on("pageerror", (error) => { errors.push(error.message); console.error("Browser error:", error.message); });
     page.on("console", (message) => {
       if (message.type() === "error" && !(expectedLedgerFailure && /(?:409|503)/.test(message.text())) && !(expectedExportFailure && message.text().includes("net::ERR_FAILED"))) errors.push(message.text());
     });
@@ -1863,7 +1868,7 @@ try {
     await page.getByRole("button", { name: /Google/ }).waitFor();
     await check(page, "sign-in", width, height);
     if (width === 320) {
-      assert.equal((await page.request.get(`${origin}/api/ledger`)).status(), 401);
+      assert.equal((await page.request.get(`${origin}/api/ledger/export`)).status(), 401);
       assert.equal((await page.request.post(`${origin}/api/receipts/extract`, { headers: { Origin: origin } })).status(), 401);
       assert.equal(
         (
@@ -1884,7 +1889,7 @@ try {
       },
     ]);
     await page.goto(origin);
-    if (width === 320) {
+    if (width === selectedSizes[0][0]) {
       await page.getByRole("dialog").filter({ hasText: "Choose your language" }).waitFor();
       await page.getByRole("button", { name: "English", exact: true }).click();
       await page.getByRole("dialog").waitFor({ state: "detached" });
@@ -2072,11 +2077,11 @@ try {
     await context.close();
   }
   assert.deepEqual(errors, [], "JavaScript page errors");
-  console.log(
+  const resultMessage =
     brandingOnly ? "Branding and bottom clearance passed on all four views at eight sizes." : balancesOnly ? "Balance checks passed at eight sizes on Transactions and Report: collapsed defaults, keyboard toggles, conversions, retry, and responsive layouts." : filtersOnly ? "Transaction filter and animation checks passed at eight sizes." : categoriesOnly ? "Inline category and receipt checks passed at eight sizes; creation, cancel, income/expense, suggestions and reload persistence verified." : receiptsOnly ? "Receipt browser checks passed: eight sizes, OCR/AI choice, missing API key, editable review, item reconciliation, one wallet charge, conflict recovery, durable retries, reload persistence and deletion." : reportsOnly
       ? "Report browser checks passed: eight sizes, route persistence and server HTML, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, custom dates, daily/monthly charts, exact amounts, empty periods, currencies, and accessible controls."
-      : "Responsive checks passed: eight sizes, conflict recovery and draft preservation, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, date ranges, daily/monthly reports, JSON/CSV downloads and retry, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.",
-  );
+      : "Responsive checks passed: eight sizes, conflict recovery and draft preservation, cached balance conversions and retry, floating navigation and scroll clearance, tablet Sheet, desktop icon rail, all tabs, date ranges, daily/monthly reports, JSON/CSV downloads and retry, source/destination fees, cached/manual rates, exact CAD→IDR amounts, reload persistence, and atomic transfer/fee deletion.";
+  console.log(resultMessage.replaceAll("eight sizes", `${selectedSizes.length} viewport sizes`));
 } finally {
   await browser?.close();
   await sql`delete from public."user" where id = ${id}`;

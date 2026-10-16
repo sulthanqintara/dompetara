@@ -11,7 +11,7 @@ export function TransactionFilterFields({ data, filters, onChange }: {
 }) {
   const t = useTranslations("UI");
   const categories = [...new Set([...data.categories.map((category) => category.name),
-    ...data.entries.map((entry) => entry.category).filter(Boolean)])].sort();
+    ...(data.historicalCategories ?? []).map((category) => category.name)])].sort();
   return <>
     <LedgerSelect label={t("wallet")} name="wallet" defaultValue={onChange ? undefined : filters.wallet} value={onChange ? filters.wallet : undefined}
       onValueChange={(value) => onChange?.({ ...filters, wallet: value })}

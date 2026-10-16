@@ -8,6 +8,7 @@ export default defineConfig({
   schemaFilter: ["public"],
   tablesFilter: [
     "user", "session", "account", "verification", "ledger",
+    "ledger_wallets", "ledger_categories", "ledger_transactions", "ledger_receipt_imports",
     "exchange_rate_cache", "user_preferences", "security_limit_buckets", "security_admission_leases",
   ],
   dbCredentials: migrationDatabaseConfig(process.env.DATABASE_URL),

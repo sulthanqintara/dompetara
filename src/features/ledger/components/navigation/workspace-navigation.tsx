@@ -5,7 +5,8 @@ import { TabsIndicator } from "@/components/ui/tabs-indicator";
 import { useSidebar } from "@/components/ui/use-sidebar";
 import { ChartNoAxesCombined, List, Settings2, Wallet } from "lucide-react";
 import Link from "next/link";
-import { useContext } from "react";
+import { useContext, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { ledgerSections } from "../../navigation";
 import { NavigationContext } from "../../navigation-context";
 
@@ -15,6 +16,14 @@ export function WorkspaceNavigation({ tab }: { tab: string }) {
   const t = useTranslations("UI");
   const { isPhone, isMobile, open, setOpenMobile } = useSidebar();
   const navigate = useContext(NavigationContext);
+  const pathname = usePathname();
+  const previousPath = useRef(pathname);
+  useEffect(() => {
+    if (previousPath.current !== pathname) {
+      previousPath.current = pathname;
+      setOpenMobile(false);
+    }
+  }, [pathname, setOpenMobile]);
   return (
     <TabsList className={isPhone ? "mobile-navigation" : "workspace-tabs"} aria-label={t("workspace")}>
       {ledgerSections.map(({ name, label, href, key }, index) => {
@@ -24,7 +33,8 @@ export function WorkspaceNavigation({ tab }: { tab: string }) {
           nativeButton={false} render={<Link href={href} prefetch={true} onNavigate={() => navigate?.(href)} />}
           className={isPhone ? "mobile-nav-item" : tab === name ? "nav-item active" : "nav-item"}
           onClick={() => {
-            setOpenMobile(false);
+            // Keep the navigation link mounted until its route transition commits.
+            if (href === pathname) setOpenMobile(false);
             if (isPhone) window.scrollTo({ top: 0, behavior: "instant" });
           }}>
           {isPhone ? <span className="mobile-nav-icon" aria-hidden="true"><Icon size={18} /></span> : <Icon size={18} />}

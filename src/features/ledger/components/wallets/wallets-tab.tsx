@@ -18,8 +18,8 @@ export function WalletsTab({
   const locale = useLocale();
   const t = useTranslations("UI");
   const date = localDate().slice(0, 10);
-  const usd = useCachedRate("USD", "IDR", date).suggestion?.rate;
-  const cad = useCachedRate("CAD", "IDR", date).suggestion?.rate;
+  const usd = useCachedRate("USD", "IDR", date, 0, data.wallets.some((wallet) => balance(data, wallet.id, "USD") !== 0)).suggestion?.rate;
+  const cad = useCachedRate("CAD", "IDR", date, 0, data.wallets.some((wallet) => balance(data, wallet.id, "CAD") !== 0)).suggestion?.rate;
   return (
     <div className="wallet-grid">
       {data.wallets.map((w) => (

@@ -10,10 +10,10 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "generate:social-image": "node scripts/generate-social-image.mjs",
-    "db:push": "drizzle-kit push --strict --verbose && node --experimental-strip-types scripts/secure-database.ts",
+    "db:push": "node --experimental-strip-types scripts/prepare-ledger-database.ts && drizzle-kit push --strict --verbose && node --experimental-strip-types scripts/secure-database.ts",
     "db:studio": "drizzle-kit studio",
     "fx:setup": "node scripts/setup-exchange-rates.mjs",
-    "test": "node --experimental-strip-types tests/auth-privacy.test.ts && node --experimental-strip-types tests/database-pool.test.ts && node --experimental-strip-types tests/ledger.test.ts && node --experimental-strip-types tests/exchange-rates.test.ts && node --experimental-strip-types tests/reports.test.ts && node --experimental-strip-types tests/format.test.ts && node --experimental-strip-types tests/rate-cache.test.ts && node --experimental-strip-types tests/export.test.ts && node --experimental-strip-types tests/balances.test.ts && node --experimental-strip-types tests/pagination.test.ts && node --experimental-strip-types tests/transaction-filters.test.ts && node --experimental-strip-types tests/receipts.test.ts && node --conditions=react-server --experimental-strip-types tests/receipt-provider.test.ts && node --experimental-strip-types tests/currency-input.test.ts && node --conditions=react-server --experimental-strip-types tests/api-error-logging.test.ts && node --conditions=react-server --experimental-strip-types tests/server-performance.test.ts && node --experimental-strip-types tests/i18n.test.mjs && node --experimental-strip-types tests/ledger-security.test.ts && node --conditions=react-server --experimental-strip-types tests/receipt-context.test.ts && node --experimental-strip-types tests/security-limits.test.ts && node --conditions=react-server --experimental-strip-types tests/security-limits-config.test.ts && node --experimental-strip-types tests/migration-database-config.test.ts && pnpm test:design-system",
+    "test": "node --experimental-strip-types tests/auth-privacy.test.ts && node --experimental-strip-types tests/database-pool.test.ts && node --experimental-strip-types tests/ledger.test.ts && node --experimental-strip-types tests/ledger-storage.test.ts && node --experimental-strip-types tests/ledger-cache.test.ts && node --experimental-strip-types tests/exchange-rates.test.ts && node --experimental-strip-types tests/reports.test.ts && node --experimental-strip-types tests/format.test.ts && node --experimental-strip-types tests/rate-cache.test.ts && node --experimental-strip-types tests/export.test.ts && node --experimental-strip-types tests/balances.test.ts && node --experimental-strip-types tests/pagination.test.ts && node --experimental-strip-types tests/transaction-filters.test.ts && node --experimental-strip-types tests/receipts.test.ts && node --conditions=react-server --experimental-strip-types tests/receipt-provider.test.ts && node --experimental-strip-types tests/currency-input.test.ts && node --conditions=react-server --experimental-strip-types tests/api-error-logging.test.ts && node --conditions=react-server --experimental-strip-types tests/server-performance.test.ts && node --experimental-strip-types tests/i18n.test.mjs && node --experimental-strip-types tests/ledger-security.test.ts && node --conditions=react-server --experimental-strip-types tests/receipt-context.test.ts && node --experimental-strip-types tests/security-limits.test.ts && node --conditions=react-server --experimental-strip-types tests/security-limits-config.test.ts && node --experimental-strip-types tests/migration-database-config.test.ts && pnpm test:design-system",
     "test:receipts:live": "node --conditions=react-server --experimental-strip-types tests/receipt-live.test.ts",
     "profile:navigation": "node scripts/profile-navigation.mjs",
     "test:db": "node --experimental-strip-types tests/database.test.ts",
@@ -29,11 +29,19 @@
     "test:design-system": "node --experimental-strip-types tests/design-system.test.ts",
     "test:theme:browser": "node tests/theme-browser.test.mjs",
     "test:theme-toggle:browser": "node tests/theme-toggle-browser.test.mjs",
-    "test:auth:db": "node --experimental-strip-types tests/auth-privacy-db.test.ts"
+    "test:auth:db": "node --experimental-strip-types tests/auth-privacy-db.test.ts",
+    "db:ledger:check": "node --experimental-strip-types scripts/normalize-ledgers.ts",
+    "db:ledger:cutover": "node --experimental-strip-types scripts/normalize-ledgers.ts --apply",
+    "test:ledger:api": "node --experimental-strip-types tests/ledger-normalized-api.test.mjs",
+    "test:ledger:targeted": "node --experimental-strip-types tests/ledger-targeted-api.test.mjs",
+    "test:ledger:startup": "node --experimental-strip-types tests/ledger-startup-browser.test.mjs",
+    "test:ledger:performance": "node --experimental-strip-types tests/ledger-performance-browser.test.mjs",
+    "db:ledger:usage": "node --experimental-strip-types scripts/backfill-ledger-usage.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
     "@better-auth/drizzle-adapter": "^1.7.3",
+    "@tanstack/react-query": "^5.104.2",
     "@vercel/functions": "^3.9.11",
     "@vercel/speed-insights": "^2.0.0",
     "better-auth": "^1.7.3",
@@ -43,6 +51,7 @@
     "lucide-react": "^1.42.0",
     "next": "16.3.8",
     "next-intl": "^4.14.9",
+    "next-themes": "^0.4.6",
     "pg": "^8.23.1",
     "postgres": "^3.4.9",
     "react": "19.2.8",
@@ -52,8 +61,7 @@
     "server-only": "^0.0.1",
     "sharp": "^0.35.5",
     "tw-animate-css": "^1.4.0",
-    "zod": "^4.6.5",
-    "next-themes": "^0.4.6"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

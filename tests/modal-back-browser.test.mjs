@@ -1,3 +1,4 @@
+import { seedLedger } from "./support/seed-ledger.mjs";
 import "dotenv/config";
 import assert from "node:assert/strict";
 import { createHmac, randomUUID } from "node:crypto";
@@ -18,7 +19,7 @@ try {
   await sql`insert into public."user" (id, name, email) values (${account}, 'Modal history test', ${account + "@example.invalid"})`;
   const codec = createSessionTokenCodec(process.env.BETTER_AUTH_SECRET);
   await sql`insert into public.session (id, user_id, token, token_hash, expires_at, updated_at) values (${randomUUID()}, ${account}, ${await codec.encrypt(token)}, ${codec.hash(token)}, ${new Date(Date.now() + 3600000)}, ${new Date()})`;
-  await sql`insert into public.ledger (user_id, data) values (${account}, ${sql.json({ wallets: [{ id: "bank", name: "Test wallet", currencies: ["IDR"] }], categories: [{ id: "Bills", name: "Bills", kind: "expense" }], entries: [{ id: "example", kind: "expense", date, wallet: "bank", currency: "IDR", amount: 123456, title: "Modal test", category: "Bills", description: "" }] })})`;
+  await seedLedger(sql, account, { wallets: [{ id: "bank", name: "Test wallet", currencies: ["IDR"] }], categories: [{ id: "Bills", name: "Bills", kind: "expense" }], entries: [{ id: "example", kind: "expense", date, wallet: "bank", currency: "IDR", amount: 123456, title: "Modal test", category: "Bills", description: "" }] });
   const signature = createHmac("sha256", process.env.BETTER_AUTH_SECRET).update(token).digest("base64");
   browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE });
   for (const language of ["en", "id"]) {

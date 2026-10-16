@@ -37,7 +37,7 @@ export function LedgerShell({ children }: { children: ReactNode }) {
   const section =
     ledgerSections.find((item) => item.href === (loading ? pendingHref : pathname)) ?? ledgerSections[0];
   const tab = section.name;
-  const { editor } = useLedgerContext();
+  const { editor, data } = useLedgerContext();
   return (
     <NavigationContext.Provider value={setPendingHref}><SidebarProvider>
       <WorkspaceTabs className="app-shell" value={tab}>
@@ -66,7 +66,7 @@ export function LedgerShell({ children }: { children: ReactNode }) {
               aria-label={t(section.key)}
               className="route-content"
             >
-              {loading ? <LedgerLoading /> : children}
+              {loading ? <LedgerLoading view={tab} wallets={data.wallets} /> : children}
             </TabsContent>
           </div>
           <footer className="workspace-footer"><BrandWordmark size={32} /></footer>

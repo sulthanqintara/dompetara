@@ -42,6 +42,7 @@ try {
     ...authPrivacyOptions,
     secret: "isolated-auth-db-test-secret-at-least-32-characters",
     baseURL: "https://example.test",
+    advanced: { database: { joins: true } },
     database: protectSessionAdapter(drizzleAdapter(drizzle(pool, { schema }), { provider: "pg", transaction: true })),
     socialProviders: { google: { clientId: "test", clientSecret: "test", includeGrantedScopes: false } },
     logger: { disabled: true },

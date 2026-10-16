@@ -1,13 +1,25 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchLedger, saveLedger, type LedgerState } from "./api";
+import { updateLedgerCache } from "./update-ledger-cache";
 
 export function useLedger(initialState: LedgerState) {
+  const client = useQueryClient();
   const [state, setState] = useState(initialState);
+  const [revision, setRevision] = useState(0);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [conflict, setConflict] = useState(false);
   const [reloading, setReloading] = useState(false);
   const [notice, setNotice] = useState("");
+  const mutation = useMutation({
+    mutationFn: (payload: Record<string, unknown>) => saveLedger(payload, state.version),
+    onSuccess: async (saved) => {
+      await client.cancelQueries({ queryKey: ["ledger"] });
+      setState(saved);
+      updateLedgerCache(client, saved);
+    },
+  });
 
   async function reload() {
     if (pending) return;
@@ -15,6 +27,9 @@ export function useLedger(initialState: LedgerState) {
     setReloading(true);
     try {
       setState(await fetchLedger());
+      await client.cancelQueries({ queryKey: ["ledger"] });
+      await client.invalidateQueries({ queryKey: ["ledger"] });
+      setRevision((value) => value + 1);
       setConflict(false);
       setError("");
       setNotice("Latest ledger loaded. Your unsaved changes are kept.");
@@ -32,8 +47,8 @@ export function useLedger(initialState: LedgerState) {
     setError("");
     setNotice("");
     try {
-      const saved = await saveLedger(payload, state.version);
-      setState(saved);
+      const saved = await mutation.mutateAsync(payload);
+      setRevision((value) => value + 1);
       setNotice(saved.notice ?? "");
       return true;
     } catch (e) {
@@ -49,6 +64,8 @@ export function useLedger(initialState: LedgerState) {
 
   return {
     data: state.data,
+    version: state.version,
+    revision,
     error,
     setError,
     pending,

@@ -13,7 +13,7 @@ export function ThemeToggle() {
   const [hasSwitched, setHasSwitched] = useState(false);
   const dark = mounted && resolvedTheme === "dark";
   const label = t(dark ? "switchToLightTheme" : "switchToDarkTheme");
-  return <Button variant="ghost" className="theme-toggle" disabled={!mounted} aria-label={label} title={label} aria-pressed={dark}
+  return <Button variant="ghost" className="theme-toggle" disabled={!mounted} focusableWhenDisabled aria-label={label} title={label} aria-pressed={dark}
     onClick={() => { setHasSwitched(true); setTheme(dark ? "light" : "dark"); }}>
     {mounted ? (dark
       ? <Moon key="dark" aria-hidden="true" data-theme="dark" className={hasSwitched ? "theme-toggle-icon is-switching" : "theme-toggle-icon"} />

@@ -387,7 +387,8 @@
     "styleGuideChartFour": "Seri grafik 4",
     "styleGuideChartFive": "Seri grafik 5",
     "chooseFile": "Pilih berkas",
-    "noFileChosen": "Belum ada berkas dipilih"
+    "noFileChosen": "Belum ada berkas dipilih",
+    "updatingLedgerData": "Memperbarui data…"
   },
   "Errors": {
     "aReceiptMustBeSavedAsAnExpense": "Struk harus disimpan sebagai pengeluaran.",
@@ -490,6 +491,8 @@
     "requestProtectionUnavailable": "Perlindungan permintaan sementara tidak tersedia. Coba lagi nanti.",
     "authTooManyRequests": "Terlalu banyak permintaan. Coba lagi nanti.",
     "couldNotDeleteYourAccountPleaseTryAgain": "Akun Anda tidak dapat dihapus. Silakan coba lagi.",
-    "pleaseSignOutAndSignInAgainBeforeDeletingYourAccount": "Silakan keluar dan masuk kembali sebelum menghapus akun Anda."
+    "pleaseSignOutAndSignInAgainBeforeDeletingYourAccount": "Silakan keluar dan masuk kembali sebelum menghapus akun Anda.",
+    "invalidLedgerQuery": "Filter buku keuangan tidak valid.",
+    "ledgerStorageUpgradeRequired": "Penyimpanan buku keuangan perlu diperbarui. Silakan coba lagi nanti."
   }
 }

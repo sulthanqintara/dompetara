@@ -1,3 +1,4 @@
+import { seedLedger } from "./support/seed-ledger.mjs";
 import "dotenv/config";
 import { createSessionTokenCodec } from "../src/lib/auth-privacy/create-session-token-codec.ts";
 import assert from "node:assert/strict";
@@ -24,7 +25,7 @@ async function fixture(stale = false) {
     for (const sessionToken of [token, randomUUID()]) {
       await tx`insert into session (id, user_id, token, token_hash, expires_at, created_at, updated_at) values (${randomUUID()}, ${id}, ${await codec.encrypt(sessionToken)}, ${codec.hash(sessionToken)}, ${new Date(Date.now() + 3600000)}, ${new Date(Date.now() - (stale ? 172800000 : 0))}, now())`;
     }
-    await tx`insert into ledger (user_id, data) values (${id}, ${tx.json({ wallets: [], entries: [], categories: [] })})`;
+    await seedLedger(tx, id, { wallets: [{ id: "bank", name: "Bank", currencies: ["IDR"] }], entries: [], categories: [{ id: "Bills", name: "Bills", kind: "expense" }] });
     await tx`insert into user_preferences (user_id, locale, language_prompt_shown_at) values (${id}, null, now())`;
   });
   const signature = createHmac("sha256", process.env.BETTER_AUTH_SECRET).update(token).digest("base64");
@@ -93,7 +94,7 @@ try {
     await page.unroute("**/api/auth/delete-user");
     await dialog.getByRole("button", { name: t.deleteAccount, exact: true }).click();
     await page.waitForURL("**/sign-in");
-    for (const table of ["user", "session", "account", "ledger", "user_preferences"]) {
+    for (const table of ["user", "session", "account", "ledger", "ledger_wallets", "ledger_categories", "ledger_transactions", "ledger_receipt_imports", "user_preferences"]) {
       const field = table === "user" ? "id" : "user_id";
       assert.equal((await sql`select * from ${sql(table)} where ${sql(field)} = ${current.id}`).length, 0, `${table} removed`);
     }
