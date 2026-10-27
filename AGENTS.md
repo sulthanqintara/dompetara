@@ -25,7 +25,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Preserve user-entered wallet/category names, transaction titles, notes, and printed receipt text. Translate identified built-in categories and generated titles through the existing i18n display helpers. Proper names and standard codes may remain unchanged.
 - Keep server diagnostics safe and stable; translate known user-facing domain/API errors through `useErrorMessage`. Add matching `Errors` entries for new errors. Localize new component validation messages too; never display raw provider exceptions. Pass the selected language to services that generate user-facing copy.
 - Run `pnpm test:i18n` for every change involving copy or formatting. The production build runs this check too. Extend its coverage when adding a new copy pattern; do not bypass failures or expand the proper-name allowlist to hide untranslated prose.
-- Render affected UI in both languages at phone, tablet, desktop, and short viewport sizes. Check long translated text, keyboard/focus behavior, and accessible names. Automated scans cannot prove that computed text or translation wording is correct.
 
 ## API error logging
 
@@ -38,7 +37,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Design and implement the phone layout first, then adapt it for tablet and desktop with `min-width` media queries.
 - Keep navigation, amounts, forms, and actions readable and usable at 320px without page-wide horizontal scrolling.
 - Give interactive controls at least 44 × 44px touch targets and use at least 16px text in form inputs.
-- For UI changes, render and check every affected view at phone, tablet, and desktop sizes, including short viewports and long content. Do not consider CSS breakpoints alone proof of responsiveness. Backend-only changes do not require layout checks.
 
 ## Components: shadcn
 
