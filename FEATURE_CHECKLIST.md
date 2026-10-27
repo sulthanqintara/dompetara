@@ -323,6 +323,13 @@ Authentication privacy production release (2026-10-09): migrations 0007 and 0008
 - [x] Full offline/i18n tests, production build, TypeScript, database permissions/privacy checks, normalized API tests and 10,000-entry targeted-write tests passed. Isolated PostgreSQL tests passed joined Google provisioning/login, session encryption/revocation and cross-pool security admission. Startup, delayed-refresh, save/navigation and account-deletion browser checks passed both languages at phone/tablet/desktop/short sizes, with zero measured startup CLS and no redundant post-login query requests. ESLint passed with the two existing unused-variable warnings in receipt extraction.
 - [x] Matched local 1,000-entry production-build measurements reduced median bootstrap completion from 722 to 365 ms, transaction document completion from 1,093 to 592 ms, and stylesheet discovery from 1,091 to 196 ms. A fresh slower-phone simulation measured LCP 1,840 to 1,292 ms with zero CLS. These are local comparisons, not new production visitor percentiles; field results require fresh samples after release. Removed the investigation report files as requested.
 
+### Dependency security refresh — 2026-10-23
+
+- [x] Reconciled the checkout with current main while retaining the previous working tree in a named Git stash. Preserved the newer startup, theme, authentication and normalized-ledger behavior.
+- [x] Updated Next.js and its ESLint configuration from 16.3.8 to 16.4.2, React/React DOM from 19.2.8 to 19.2.9, and transitive Hono/ip-address to 4.13.13/10.7.4. The resolved sharp remains patched at 0.35.5. No application UI, database schema or ledger data changes were needed.
+- [x] Frozen-lockfile installation, offline tests (including i18n/security checks), TypeScript, ESLint and production build passed. ESLint retains the two existing receipt-extraction unused-variable warnings.
+- [ ] Remaining upstream/tooling advisories: braces 3.0.3 (GHSA-vfj7-8cjw-p6xm, high; no published patch) and esbuild 0.18.20 through Drizzle's deprecated esm-loader chain (GHSA-67mh-4wv8-2f99, moderate; concerns the esbuild development server). Audit findings reduced from seven to two, with no critical findings; no advisory suppressions or incompatible overrides were added.
+
 ### Fallow complexity cleanup — 2026-10-27
 
 - [x] Separated cutover row insertion and stored-ledger verification from transaction orchestration; shared the existing table mapping with usage backfill. Preserved source round-trip assertions, transfer-before-fee inserts, read-back validation, locks, rollback and client release. Recording-client tests cover dry runs, scoped/empty reads, arrays/JSON, archived categories, corruption and database failures without connecting to a database.
