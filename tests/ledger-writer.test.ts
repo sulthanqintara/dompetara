@@ -1,7 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import { runInNewContext } from "node:vm";
-import ts from "typescript";
+import { loadTypescriptModule } from "./support/load-typescript-module.ts";
 import * as orm from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
 import { emptyLedger, mutateLedger } from "../src/features/ledger/ledger.ts";
@@ -18,11 +16,7 @@ const dependencies: Record<string, unknown> = {
   "@/lib/db/schema": schema, "../storage": { ledgerFromRows }, "../write-plan": { planLedgerChanges },
 };
 for (const [path, exports] of [["src/lib/db/schema/ledger.ts", schema], ["src/features/ledger/server/write-ledger-changes.ts", writer]] as const) {
-  const code = ts.transpileModule(await readFile(path, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
-  runInNewContext(code, { exports, require: (name: string) => {
-    assert.ok(name in dependencies, `Unexpected dependency: ${name}`);
-    return dependencies[name];
-  } });
+  await loadTypescriptModule(path, dependencies, exports);
 }
 let previous = mutateLedger(emptyLedger(), { action: "wallet", name: "Bank", currency: "IDR", amount: "1000" });
 previous = mutateLedger(previous, { action: "wallet", name: "Cash", currency: "USD", amount: "0" });
@@ -65,7 +59,8 @@ const result = await writer.writeLedgerChanges!(database, "user", previous, next
 assert.equal(events[0].operation, "delete", "Remove old transfers and fees before inserting replacements");
 assert.ok(events[0].query?.params.includes(oldTransfer.id));
 const archiveIndex = events.findIndex((event) => event.operation === "archive");
-const replacementIndex = events.findIndex((event) => event.operation === "insert" && event.table === "ledger_categories" && event.row?.name === category.name && !event.row.archived);
+const replacement = next.categories.find((candidate) => candidate.name === category.name)!;
+const replacementIndex = events.findIndex((event) => event.operation === "insert" && event.table === "ledger_categories" && event.row?.id === replacement.id);
 assert.ok(archiveIndex >= 0 && replacementIndex > archiveIndex, "Archive before reusing an active category name");
 const transactions = events.filter((event) => event.operation === "insert" && event.table === "ledger_transactions");
 const parentIndex = transactions.findIndex((event) => event.row?.kind === "transfer");

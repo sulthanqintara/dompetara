@@ -44,8 +44,10 @@ function fixture(options: { failOn?: string; corruptReadBack?: boolean; invalidS
         .sort((a, b) => Number(a.position) - Number(b.position))
         .map((row) => Object.fromEntries(aliases.map(([, column, alias]) => {
           let value = row[column];
-          if (["receipt", "details", "exchange_rate"].includes(column) && value !== null) value = JSON.parse(value as string);
-          if (["amount_minor", "received_minor"].includes(column) && value !== null) value = String(value);
+          if (value !== null) {
+            if (["receipt", "details", "exchange_rate"].includes(column)) value = JSON.parse(value as string);
+            else if (["amount_minor", "received_minor"].includes(column)) value = String(value);
+          }
           return [alias, value];
         })));
       if (options.corruptReadBack && select[2] === "ledger_transactions") rows[0].title = "Corrupted";

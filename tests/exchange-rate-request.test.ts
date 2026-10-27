@@ -1,7 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import { runInNewContext } from "node:vm";
-import ts from "typescript";
+import { loadTypescriptModule } from "./support/load-typescript-module.ts";
 import { currencies } from "../src/features/ledger/ledger.ts";
 import { validRateDate } from "../src/features/exchange-rates/exchange-rates.ts";
 import { withApiErrorLogging } from "../src/lib/with-api-error-logging.ts";
@@ -31,11 +29,7 @@ for (const [path, exports] of [
   ["src/features/exchange-rates/exchange-rate-request.ts", feature],
   ["src/app/api/exchange-rates/route.ts", route],
 ] as const) {
-  const code = ts.transpileModule(await readFile(path, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
-  runInNewContext(code, { exports, URL, Response, require: (name: string) => {
-    assert.ok(name in dependencies, `Unexpected dependency: ${name}`);
-    return dependencies[name];
-  } });
+  await loadTypescriptModule(path, dependencies, exports);
 }
 const request = (query = "from=USD&to=IDR&date=2026-10-01") => route.GET!(new Request(`https://ledger.example/api/exchange-rates?${query}`));
 try {

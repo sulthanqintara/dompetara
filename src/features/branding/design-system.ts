@@ -13,8 +13,8 @@ export const scaleLabels = {
   red: "styleGuideRedScale", blue: "styleGuideBlueScale", amber: "styleGuideAmberScale",
 } as const;
 
-export const white = "#FFFFFF";
-export const black = "#000000";
+const white = "#FFFFFF";
+const black = "#000000";
 type Family = keyof typeof colorScales;
 type Shade = keyof typeof colorScales.neutral;
 type ShadeReference = `${Family}.${Shade}` | "white" | "black";

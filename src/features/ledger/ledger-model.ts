@@ -69,6 +69,18 @@ export function balance(
   return total;
 }
 
+function setBalance(totals: Map<Currency, number>, currency: Currency, amount: number) {
+  if (!Number.isSafeInteger(amount)) throw new Error("Balance exceeds supported amount.");
+  totals.set(currency, amount);
+}
+
+function sourceBalance(previous: number, entry: Entry, sameBalance: boolean) {
+  let total = previous + (entry.kind === "expense" || entry.kind === "transfer" ? -entry.amount : entry.amount);
+  // Check a same-balance transfer after both movements, preserving their arithmetic order.
+  if (sameBalance) total += entry.received!;
+  return total;
+}
+
 export function ledgerBalances(data: Ledger) {
   const totals = new Map(
     data.wallets.map((wallet) => [
@@ -79,21 +91,12 @@ export function ledgerBalances(data: Ledger) {
   for (const entry of data.entries) {
     const source = totals.get(entry.wallet);
     const destination = entry.kind === "transfer" ? totals.get(entry.toWallet!) : undefined;
+    const sameBalance = destination === source && entry.toCurrency === entry.currency;
     if (source?.has(entry.currency)) {
-      let total = source.get(entry.currency)! +
-        (entry.kind === "expense" || entry.kind === "transfer" ? -entry.amount : entry.amount);
-      if (destination === source && entry.toCurrency === entry.currency)
-        total += entry.received!;
-      if (!Number.isSafeInteger(total)) throw new Error("Balance exceeds supported amount.");
-      source.set(entry.currency, total);
+      setBalance(source, entry.currency, sourceBalance(source.get(entry.currency)!, entry, sameBalance));
     }
-    if (
-      destination?.has(entry.toCurrency!) &&
-      !(destination === source && entry.toCurrency === entry.currency)
-    ) {
-      const total = destination.get(entry.toCurrency!)! + entry.received!;
-      if (!Number.isSafeInteger(total)) throw new Error("Balance exceeds supported amount.");
-      destination.set(entry.toCurrency!, total);
+    if (destination?.has(entry.toCurrency!) && !sameBalance) {
+      setBalance(destination, entry.toCurrency!, destination.get(entry.toCurrency!)! + entry.received!);
     }
   }
   return totals;

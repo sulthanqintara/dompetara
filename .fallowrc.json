@@ -1,0 +1,6 @@
+{
+  "entry": ["tests/fixtures/ledger-editor.tsx"],
+  "health": {
+    "coverage": "coverage/fallow/coverage-final.json"
+  }
+}

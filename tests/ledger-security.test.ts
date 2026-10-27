@@ -102,6 +102,13 @@ for (const kind of ["income", "expense", "transfer", "correction"] as const) {
 const destinationOverflow = ledger();
 destinationOverflow.entries = [entry("max-destination", { wallet: "cash", amount: Number.MAX_SAFE_INTEGER }), entry("transfer", { kind: "transfer", toWallet: "cash", toCurrency: "IDR", received: 1, amount: 1 })];
 assert.throws(() => ledgerBalances(destinationOverflow), /Balance exceeds/);
+const sameBalance = ledger();
+sameBalance.entries = [entry("opening", { amount: Number.MAX_SAFE_INTEGER }), entry("same-balance", {
+  kind: "transfer", amount: Number.MAX_SAFE_INTEGER, toWallet: "bank", toCurrency: "IDR", received: Number.MAX_SAFE_INTEGER,
+})];
+assert.equal(ledgerBalances(sameBalance).get("bank")?.get("IDR"), Number.MAX_SAFE_INTEGER, "Combine both same-balance movements before checking overflow");
+const missingBalance = { ...ledger(), entries: [entry("unknown", { wallet: "missing" })] };
+assert.equal(ledgerBalances(missingBalance).get("bank")?.get("IDR"), 0, "Unknown wallet references do not create balances");
 const unsafeCorrection = ledger();
 unsafeCorrection.entries = [entry("negative", { kind: "correction", amount: -Number.MAX_SAFE_INTEGER })];
 assert.throws(() => mutateLedger(unsafeCorrection, { action: "wallet", id: "bank", name: "Bank", currency: "IDR", amount: "999999999999" }), /Balance exceeds/);
