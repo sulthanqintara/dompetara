@@ -32,9 +32,13 @@ assert.equal(designColors.find((role) => role.token === "card")!.dark, "#111111"
 assert.equal(designColors.find((role) => role.token === "elevated")!.dark, "#1A1A1A");
 assert.equal(colorHsl("#FFFFFF"), "hsl(0 0% 100%)");
 assert.equal(colorHsl("#000000"), "hsl(0 0% 0%)");
+assert.equal(colorHsl("#808080"), "hsl(0 0% 50%)");
 assert.equal(colorHsl("#FF0000"), "hsl(0 100% 50%)");
 assert.equal(colorHsl("#00FF00"), "hsl(120 100% 50%)");
 assert.equal(colorHsl("#0000FF"), "hsl(240 100% 50%)");
+assert.equal(colorHsl("#FF00FF"), "hsl(300 100% 50%)");
+assert.equal(colorHsl("#FFFF00"), "hsl(60 100% 50%)");
+assert.equal(colorHsl("#00FFFF"), "hsl(180 100% 50%)");
 assert.equal(colorHsl("#287D69"), "hsl(166 52% 32%)");
 for (const mode of ["light", "dark"] as const) {
   const colors = Object.fromEntries(designColors.map((color) => [color.token, color[mode]]));

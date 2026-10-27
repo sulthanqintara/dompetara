@@ -34,6 +34,12 @@ const snapshot: RateSnapshot = {
 assert.equal(normalizeRate("00001.380000000000"), "1.38");
 assert.equal(convertMinor(10000, "17800"), 178000000);
 assert.equal(convertMinor(1, "0.5"), 1);
+assert.throws(() => convertMinor(1, "0.499999999999"), /rounds to zero/);
+assert.equal(convertMinor(99999999999999, "1"), 99999999999999);
+for (const amount of [0, -1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])
+  assert.throws(() => convertMinor(amount, "1"), /positive amount/);
+for (const rate of ["0", "-1", "NaN", "1e3"])
+  assert.throws(() => convertMinor(1, rate));
 assert.equal(effectiveRate(10000, 178000000), "17800");
 assert.equal(effectiveRate(15933, 200000000), "12552.563861168644");
 assert.equal(effectiveRate(200000000, 15933), "0.000079665");

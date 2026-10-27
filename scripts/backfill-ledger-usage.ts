@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { Pool } from "pg";
 import { databasePoolConfig } from "../src/lib/db/pool-config.ts";
-import { ledgerTables } from "./ledger-cutover.ts";
+import { ledgerTables } from "./ledger-cutover-tables.ts";
 import { ledgerFromRows, type WalletRow, type CategoryRow, type TransactionRow, type ImportRow } from "../src/features/ledger/storage.ts";
 import { ledgerUsage } from "../src/features/ledger/usage.ts";
 

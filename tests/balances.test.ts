@@ -31,6 +31,14 @@ assert.equal(convertBalanceMinor(-10000, "17800"), -178000000);
 assert.equal(convertBalanceMinor(-1, "0.5"), -1);
 assert.equal(convertBalanceMinor(-1, "0.00001"), 0);
 assert.equal(convertBalanceMinor(0, "17800"), 0);
+assert.equal(convertBalanceMinor(1, "0.499999999999"), 0);
+assert.equal(convertBalanceMinor(-1, "0.499999999999"), 0);
+assert.equal(convertBalanceMinor(Number.MAX_SAFE_INTEGER, "1"), Number.MAX_SAFE_INTEGER);
+assert.equal(convertBalanceMinor(-Number.MAX_SAFE_INTEGER, "1"), -Number.MAX_SAFE_INTEGER);
+for (const amount of [0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])
+  assert.throws(() => convertBalanceMinor(amount, "1"), /Balance exceeds/);
+for (const rate of ["0", "-1", "NaN", "1e3"])
+  assert.throws(() => convertBalanceMinor(0, rate));
 assert.throws(() => convertBalanceMinor(Number.MAX_SAFE_INTEGER, "17800"));
 assert.equal(balanceBreakdown(data, "IDR", { ...rates, CAD: { ...rates.CAD, rate: "0" } }).total, null);
 assert.deepEqual(data.entries.map((entry) => entry.amount), [10000000, 5000000, 10000, 13800]);

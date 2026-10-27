@@ -242,6 +242,7 @@
     "exchangeRateLabel": "Exchange rate (1 {currency} in {toCurrency})",
     "savedReference": "Saved ECB reference · {date}",
     "referenceRate": "ECB via Frankfurter · {date}",
+    "staleReferenceRate": "ECB via Frankfurter · {date} · refresh overdue",
     "receivedBeforeFee": "Amount received before fee ({currency})",
     "serviceFeeLabel": "Service fee ({currency})",
     "sourceOption": "Source · {name} ({currency})",

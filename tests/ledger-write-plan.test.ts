@@ -1,0 +1,71 @@
+import assert from "node:assert/strict";
+import { emptyLedger, mutateLedger } from "../src/features/ledger/ledger.ts";
+import { ledgerStorageRows, ledgerFromRows } from "../src/features/ledger/storage.ts";
+import { planLedgerChanges } from "../src/features/ledger/write-plan.ts";
+
+let data = mutateLedger(emptyLedger(), { action: "wallet", name: "Bank", currency: "IDR", amount: "1000" });
+data = mutateLedger(data, { action: "wallet", name: "Cash", currency: "USD", amount: "0" });
+const [bank, cash] = data.wallets;
+const payload = { action: "entry", kind: "expense", date: "2026-10-01T12:34:56.123Z", wallet: bank.id, currency: "IDR", amount: "10", title: "Lunch", category: "Food & drink", description: "" };
+data = mutateLedger(data, payload);
+const rows = ledgerStorageRows("user", data);
+data = ledgerFromRows(rows.wallets, rows.categories, rows.entries, rows.imports);
+const context = { categories: rows.categories, positions: rows.entries.map((row, index) => ({ id: row.id, position: 100 + index })), nextPosition: 500, nextImportPosition: 1000 };
+const original = structuredClone({ data, context });
+const unchanged = planLedgerChanges("user", data, data, context);
+assert.deepEqual(unchanged.entries, []);
+assert.deepEqual(unchanged.wallets, []);
+assert.deepEqual(unchanged.categories, []);
+assert.equal(unchanged.nextPosition, 500);
+assert.deepEqual(unchanged.after.entries.map((row) => row.position), [100, 101, 102]);
+assert.equal(unchanged.invalidateTransactions, false);
+
+const id = data.entries.at(-1)!.id;
+const edited = mutateLedger(data, { ...payload, id, title: "Edited" });
+const editPlan = planLedgerChanges("user", data, edited, context);
+assert.deepEqual(editPlan.entries.map((row) => row.id), [id]);
+assert.equal(editPlan.entries[0].position, 500);
+assert.equal(editPlan.nextPosition, 501);
+assert.equal(editPlan.invalidateTransactions, false);
+
+const transferred = mutateLedger(data, { ...payload, kind: "transfer", toWallet: cash.id, toCurrency: "USD", received: "5", feeAmount: "0.1", feeChargedTo: "destination" });
+const transferPlan = planLedgerChanges("user", data, transferred, context);
+assert.equal(transferPlan.entries.length, 2);
+assert.equal(transferPlan.entries[0].kind, "transfer");
+assert.equal(transferPlan.entries[1].transferId, transferPlan.entries[0].id);
+assert.deepEqual(transferPlan.entries.map((row) => row.position), [500, 501]);
+assert.equal(transferPlan.nextPosition, 502);
+const transferRows = ledgerStorageRows("user", transferred);
+const deleted = mutateLedger(transferred, { action: "deleteEntry", id: transferPlan.entries[0].id });
+const deletePlan = planLedgerChanges("user", transferred, deleted, { ...context, categories: transferRows.categories });
+assert.deepEqual(deletePlan.removedEntries, transferPlan.entries.map((row) => row.id));
+assert.equal(deletePlan.entries.length, 0);
+
+const renamed = mutateLedger(data, { action: "wallet", id: bank.id, name: "Renamed", currency: "IDR", amount: "990" });
+const renamePlan = planLedgerChanges("user", data, renamed, context);
+assert.deepEqual(renamePlan.wallets.map((wallet) => wallet.id), [bank.id]);
+assert.deepEqual(renamePlan.renamedWallets.map((wallet) => wallet.id), [bank.id]);
+assert.equal(renamePlan.invalidateTransactions, true);
+assert.ok(renamePlan.entries.every((entry) => entry.searchText.includes("Renamed")));
+
+const removedCategory = data.categories.find((category) => category.name === "Food & drink")!;
+const archived = mutateLedger(data, { action: "deleteCategory", id: removedCategory.id });
+const replaced = mutateLedger(archived, { action: "category", name: removedCategory.name, kind: "expense" });
+const categoryPlan = planLedgerChanges("user", data, replaced, context);
+assert.deepEqual(categoryPlan.removedCategories, [removedCategory.id]);
+assert.equal(categoryPlan.categories.find((category) => category.id === removedCategory.id)?.archived, true);
+assert.equal(categoryPlan.after.entries.find((entry) => entry.id === id)?.categoryId, removedCategory.id, "Historical entries retain the archived category ID");
+assert.equal(categoryPlan.categories.filter((category) => !category.archived && category.name === removedCategory.name).length, 1);
+
+const receipt = { importId: "00000000-0000-4000-8000-000000000001", fingerprint: "a".repeat(64), method: "ai", documentKind: "receipt", merchant: null, receiptNumber: null, keepItems: false, items: [], adjustments: [] };
+const imported = mutateLedger(data, { ...payload, action: "receipt", receipt });
+const importPlan = planLedgerChanges("user", data, imported, context);
+assert.equal(importPlan.imports[0].position, 1000);
+assert.equal(importPlan.imports[0].entryId, importPlan.entries[0].id);
+assert.equal(planLedgerChanges("user", imported, imported, context).imports.length, 0, "Retries do not write another import");
+const fallback = planLedgerChanges("user", data, edited, { categories: context.categories, positions: context.positions });
+assert.equal(fallback.entries[0].position, 103, "Without counters, append after the highest saved position");
+const targeted = { ...data, entries: [data.entries.at(-1)!] };
+assert.equal(planLedgerChanges("user", targeted, targeted, { ...context, positions: [] }).entries.length, 0, "Unchanged rows are not rewritten when their saved position is absent");
+assert.deepEqual({ data, context }, original, "Planning does not mutate ledgers or saved metadata");
+console.log("Ledger write-plan checks passed: no-op/edit ordering, linked fees, deletion, wallet search updates, archived replacements, import counters, fallback positions and immutable inputs.");

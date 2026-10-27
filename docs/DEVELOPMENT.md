@@ -175,6 +175,18 @@ pnpm build
 
 Tests cover exact money and exchange-rate parsing, conversion rounding, all currency directions, provider validation, cache expiry and 200/304/error paths, corrections, linked source/destination fees, transfer edits/deletion, category history, and invalid wallet references. A live Google sign-in and persistence check requires working OAuth credentials and a reachable database synchronized with the current schema.
 
+The offline suite also covers editor defaults, wallet/currency selection, saved/manual/received conversion modes, validated save payloads, timestamp preservation, and SQL write planning. Recording-writer tests check user scoping and delete/archive/transfer/import ordering without a database connection.
+
+For Fallow coverage-risk scoring, collect fresh local V8 coverage and pass it to the analysis:
+
+```sh
+ledger_coverage_dir=$(mktemp -d)
+NODE_V8_COVERAGE="$ledger_coverage_dir" pnpm test &&
+  fallow health --complexity --production --coverage "$ledger_coverage_dir" --format json --quiet
+```
+
+Fallow exits 1 when findings remain. It uses measured coverage where source files match, and estimates elsewhere; these offline tests do not establish browser or live database coverage. Compare branching/nesting metrics separately from coverage-risk counts, since extracting functions can increase estimated findings despite making each function simpler.
+
 `pnpm test:db` uses `.env` to check the live database connection, the current session schema, privacy guards, table permissions, and server reads/writes. Its sample records are rolled back.
 
 The layout starts with phones and adds tablet/desktop layouts using `min-width` media queries. `AGENTS.md` makes mobile-first design a rule for future features.

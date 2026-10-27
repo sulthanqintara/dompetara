@@ -70,6 +70,11 @@ export function colorHsl(hex: string) {
   const high = Math.max(r, g, b), low = Math.min(r, g, b), delta = high - low;
   const lightness = (high + low) / 2;
   const saturation = delta === 0 ? 0 : delta / (1 - Math.abs(2 * lightness - 1));
-  const hue = delta === 0 ? 0 : high === r ? ((g - b) / delta + 6) % 6 : high === g ? (b - r) / delta + 2 : (r - g) / delta + 4;
+  let hue = 0;
+  if (delta !== 0) {
+    if (high === r) hue = ((g - b) / delta + 6) % 6;
+    else if (high === g) hue = (b - r) / delta + 2;
+    else hue = (r - g) / delta + 4;
+  }
   return `hsl(${Math.round(hue * 60)} ${Math.round(saturation * 100)}% ${Math.round(lightness * 100)}%)`;
 }

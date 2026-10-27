@@ -242,6 +242,7 @@
     "exchangeRateLabel": "Kurs (1 {currency} dalam {toCurrency})",
     "savedReference": "Acuan ECB tersimpan · {date}",
     "referenceRate": "ECB melalui Frankfurter · {date}",
+    "staleReferenceRate": "ECB melalui Frankfurter · {date} · perlu diperbarui",
     "receivedBeforeFee": "Jumlah diterima sebelum biaya ({currency})",
     "serviceFeeLabel": "Biaya layanan ({currency})",
     "sourceOption": "Asal · {name} ({currency})",
