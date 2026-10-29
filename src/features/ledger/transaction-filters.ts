@@ -11,6 +11,15 @@ export const transactionFiltersSchema = z.object({
 });
 export type TransactionFilters = z.infer<typeof transactionFiltersSchema>;
 
+export function transactionFiltersHref(values: Record<string, unknown>) {
+  const filters = transactionFiltersSchema.parse(values);
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value && (key === "search" || value !== "all")) params.set(key, value);
+  }
+  return `/transactions${params.size ? `?${params}` : ""}`;
+}
+
 export function readTransactionSearchParams(params: Pick<URLSearchParams, "forEach">) {
   const result: Record<string, string | string[] | undefined> = Object.create(null);
   params.forEach((value, key) => {

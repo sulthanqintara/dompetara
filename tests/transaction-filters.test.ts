@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { filterTransactions, readTransactionSearchParams, transactionFiltersSchema } from "../src/features/ledger/transaction-filters.ts";
+import { filterTransactions, readTransactionSearchParams, transactionFiltersHref, transactionFiltersSchema } from "../src/features/ledger/transaction-filters.ts";
 import { emptyLedger, type Entry } from "../src/features/ledger/ledger.ts";
 import { transactionPage } from "../src/features/ledger/pagination.ts";
 
@@ -10,6 +10,19 @@ assert.deepEqual(query.currency, ["IDR", "USD"]);
 assert.equal(query.__proto__, "safe");
 assert.equal(Object.getPrototypeOf(query), null);
 assert.equal(transactionFiltersSchema.parse(query).currency, "all", "Repeated filters retain the server page's validation behavior");
+
+assert.equal(transactionFiltersHref({}), "/transactions");
+assert.equal(transactionFiltersHref({ search: "", wallet: "all", category: "all", type: "all", currency: "all", page: 4 }), "/transactions");
+const submitted = { search: "Lunch & coffee", wallet: "bank", category: "Food / dining", type: "expense", currency: "IDR" };
+const href = transactionFiltersHref(submitted);
+assert.deepEqual(Object.fromEntries(new URL(href, "https://ledger.test").searchParams), submitted);
+assert.equal(transactionFiltersHref(Object.fromEntries(new FormData())), "/transactions");
+const form = new FormData();
+for (const [key, value] of Object.entries(submitted)) form.set(key, value);
+assert.equal(transactionFiltersHref(Object.fromEntries(form)), href, "Form submissions and filter actions share URL serialization");
+assert.equal(transactionFiltersHref({ ...submitted, page: 9 }), href, "Changing filters resets pagination");
+assert.equal(new URL(transactionFiltersHref({ ...submitted, category: undefined }), "https://ledger.test").searchParams.has("category"), false);
+assert.equal(transactionFiltersHref({ type: "invalid", currency: "EUR", search: ["bad"] }), "/transactions");
 
 const data = emptyLedger();
 data.wallets = [{ id: "bank", name: "Bank", currencies: ["IDR"] }, { id: "cash", name: "Cash", currencies: ["USD"] }];

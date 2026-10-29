@@ -30,7 +30,7 @@ export function TransactionsPage({ initial, initialSummary }: { initial: QuerySt
   const pageData = result ? { ...data, entries: result.related } : data;
   return <>
     <LedgerSummary initial={initialSummary} />
-    <TransactionFilters key={JSON.stringify(filters)} data={data} filters={filters} />
+    <TransactionFilters key={JSON.stringify(filters)} data={data} filters={filters} pending={refreshing} />
     <div className="ledger-query-content" aria-busy={refreshing} aria-label={t("transactionHistory")}>
     <QueryRefreshStatus refreshing={refreshing} />
     {error && <LedgerQueryError error={error} />}

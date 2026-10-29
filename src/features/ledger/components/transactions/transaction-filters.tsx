@@ -1,6 +1,4 @@
 import { useTranslations } from "next-intl";
-import Form from "next/form";
-import Link from "next/link";
 import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,16 +8,16 @@ import type { TransactionFilters as Filters } from "../../transaction-filters";
 import { TransactionFilterFields } from "./transaction-filter-fields";
 import { MobileTransactionFilters } from "./mobile-transaction-filters";
 import { TransactionSubmit } from "./transaction-submit";
+import { TransactionFilterForm } from "./transaction-filter-form";
+import { applyTransactionFilters } from "../../apply-transaction-filters";
 
-export function TransactionFilters({ data, filters }: { data: Ledger; filters: Filters }) {
+export function TransactionFilters({ data, filters, pending }: { data: Ledger; filters: Filters; pending: boolean }) {
   const t = useTranslations("UI");
   const id = useId();
   return (
     <>
-      <MobileTransactionFilters data={data} filters={filters} />
-      <Form
-        action="/transactions"
-        scroll={false}
+      <MobileTransactionFilters data={data} filters={filters} pending={pending} />
+      <TransactionFilterForm
         className="transaction-filters desktop-history-filters"
         aria-label={t("filterTransactionHistory")}
       >
@@ -36,17 +34,17 @@ export function TransactionFilters({ data, filters }: { data: Ledger; filters: F
         </div>
         <TransactionFilterFields data={data} filters={filters} />
         <div className="transaction-filter-actions">
-          <Button variant="outline" nativeButton={false} render={<Link href="/transactions" scroll={false} />}>
+          <Button type="button" variant="outline" onClick={() => applyTransactionFilters({})}>
             {t("clearFilters")}
           </Button>
-          <TransactionSubmit />
+          <TransactionSubmit pending={pending} />
         </div>
         <p className="hint transaction-search">
           {t(
             "filtersApplyWithinTheSelectedPeriodTransfersMatchEitherWalletAndEitherCurrencySummaryTotalsUseThePeriodAndSummaryCurrency",
           )}
         </p>
-      </Form>
+      </TransactionFilterForm>
     </>
   );
 }
