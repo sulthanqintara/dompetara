@@ -9,10 +9,14 @@ import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu-trigger";
 import { DropdownMenuContent } from "@/components/ui/dropdown-menu-content";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu-item";
 import { signOut } from "@/features/auth/api";
-import { useLedgerContext } from "../../use-ledger-context";
+import { useLedgerStore } from "../../use-ledger-store";
 export function AccountMenu() {
   const t = useTranslations("UI");
-  const { name, email, pending, setPending, setError } = useLedgerContext();
+  const name = useLedgerStore((state) => state.name);
+  const email = useLedgerStore((state) => state.email);
+  const pending = useLedgerStore((state) => state.pending);
+  const setPending = useLedgerStore((state) => state.setPending);
+  const setError = useLedgerStore((state) => state.setError);
   const router = useRouter();
   const initials =
     name

@@ -12,10 +12,13 @@ import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu-trigger";
 import { DropdownMenuContent } from "@/components/ui/dropdown-menu-content";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu-item";
-import { useLedgerContext } from "../../use-ledger-context";
+import { useLedgerStore } from "../../use-ledger-store";
 export function LedgerActions({ tab }: { tab: string }) {
   const t = useTranslations("UI");
-  const { data, setEditor, pending, editor } = useLedgerContext();
+  const data = useLedgerStore((state) => state.data);
+  const setEditor = useLedgerStore((state) => state.setEditor);
+  const pending = useLedgerStore((state) => state.pending);
+  const editor = useLedgerStore((state) => state.editor);
   const trigger = useRef<HTMLButtonElement>(null);
   if (tab !== "Transactions" && tab !== "Wallet") return null;
   if (tab === "Wallet" || !data.wallets.length)
@@ -33,6 +36,7 @@ export function LedgerActions({ tab }: { tab: string }) {
         <span>{t("addWallet")}</span>
       </Button>
     );
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger

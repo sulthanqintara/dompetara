@@ -1,8 +1,10 @@
-import { useEffect, useState, type ContextType } from "react";
+import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { NextIntlClientProvider } from "next-intl";
 import { EditorForm } from "@/features/ledger/components/editor/editor-form";
-import { LedgerContext } from "@/features/ledger/ledger-context";
+import { LedgerStoreContext } from "@/features/ledger/ledger-store-context";
+import { createLedgerStore } from "@/features/ledger/ledger-store";
+import { QueryClient } from "@tanstack/react-query";
 import { RateCacheContext } from "@/features/exchange-rates/rate-cache-context";
 import { mutateLedger, emptyLedger, type Ledger } from "@/features/ledger/ledger";
 import type { EditorFormProps } from "@/features/ledger/editor";
@@ -35,6 +37,7 @@ const initial: Ledger = { ...emptyLedger(), wallets: [
 const cache = { get: async () => ({ rate: "2", rateDate: "2026-10-01", provider: "ecb" as const, lastCheckedAt: "2026-10-01T00:00:00Z", stale: false }), clear() {} };
 
 export function LedgerEditorFixture({ locale }: { locale: "en" | "id" }) {
+  const [store] = useState(() => createLedgerStore({ initialState: { data: initial, version: 1 }, name: "Fixture", email: "fixture@example.com", initialTimeZone: "Asia/Jakarta", initialMonth: "2026-10" }, new QueryClient(), { fetchLedger: async () => ({ data: initial, version: 1 }), saveLedger: async () => ({ data: initial, version: 2 }) }));
   const [data, setData] = useState(() => structuredClone(initial));
   const [editor, setEditor] = useState<EditorFormProps["editor"]>();
   const [flags, setFlags] = useState<Flags>({ pending: false, conflict: false });
@@ -52,15 +55,15 @@ export function LedgerEditorFixture({ locale }: { locale: "en" | "id" }) {
     if (config.type === "wallet") setEditor({ type: "wallet", wallet: data.wallets.find((wallet) => wallet.id === config.wallet), currency: config.currency });
     else setEditor({ type: "entry", entry: data.entries.find((entry) => entry.id === config.id), kind: config.kind });
   }
-  const context = { data, error: "", notice: "", conflict: flags.conflict, pending: flags.pending, reloading: false, reload() {} } as NonNullable<ContextType<typeof LedgerContext>>;
+  useEffect(() => { store.setState({ data, conflict: flags.conflict, pending: flags.pending }); }, [store, data, flags]);
   return <NextIntlClientProvider locale={locale} messages={locale === "en" ? en : id} timeZone="Asia/Jakarta">
     <style>{themeCss}</style>
-    <LedgerContext.Provider value={context}><RateCacheContext.Provider value={cache}>
+    <LedgerStoreContext.Provider value={store}><RateCacheContext.Provider value={cache}>
       <button id="opener" onClick={open}>Open fixture</button>
       {editor && <EditorForm key={JSON.stringify(editor)} editor={editor} data={data}
         kind={editor.type === "entry" ? editor.kind : undefined} restoreFocus={document.getElementById("opener")}
         pending={flags.pending} conflict={flags.conflict} error="" close={() => setEditor(undefined)} save={save} />}
-    </RateCacheContext.Provider></LedgerContext.Provider>
+    </RateCacheContext.Provider></LedgerStoreContext.Provider>
   </NextIntlClientProvider>;
 }
 

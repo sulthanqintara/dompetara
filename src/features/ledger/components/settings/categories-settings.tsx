@@ -8,7 +8,7 @@ import { Pill } from "@/components/ui/pill";
 import type { Ledger } from "../../ledger";
 import { LedgerSelect } from "../shared/ledger-select";
 import { ConfirmationDialog } from "../shared/confirmation-dialog";
-import { useLedgerContext } from "../../use-ledger-context";
+import { useLedgerStore } from "../../use-ledger-store";
 
 export function CategoriesSettings({
   data,
@@ -22,7 +22,7 @@ export function CategoriesSettings({
   save: (payload: Record<string, unknown>) => Promise<boolean>;
 }) {
   const t = useTranslations("UI");
-  const { conflict } = useLedgerContext();
+  const conflict = useLedgerStore((state) => state.conflict);
   return (
     <Card className="settings-panel">
       <h3>{t("categories")}</h3>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { DialogContent } from "@/components/ui/dialog-content";
 import { EditorHeader } from "@/features/ledger/components/editor/editor-header";
-import { useLedgerContext } from "@/features/ledger/use-ledger-context";
+import { useLedgerStore } from "@/features/ledger/use-ledger-store";
 import type { Entry } from "@/features/ledger/ledger";
 import { localDate } from "@/features/ledger/format";
 import type { Extraction } from "../receipts";
@@ -18,7 +18,9 @@ export function ReceiptEditor({
   restoreFocus?: HTMLElement | null;
 }) {
   const t = useTranslations("UI");
-  const { pending, setEditor, setError } = useLedgerContext();
+  const pending = useLedgerStore((state) => state.pending);
+  const setEditor = useLedgerStore((state) => state.setEditor);
+  const setError = useLedgerStore((state) => state.setError);
   const [image, setImage] = useState<File>();
   const [returnFocus] = useState(
     () => restoreFocus ?? (document.activeElement as HTMLElement | null),

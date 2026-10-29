@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 import { LedgerError } from "./ledger-error";
-import { useLedgerContext } from "../../use-ledger-context";
+import { useLedgerStore } from "../../use-ledger-store";
 import { useState, type ReactElement } from "react";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { AlertDialogTrigger } from "@/components/ui/alert-dialog-trigger";
@@ -29,7 +29,7 @@ export function ConfirmationDialog({
 }) {
   const t = useTranslations("UI");
   const [open, setOpen] = useState(false);
-  const { conflict } = useLedgerContext();
+  const conflict = useLedgerStore((state) => state.conflict);
   return (
     <AlertDialog
       open={open}

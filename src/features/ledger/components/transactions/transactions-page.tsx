@@ -2,7 +2,7 @@
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useLedgerContext } from "../../use-ledger-context";
+import { useLedgerStore } from "../../use-ledger-store";
 import { periodLabel } from "../../derive";
 import { LedgerSummary } from "../shared/ledger-summary";
 import { readTransactionSearchParams, transactionFiltersSchema } from "../../transaction-filters";
@@ -19,7 +19,11 @@ export function TransactionsPage({ initial, initialSummary }: { initial: QuerySt
   const t = useTranslations("UI");
   const urlParams = useSearchParams();
   const searchParams = useMemo(() => readTransactionSearchParams(urlParams), [urlParams]);
-  const { data, period, currency, setEditor, timeZone } = useLedgerContext();
+  const data = useLedgerStore((state) => state.data);
+  const period = useLedgerStore((state) => state.period);
+  const currency = useLedgerStore((state) => state.currency);
+  const setEditor = useLedgerStore((state) => state.setEditor);
+  const timeZone = useLedgerStore((state) => state.timeZone);
   const filters = useMemo(() => transactionFiltersSchema.parse(searchParams), [searchParams]);
   const query = useMemo(() => ledgerQuery(period, timeZone, currency, searchParams), [period, timeZone, currency, searchParams]);
   const { result, error, refreshing, displayedQuery } = useLedgerQuery("transactions", query, fetchTransactions, initial);

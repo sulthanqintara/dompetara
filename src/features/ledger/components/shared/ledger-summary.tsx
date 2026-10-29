@@ -1,7 +1,7 @@
 "use client";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-import { useLedgerContext } from "../../use-ledger-context";
+import { useLedgerStore } from "../../use-ledger-store";
 import { FiltersBar } from "../filters/filters-bar";
 import { SummarySkeleton } from "./summary-skeleton";
 import { LedgerQueryError } from "./ledger-query-error";
@@ -12,7 +12,12 @@ import { fetchOverview } from "../../api";
 import { QueryRefreshStatus } from "./query-refresh-status";
 
 export function LedgerSummary({ initial }: { initial?: QueryState<LedgerOverview> }) {
-  const { data, period, setPeriod, currency, setCurrency, timeZone } = useLedgerContext();
+  const data = useLedgerStore((state) => state.data);
+  const period = useLedgerStore((state) => state.period);
+  const setPeriod = useLedgerStore((state) => state.setPeriod);
+  const currency = useLedgerStore((state) => state.currency);
+  const setCurrency = useLedgerStore((state) => state.setCurrency);
+  const timeZone = useLedgerStore((state) => state.timeZone);
   const query = useMemo(() => ledgerQuery(period, timeZone, currency, { scope: "summary" }), [period, timeZone, currency]);
   const { result: overview, error: overviewError, refreshing, displayedQuery } = useLedgerQuery("overview", query, fetchOverview, initial);
   const searchParams = useSearchParams();

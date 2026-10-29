@@ -1,11 +1,12 @@
 import { useTranslations } from "next-intl";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLedgerContext } from "../../use-ledger-context";
+import { useLedgerStore } from "../../use-ledger-store";
 
 export function BalanceVisibilityToggle() {
   const t = useTranslations("UI");
-  const { balancesVisible, setBalancesVisible } = useLedgerContext();
+  const balancesVisible = useLedgerStore((state) => state.balancesVisible);
+  const setBalancesVisible = useLedgerStore((state) => state.setBalancesVisible);
   const label = balancesVisible ? t("hideAmounts") : t("showAmounts");
   return (
     <Button variant="ghost" size="icon" className="balance-visibility-toggle"

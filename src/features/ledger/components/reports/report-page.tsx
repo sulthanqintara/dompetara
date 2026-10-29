@@ -2,7 +2,7 @@
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { categoryLabel } from "@/features/i18n/format";
-import { useLedgerContext } from "../../use-ledger-context";
+import { useLedgerStore } from "../../use-ledger-store";
 import { LedgerSummary } from "../shared/ledger-summary";
 import { ReportTab } from "./report-tab";
 import { ReportSkeleton } from "../shared/report-skeleton";
@@ -14,7 +14,10 @@ import { QueryRefreshStatus } from "../shared/query-refresh-status";
 
 export function ReportPage({ initial }: { initial: QueryState<LedgerOverview> }) {
   const t = useTranslations("UI");
-  const { data, period, currency, timeZone } = useLedgerContext();
+  const data = useLedgerStore((state) => state.data);
+  const period = useLedgerStore((state) => state.period);
+  const currency = useLedgerStore((state) => state.currency);
+  const timeZone = useLedgerStore((state) => state.timeZone);
   const query = useMemo(() => ledgerQuery(period, timeZone, currency, { scope: "report" }), [period, timeZone, currency]);
   const { result: overview, error: overviewError, refreshing, displayedQuery } = useLedgerQuery("overview", query, fetchOverview, initial);
   return <>

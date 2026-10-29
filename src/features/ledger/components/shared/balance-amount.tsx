@@ -1,13 +1,13 @@
 import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
-import { useLedgerContext } from "../../use-ledger-context";
+import { useLedgerStore } from "../../use-ledger-store";
 import { splitCurrencyAmount } from "../../format";
 import type { Currency } from "../../ledger";
 
 export function BalanceAmount({ children, currency, approximate = false, currencyDisplay = "symbol" }: { children: ReactNode; currency: Currency; approximate?: boolean; currencyDisplay?: "symbol" | "code" }) {
   const locale = useLocale();
   const t = useTranslations("UI");
-  const { balancesVisible } = useLedgerContext();
+  const balancesVisible = useLedgerStore((state) => state.balancesVisible);
   const { prefix, amount } = typeof children === "string"
     ? splitCurrencyAmount(children, currency, currencyDisplay, locale)
     : { prefix: `${currency} `, amount: children };

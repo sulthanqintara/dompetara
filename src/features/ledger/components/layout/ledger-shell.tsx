@@ -6,7 +6,7 @@ import { SidebarProvider } from "@/components/ui/sidebar-provider";
 import { SidebarTrigger } from "@/components/ui/sidebar-trigger";
 import { TabsContent } from "@/components/ui/tabs-content";
 import { LedgerError } from "../shared/ledger-error";
-import { useLedgerContext } from "../../use-ledger-context";
+import { useLedgerStore } from "../../use-ledger-store";
 import { ledgerSections } from "../../navigation";
 import { WorkspaceTabs } from "../navigation/workspace-tabs";
 import { Sidebar } from "../navigation/sidebar";
@@ -37,7 +37,8 @@ export function LedgerShell({ children }: { children: ReactNode }) {
   const section =
     ledgerSections.find((item) => item.href === (loading ? pendingHref : pathname)) ?? ledgerSections[0];
   const tab = section.name;
-  const { editor, data } = useLedgerContext();
+  const editor = useLedgerStore((state) => state.editor);
+  const data = useLedgerStore((state) => state.data);
   return (
     <NavigationContext.Provider value={setPendingHref}><SidebarProvider>
       <WorkspaceTabs className="app-shell" value={tab}>
