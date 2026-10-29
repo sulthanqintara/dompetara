@@ -15,7 +15,8 @@ const runDirectory = await mkdtemp(join(destination, "run-"));
 const rawDirectory = join(runDirectory, "raw");
 await mkdir(rawDirectory);
 const env = { ...process.env, NODE_V8_COVERAGE: rawDirectory, LEDGER_COVERAGE_DIR: rawDirectory };
-for (const [command, args] of [["pnpm", ["test"]], [process.execPath, ["tests/ledger-editor-browser.test.mjs"]]]) {
+for (const [command, args] of [["pnpm", ["test"]], [process.execPath, ["tests/ledger-editor-browser.test.mjs"]],
+  [process.execPath, ["tests/ledger-store-browser.test.mjs"]], [process.execPath, ["tests/ledger-views-browser.test.mjs"]]]) {
   const child = spawnSync(command, args, { cwd: root, env, stdio: "inherit" });
   if (child.error) throw child.error;
   if (child.status !== 0) process.exit(child.status ?? 1);

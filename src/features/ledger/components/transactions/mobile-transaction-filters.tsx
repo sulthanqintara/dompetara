@@ -1,5 +1,4 @@
 import { useTranslations } from "next-intl";
-import { categoryLabel } from "@/features/i18n/format";
 import { useId, useRef, useState } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import { TransactionFilterForm } from "./transaction-filter-form";
 import { TransactionSubmit } from "./transaction-submit";
 import { applyTransactionFilters } from "../../apply-transaction-filters";
 import { Spinner } from "@/components/ui/spinner";
+import { transactionFilterChips } from "../../transaction-filter-chips";
 
 export function MobileTransactionFilters({ data, filters, pending }: { data: Ledger; filters: Filters; pending: boolean }) {
   const t = useTranslations("UI");
@@ -27,12 +27,7 @@ export function MobileTransactionFilters({ data, filters, pending }: { data: Led
   const [search, setSearch] = useState(filters.search);
   const [draft, setDraft] = useState(filters);
   const active = (["wallet", "category", "type", "currency"] as const).filter((key) => filters[key] !== "all");
-  const chips = [
-    ...(filters.search ? [{ key: "search" as const, label: t("searchFilter", { value: filters.search }) }] : []),
-    ...active.map((key) => ({ key, label: key === "wallet" ? t("walletFilter", { value: data.wallets.find((wallet) => wallet.id === filters.wallet)?.name ?? filters.wallet })
-      : key === "category" ? t("categoryFilter", { value: categoryLabel(data, filters.category, t) }) : key === "currency" ? t("currencyFilter", { value: filters.currency })
-      : t("typeFilter", { value: t({ income: "income", expense: "expense", transfer: "transfer", correction: "openingBalancesCorrections", all: "allTypes" }[filters.type]) }) })),
-  ];
+  const chips = transactionFilterChips(data, filters, t);
   return <div className="mobile-history-filters">
     <div className="mobile-history-toolbar">
       <TransactionFilterForm aria-label={t("searchTransactionHistory")} className="mobile-history-search">

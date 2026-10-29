@@ -1,5 +1,4 @@
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import { ChevronDown, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
@@ -8,7 +7,7 @@ import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu-trigger";
 import { DropdownMenuContent } from "@/components/ui/dropdown-menu-content";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu-item";
-import { signOut } from "@/features/auth/api";
+import { useSignOut } from "@/features/auth/use-sign-out";
 import { useLedgerStore } from "../../use-ledger-store";
 export function AccountMenu() {
   const t = useTranslations("UI");
@@ -17,7 +16,7 @@ export function AccountMenu() {
   const pending = useLedgerStore((state) => state.pending);
   const setPending = useLedgerStore((state) => state.setPending);
   const setError = useLedgerStore((state) => state.setError);
-  const router = useRouter();
+  const signOut = useSignOut(setPending, setError);
   const initials =
     name
       .trim()
@@ -49,17 +48,7 @@ export function AccountMenu() {
         </div>
         <DropdownMenuItem
           disabled={pending}
-          onClick={async () => {
-            setPending(true);
-            try {
-              await signOut();
-              router.push("/sign-in");
-              router.refresh();
-            } catch {
-              setError("Could not sign out. Please try again.");
-              setPending(false);
-            }
-          }}
+          onClick={signOut}
         >
           <LogOut />
           {t("signOut")}

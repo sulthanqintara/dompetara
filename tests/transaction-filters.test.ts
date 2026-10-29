@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { filterTransactions, readTransactionSearchParams, transactionFiltersHref, transactionFiltersSchema } from "../src/features/ledger/transaction-filters.ts";
 import { emptyLedger, type Entry } from "../src/features/ledger/ledger.ts";
 import { transactionPage } from "../src/features/ledger/pagination.ts";
+import { transactionFilterChips } from "../src/features/ledger/transaction-filter-chips.ts";
+import { ledgerQuery, matchingInitialQuery } from "../src/features/ledger/query.ts";
 
 const query = readTransactionSearchParams(new URLSearchParams("search=Lunch&page=2&currency=IDR&currency=USD&__proto__=safe"));
 assert.equal(query.search, "Lunch");
@@ -26,6 +28,18 @@ assert.equal(transactionFiltersHref({ type: "invalid", currency: "EUR", search: 
 
 const data = emptyLedger();
 data.wallets = [{ id: "bank", name: "Bank", currencies: ["IDR"] }, { id: "cash", name: "Cash", currencies: ["USD"] }];
+const translate = (key: string, values?: Record<string, string | number>) => `${key}:${values?.value ?? ""}`;
+assert.deepEqual(transactionFilterChips(data, transactionFiltersSchema.parse({}), translate), []);
+assert.deepEqual(transactionFilterChips(data, transactionFiltersSchema.parse({ search: "all", wallet: "bank", category: "Custom", type: "correction", currency: "USD" }), translate).map(({ label }) => label),
+  ["searchFilter:all", "walletFilter:Bank", "categoryFilter:Custom", "typeFilter:openingBalancesCorrections:", "currencyFilter:USD"]);
+assert.equal(transactionFilterChips(data, transactionFiltersSchema.parse({ wallet: "missing" }), translate)[0].label, "walletFilter:missing");
+const initialQuery = ledgerQuery({ month: "2026-10" }, "UTC", "IDR");
+const snapshot = { query: initialQuery, version: 2, result: [] };
+assert.equal(matchingInitialQuery(undefined, initialQuery, 1), undefined);
+assert.equal(matchingInitialQuery(snapshot, initialQuery, 3), undefined);
+assert.equal(matchingInitialQuery(snapshot, { ...initialQuery, search: "Lunch" }, 2), undefined);
+assert.equal(matchingInitialQuery(snapshot, initialQuery, 2), snapshot);
+assert.equal(matchingInitialQuery(snapshot, initialQuery, 1), snapshot);
 const entry: Entry = { id: "expense", kind: "expense", wallet: "bank", currency: "IDR", amount: 100, date: "2026-10-05T00:00:00Z", title: "Lunch", category: "Archived dining", description: "With friends" };
 data.entries = [entry, { ...entry, id: "transfer", kind: "transfer", toWallet: "cash", toCurrency: "USD", category: "", title: "Transfer", description: "", received: 1 }, { ...entry, id: "opening", kind: "correction", category: "", title: "Opening balance", description: "" }];
 const filter = (values: Record<string, unknown>) => filterTransactions(data.entries, data, transactionFiltersSchema.parse(values)).map((item) => item.id);

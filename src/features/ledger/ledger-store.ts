@@ -26,6 +26,13 @@ export type LedgerStoreInitial = {
   initialState: LedgerState; name: string; email: string; initialTimeZone: string; initialMonth: string;
 };
 
+function saveFailureState(error: unknown) {
+  if (error instanceof Error) {
+    return { error: error.message, ...(error.cause === 409 ? { conflict: true } : {}) };
+  }
+  return { error: "Connection lost. Please try again." };
+}
+
 // Construct inside the account boundary; never share ledger state across requests or accounts.
 export function createLedgerStore(initial: LedgerStoreInitial, client: QueryClient,
   api: { fetchLedger: typeof fetchLedger; saveLedger: typeof saveLedger }) {
@@ -56,8 +63,7 @@ export function createLedgerStore(initial: LedgerStoreInitial, client: QueryClie
         updateLedgerCache(client, saved);
         return true;
       } catch (error) {
-        set({ ...(error instanceof Error && error.cause === 409 ? { conflict: true } : {}),
-          error: error instanceof Error ? error.message : "Connection lost. Please try again." });
+        set(saveFailureState(error));
         return false;
       } finally {
         set({ pending: false });

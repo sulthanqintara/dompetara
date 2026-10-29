@@ -5,6 +5,9 @@ import { IncomeModal } from "./income-modal";
 import { ExpenseModal } from "./expense-modal";
 import { TransferModal } from "./transfer-modal";
 import { EditorForm } from "./editor-form";
+import { editorIdentity, editorKind } from "../../editor";
+
+const entryModals = { income: IncomeModal, expense: ExpenseModal, transfer: TransferModal, correction: ExpenseModal };
 
 export function LedgerEditor() {
   const editor = useLedgerStore((state) => state.editor);
@@ -15,52 +18,37 @@ export function LedgerEditor() {
   const setEditor = useLedgerStore((state) => state.setEditor);
   const setError = useLedgerStore((state) => state.setError);
   const save = useLedgerStore((state) => state.save);
+  const close = () => {
+    setEditor(undefined);
+    setError("");
+  };
+  const saveAndClose = async (payload: Record<string, unknown>) => {
+    const ok = await save(payload);
+    if (ok) setEditor(undefined);
+    return ok;
+  };
   if (!editor) return null;
-  if (
-    editor.type === "receipt" ||
-    (editor.type === "entry" && editor.entry?.receipt)
-  )
+  const receiptEntry = editor.type === "entry" ? editor.entry : undefined;
+  if (editor.type === "receipt" || receiptEntry?.receipt)
     return (
       <ReceiptEditor
-        entry={editor.type === "entry" ? editor.entry : undefined}
+        entry={receiptEntry}
         restoreFocus={editor.restoreFocus}
       />
     );
-  const kind =
-    editor.type === "entry"
-      ? (editor.entry?.kind ?? editor.kind ?? "expense")
-      : undefined;
-  const Modal =
-    editor.type === "wallet"
-      ? EditorForm
-      : kind === "income"
-        ? IncomeModal
-        : kind === "transfer"
-          ? TransferModal
-          : ExpenseModal;
+  const kind = editorKind(editor);
+  const Modal = editor.type === "wallet" ? EditorForm : entryModals[kind ?? "expense"];
   return (
     <Modal
-      key={
-        editor.type +
-        kind +
-        (editor.type === "entry" ? editor.entry?.id : editor.wallet?.id) +
-        (editor.type === "wallet" ? editor.currency : "")
-      }
+      key={editorIdentity(editor, kind)}
       editor={editor}
       restoreFocus={editor.restoreFocus}
       data={data}
       pending={pending}
       conflict={conflict}
       error={error}
-      close={() => {
-        setEditor(undefined);
-        setError("");
-      }}
-      save={async (payload) => {
-        const ok = await save(payload);
-        if (ok) setEditor(undefined);
-        return ok;
-      }}
+      close={close}
+      save={saveAndClose}
     />
   );
 }

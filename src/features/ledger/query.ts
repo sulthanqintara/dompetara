@@ -21,10 +21,14 @@ export type TransactionResult = {
   rows: Entry[]; related: Entry[]; page: number; pages: number; start: number; end: number; total: number;
 };
 export type QueryState<T> = { query: LedgerQuery; version: number; result: T };
+
+export function matchingInitialQuery<T>(initial: QueryState<T> | undefined, query: LedgerQuery, version: number) {
+  if (!initial || initial.version < version) return undefined;
+  return JSON.stringify(initial.query) === JSON.stringify(query) ? initial : undefined;
+}
 export function ledgerQuery(period: Period, timeZone: string, displayCurrency: string, filters: Record<string, unknown> = {}) {
   return ledgerQuerySchema.parse({ ...filters, ...periodRange(period), timeZone, displayCurrency });
 }
-export function queryKey(query: LedgerQuery, version: number) { return JSON.stringify([query, version]); }
 export function queryParams(query: LedgerQuery) {
   return new URLSearchParams(Object.entries(query).map(([key, value]) => [key, String(value)]));
 }

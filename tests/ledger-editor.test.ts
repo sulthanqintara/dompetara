@@ -5,12 +5,16 @@ import { entryPayload, walletPayload } from "../src/features/ledger/editor-paylo
 import { initialTransferFields, transferConversion } from "../src/features/ledger/transfer-editor.ts";
 import { draftSchema, type Extraction } from "../src/features/receipts/receipts.ts";
 import { localDate } from "../src/features/ledger/format.ts";
+import { editorIdentity } from "../src/features/ledger/editor.ts";
 
 const data: Ledger = { ...emptyLedger(), wallets: [
   { id: "bank", name: "Bank", currencies: ["IDR", "USD"] }, { id: "cash", name: "Cash", currencies: ["IDR"] },
 ] };
 const now = new Date("2026-10-01T12:34:56Z");
 const entry: Entry = { id: "entry", kind: "expense", date: now.toISOString(), wallet: "bank", currency: "IDR", amount: 1234, title: "Lunch", category: "Archived", description: "Personal note" };
+assert.notEqual(editorIdentity({ type: "wallet", currency: "IDR" }), editorIdentity({ type: "wallet", currency: "USD" }));
+assert.notEqual(editorIdentity({ type: "entry", entry }, "expense"), editorIdentity({ type: "entry", entry: { ...entry, id: "other" } }, "expense"));
+assert.notEqual(editorIdentity({ type: "entry" }, "expense"), editorIdentity({ type: "entry" }, "income"));
 const details = { receiptNumber: null, keepItems: false, items: [], adjustments: [] };
 const draft = draftSchema.parse({ documentKind: "receipt", merchant: "Store", date: null, time: null, currency: null, receiptNumber: null, total: null, items: [], adjustments: [], warnings: [] });
 const initial = initialEntryFields(data, undefined, undefined, now);

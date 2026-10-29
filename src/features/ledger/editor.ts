@@ -20,3 +20,13 @@ export type EditorFormProps = {
   close: () => void;
   save: (payload: Record<string, unknown>) => Promise<boolean>;
 };
+
+export function editorIdentity(editor: Exclude<Editor, { type: "receipt" }>, kind?: Entry["kind"]) {
+  if (editor.type === "wallet") return `${editor.type}:${editor.wallet?.id ?? ""}:${editor.currency ?? ""}`;
+  return `${editor.type}:${kind}:${editor.entry?.id ?? ""}`;
+}
+
+export function editorKind(editor: Editor) {
+  if (editor.type !== "entry") return undefined;
+  return editor.entry?.kind ?? editor.kind ?? "expense";
+}

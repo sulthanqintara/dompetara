@@ -1,5 +1,6 @@
 {
-  "entry": ["tests/fixtures/ledger-editor.tsx"],
+  "entry": ["tests/fixtures/ledger-editor.tsx", "tests/fixtures/ledger-store.tsx", "tests/fixtures/ledger-views.tsx",
+    "tests/fixtures/ledger-views/link.tsx", "tests/fixtures/ledger-views/navigation.ts"],
   "health": {
     "coverage": "coverage/fallow/coverage-final.json"
   }

@@ -31,12 +31,20 @@ export function readTransactionSearchParams(params: Pick<URLSearchParams, "forEa
 
 export function filterTransactions(entries: Entry[], data: Ledger, filters: TransactionFilters) {
   const search = filters.search.trim().toLocaleLowerCase();
-  return entries.filter((entry) =>
-    (filters.wallet === "all" || entry.wallet === filters.wallet || entry.toWallet === filters.wallet) &&
-    (filters.category === "all" || entry.category === filters.category) &&
-    (filters.type === "all" || entry.kind === filters.type) &&
-    (filters.currency === "all" || entry.currency === filters.currency || entry.toCurrency === filters.currency) &&
-    (!search || [entry.title, entry.description, entry.category, walletName(data, entry.wallet),
-      entry.toWallet ? walletName(data, entry.toWallet) : ""].join(" ").toLocaleLowerCase().includes(search)),
-  );
+  return entries.filter((entry) => matchesTransactionFields(entry, filters) && matchesTransactionSearch(entry, data, search));
+}
+
+function matchesEither(filter: string, source: string, destination?: string) {
+  return filter === "all" || filter === source || filter === destination;
+}
+
+function matchesTransactionFields(entry: Entry, filters: TransactionFilters) {
+  return [matchesEither(filters.wallet, entry.wallet, entry.toWallet), matchesEither(filters.category, entry.category),
+    matchesEither(filters.type, entry.kind), matchesEither(filters.currency, entry.currency, entry.toCurrency)].every(Boolean);
+}
+
+function matchesTransactionSearch(entry: Entry, data: Ledger, search: string) {
+  if (!search) return true;
+  return [entry.title, entry.description, entry.category, walletName(data, entry.wallet),
+    entry.toWallet ? walletName(data, entry.toWallet) : ""].join(" ").toLocaleLowerCase().includes(search);
 }
